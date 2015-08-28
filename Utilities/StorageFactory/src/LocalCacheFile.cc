@@ -1,5 +1,6 @@
 #include "Utilities/StorageFactory/interface/LocalCacheFile.h"
 #include "FWCore/Utilities/interface/EDMException.h"
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include <utility>
 #include <iostream>
 #include <stdlib.h>
@@ -48,7 +49,8 @@ LocalCacheFile::LocalCacheFile(Storage *base, const std::string &tmpdir /* = "" 
       << strerror(errno) << " (error " << errno << ")";
     ex.addContext("LocalCacheFile::LocalCacheFile");
   }
-
+  edm::LogAbsolute("LocalCacheFileUsed")<<" Creating a local cache file for reading.";
+  
   unlink(&temp[0]);
   file_ = new File(fd);
   file_->resize(image_);
