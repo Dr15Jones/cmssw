@@ -165,6 +165,14 @@ class EDProducer(_Module):
     def _isTaskComponent(self):
         return True
 
+class EDSummaryProducer(_Module):
+  def __init__(self,type_,*arg,**kargs):
+    super(EDSummaryProducer,self).__init__(type_,*arg,**kargs)
+  def _placeImpl(self,name,proc):
+    proc._placeProducer(name,self)
+  def _isTaskComponent(self):
+    return False
+
 class EDFilter(_Module):
     def __init__(self,type_,*arg,**kargs):
         super(EDFilter,self).__init__(type_,*arg,**kargs)

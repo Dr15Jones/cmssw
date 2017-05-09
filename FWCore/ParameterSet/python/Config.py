@@ -518,6 +518,8 @@ class Process(object):
         self._place(name, mod, self.__outputmodules)
     def _placeProducer(self,name,mod):
         self._place(name, mod, self.__producers)
+    def _placeSummaryProducer(self,name,mod):
+      self._place(name, mod, self.__producers)
     def _placeFilter(self,name,mod):
         self._place(name, mod, self.__filters)
     def _placeAnalyzer(self,name,mod):
