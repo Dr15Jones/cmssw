@@ -46,6 +46,12 @@ process.RunSumIntProd = cms.EDProducer("edmtest::stream::RunSummaryIntProducer",
     ,cachevalue = cms.int32(nEvtRun)
 )
 
+process.RunSumIntSummaryProd = cms.EDSummaryProducer("edmtest::stream::RunSummaryIntSummaryProducer",
+    transitions = cms.int32(nEvt+4*(nEvt/nEvtRun))
+    ,cachevalue = cms.int32(nEvtRun)
+)
+
+
 process.LumiSumIntProd = cms.EDProducer("edmtest::stream::LumiSummaryIntProducer",
     transitions = cms.int32(nEvt+4*(nEvt/nEvtLumi))
     ,cachevalue = cms.int32(nEvtLumi)
@@ -142,5 +148,5 @@ process.TestEndLumiBlockFil = cms.EDFilter("edmtest::stream::TestEndLumiBlockFil
 )
 
 
-process.p = cms.Path(process.GlobIntProd+process.RunIntProd+process.LumiIntProd+process.RunSumIntProd+process.LumiSumIntProd+process.TestBeginRunProd+process.TestEndRunProd+process.TestBeginLumiBlockProd+process.TestEndLumiBlockProd+process.GlobIntAn+process.RunIntAn+process.LumiIntAn+process.RunSumIntAn+process.LumiSumIntAn+process.GlobIntFil+process.RunIntFil+process.LumiIntFil+process.RunSumIntFil+process.LumiSumIntFil+process.TestBeginRunFil+process.TestEndRunFil+process.TestBeginLumiBlockFil+process.TestEndLumiBlockFil)
+process.p = cms.Path(process.GlobIntProd+process.RunIntProd+process.LumiIntProd+process.RunSumIntProd+process.RunSumIntSummaryProd+process.LumiSumIntProd+process.TestBeginRunProd+process.TestEndRunProd+process.TestBeginLumiBlockProd+process.TestEndLumiBlockProd+process.GlobIntAn+process.RunIntAn+process.LumiIntAn+process.RunSumIntAn+process.LumiSumIntAn+process.GlobIntFil+process.RunIntFil+process.LumiIntFil+process.RunSumIntFil+process.LumiSumIntFil+process.TestBeginRunFil+process.TestEndRunFil+process.TestBeginLumiBlockFil+process.TestEndLumiBlockFil)
 

@@ -12,6 +12,7 @@ for testing purposes only.
 #include <map>
 #include <functional>
 #include "FWCore/Framework/interface/stream/EDProducer.h"
+#include "FWCore/Framework/interface/stream/EDSummaryProducer.h"
 #include "FWCore/Framework/src/WorkerT.h"
 #include "FWCore/Framework/interface/HistoryAppender.h"
 #include "FWCore/ServiceRegistry/interface/ParentContext.h"
@@ -343,6 +344,111 @@ struct UnsafeCache {
     }
   };
 
+  class RunSummaryIntSummaryProducer : public edm::stream::EDSummaryProducer<edm::RunCache<Cache>,edm::RunSummaryCache<UnsafeCache>> {
+  public:
+    static std::atomic<unsigned int> m_count;
+    unsigned int trans_;
+    static std::atomic<unsigned int> cvalue_;
+    static std::atomic<bool> gbr;
+    static std::atomic<bool> ger;
+    static std::atomic<bool> gbrs;
+    static std::atomic<bool> gers;
+    static std::atomic<bool> brs;
+    static std::atomic<bool> ers;
+    static std::atomic<bool> br;
+    static std::atomic<bool> er;
+    
+    RunSummaryIntSummaryProducer(edm::ParameterSet const&p){
+      trans_= p.getParameter<int>("transitions");
+      cvalue_ = p.getParameter<int>("cachevalue");
+      produces<unsigned int>();
+    }
+    
+    void beginRun(edm::Run const&, edm::EventSetup const&) override {
+      br=true;
+      er=false;
+    }
+    
+    void accumulate(edm::Event const&, edm::EventSetup const&) override {
+      ++m_count;
+      ++(runCache()->value);
+      
+    }
+    
+    static std::shared_ptr<Cache> globalBeginRun(edm::Run const& iRun, edm::EventSetup const&, GlobalCache const*) {
+      ++m_count;
+      gbr=true;
+      ger=false;
+      auto pCache = std::make_shared<Cache>();
+      ++(pCache->run);
+      return pCache;
+      
+    }
+    
+    static std::shared_ptr<UnsafeCache> globalBeginRunSummary(edm::Run const&, edm::EventSetup const&, GlobalCache const*) {
+      ++m_count;
+      gbrs = true;
+      gers = false;
+      brs = true;
+      ers = false;
+      if ( !gbr ) {
+        throw cms::Exception("begin out of sequence")
+        << "globalBeginRunSummary seen before globalBeginRun";
+      }
+      return std::make_shared<UnsafeCache>();
+    }
+    
+    void endRunSummary(edm::Run const&, edm::EventSetup const&, UnsafeCache* gCache) const override {
+      brs=false;
+      ers=true;
+      gCache->value += runCache()->value;
+      runCache()->value = 0;
+      if ( !er ) {
+        throw cms::Exception("end out of sequence")
+        << "endRunSummary seen before endRun";
+      }
+    }
+    
+    static void globalEndRunSummary(edm::Run const&, edm::EventSetup const&, RunContext const*, UnsafeCache * gCache) {
+      ++m_count;
+      gbrs=false;
+      gers=true;
+      if ( !ers ) {
+        throw cms::Exception("end out of sequence")
+        << "globalEndRunSummary seen before endRunSummary";
+      }
+      if(gCache->value != cvalue_) {
+        throw cms::Exception("cache value")
+        << gCache->value << " but it was supposed to be " << cvalue_;
+      }
+    }
+    
+    static void globalEndRun(edm::Run const& iRun, edm::EventSetup const&, RunContext const* iContext) {
+      ++m_count;
+      gbr=false;
+      ger=true;
+      auto pCache = iContext->run();
+      if ( pCache->run != 1 ) {
+        throw cms::Exception("end out of sequence")
+        << "globalEndRun seen before globalBeginRun in Run" << iRun.run();
+      }
+    }
+    
+    void endRun(edm::Run const&, edm::EventSetup const&) override {
+      er = true;
+      br = false;
+    }
+    
+    ~RunSummaryIntSummaryProducer() {
+      if(m_count != trans_) {
+        throw cms::Exception("transitions")
+        << m_count<< " but it was supposed to be " << trans_;
+      }
+      
+    }
+  };
+
+  
   class LumiSummaryIntProducer : public edm::stream::EDProducer<edm::LuminosityBlockCache<Cache>,edm::LuminosityBlockSummaryCache<UnsafeCache>> {
   public:
     static std::atomic<unsigned int> m_count;
@@ -680,6 +786,7 @@ std::atomic<unsigned int> edmtest::stream::GlobalIntProducer::m_count{0};
 std::atomic<unsigned int> edmtest::stream::RunIntProducer::m_count{0};
 std::atomic<unsigned int> edmtest::stream::LumiIntProducer::m_count{0};
 std::atomic<unsigned int> edmtest::stream::RunSummaryIntProducer::m_count{0};
+std::atomic<unsigned int> edmtest::stream::RunSummaryIntSummaryProducer::m_count{0};
 std::atomic<unsigned int> edmtest::stream::LumiSummaryIntProducer::m_count{0};
 std::atomic<unsigned int> edmtest::stream::TestBeginRunProducer::m_count{0};
 std::atomic<unsigned int> edmtest::stream::TestEndRunProducer::m_count{0};
@@ -689,6 +796,7 @@ std::atomic<unsigned int> edmtest::stream::GlobalIntProducer::cvalue_{0};
 std::atomic<unsigned int> edmtest::stream::RunIntProducer::cvalue_{0};
 std::atomic<unsigned int> edmtest::stream::LumiIntProducer::cvalue_{0};
 std::atomic<unsigned int> edmtest::stream::RunSummaryIntProducer::cvalue_{0};
+std::atomic<unsigned int> edmtest::stream::RunSummaryIntSummaryProducer::cvalue_{0};
 std::atomic<unsigned int> edmtest::stream::LumiSummaryIntProducer::cvalue_{0};
 std::atomic<unsigned int> edmtest::stream::TestBeginRunProducer::cvalue_{0};
 std::atomic<unsigned int> edmtest::stream::TestEndRunProducer::cvalue_{0};
@@ -708,6 +816,14 @@ std::atomic<bool> edmtest::stream::RunSummaryIntProducer::brs{false};
 std::atomic<bool> edmtest::stream::RunSummaryIntProducer::ers{false};
 std::atomic<bool> edmtest::stream::RunSummaryIntProducer::br{false};
 std::atomic<bool> edmtest::stream::RunSummaryIntProducer::er{false};
+std::atomic<bool> edmtest::stream::RunSummaryIntSummaryProducer::gbr{false};
+std::atomic<bool> edmtest::stream::RunSummaryIntSummaryProducer::ger{false};
+std::atomic<bool> edmtest::stream::RunSummaryIntSummaryProducer::gbrs{false};
+std::atomic<bool> edmtest::stream::RunSummaryIntSummaryProducer::gers{false};
+std::atomic<bool> edmtest::stream::RunSummaryIntSummaryProducer::brs{false};
+std::atomic<bool> edmtest::stream::RunSummaryIntSummaryProducer::ers{false};
+std::atomic<bool> edmtest::stream::RunSummaryIntSummaryProducer::br{false};
+std::atomic<bool> edmtest::stream::RunSummaryIntSummaryProducer::er{false};
 std::atomic<bool> edmtest::stream::LumiSummaryIntProducer::gbl{false};
 std::atomic<bool> edmtest::stream::LumiSummaryIntProducer::gel{false};
 std::atomic<bool> edmtest::stream::LumiSummaryIntProducer::gbls{false};
@@ -732,6 +848,7 @@ DEFINE_FWK_MODULE(edmtest::stream::GlobalIntProducer);
 DEFINE_FWK_MODULE(edmtest::stream::RunIntProducer);
 DEFINE_FWK_MODULE(edmtest::stream::LumiIntProducer);
 DEFINE_FWK_MODULE(edmtest::stream::RunSummaryIntProducer);
+DEFINE_FWK_MODULE(edmtest::stream::RunSummaryIntSummaryProducer);
 DEFINE_FWK_MODULE(edmtest::stream::LumiSummaryIntProducer);
 DEFINE_FWK_MODULE(edmtest::stream::TestBeginRunProducer);
 DEFINE_FWK_MODULE(edmtest::stream::TestEndRunProducer);

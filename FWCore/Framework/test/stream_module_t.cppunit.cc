@@ -14,6 +14,7 @@
 #include "FWCore/Framework/src/ModuleHolder.h"
 #include "FWCore/Framework/src/PreallocationConfiguration.h"
 #include "FWCore/Framework/interface/stream/EDProducer.h"
+#include "FWCore/Framework/interface/stream/EDSummaryProducer.h"
 #include "FWCore/Framework/interface/stream/EDProducerAdaptor.h"
 #include "FWCore/Framework/interface/OccurrenceTraits.h"
 #include "DataFormats/Provenance/interface/ProcessHistoryRegistry.h"
@@ -45,7 +46,9 @@ class testStreamModule: public CppUnit::TestFixture
   CPPUNIT_TEST(endRunProdTest);
   CPPUNIT_TEST(endLumiProdTest);
   CPPUNIT_TEST(endRunSummaryProdTest);
+  CPPUNIT_TEST(runSummaryProd2Test);
   CPPUNIT_TEST(endLumiSummaryProdTest);
+  CPPUNIT_TEST(lumiSummaryProd2Test);
   
   CPPUNIT_TEST_SUITE_END();
 public:
@@ -65,7 +68,9 @@ public:
   void endRunProdTest();
   void endLumiProdTest();
   void endRunSummaryProdTest();
+  void runSummaryProd2Test();
   void endLumiSummaryProdTest();
+  void lumiSummaryProd2Test();
 
   enum class Trans {
     kBeginJob, //0
@@ -301,7 +306,34 @@ private:
       ++m_count;
     }
   };
-  
+
+  class RunSummaryProd2 : public edm::stream::EDSummaryProducer<edm::EndRunProducer, edm::RunSummaryCache<int>> {
+  public:
+    static unsigned int m_count;
+    RunSummaryProd2(edm::ParameterSet const&) {}
+    
+    void accumulate(edm::Event const&, edm::EventSetup const&) override {
+      ++m_count;
+    }
+    
+    static std::shared_ptr<int> globalBeginRunSummary(edm::Run const&, edm::EventSetup const&, RunContext const*) {
+      ++m_count;
+      return std::shared_ptr<int>{};
+    }
+    
+    void endRunSummary(edm::Run const&, edm::EventSetup const&, int*) const override {
+      ++m_count;
+    }
+    
+    static void globalEndRunSummary(edm::Run const&, edm::EventSetup const&, RunContext const*, int*) {
+      ++m_count;
+    }
+    
+    static void globalEndRunProduce(edm::Run&, edm::EventSetup const&, RunContext const*, int const*) {
+      ++m_count;
+    }
+  };
+
   class EndLumiSummaryProd : public edm::stream::EDProducer<edm::EndLuminosityBlockProducer, edm::LuminosityBlockSummaryCache<int>> {
   public:
     static unsigned int m_count;
@@ -328,7 +360,34 @@ private:
       ++m_count;
     }
   };
-   
+
+  class LumiSummaryProd2 : public edm::stream::EDSummaryProducer<edm::EndLuminosityBlockProducer, edm::LuminosityBlockSummaryCache<int>> {
+  public:
+    static unsigned int m_count;
+    LumiSummaryProd2(edm::ParameterSet const&) {}
+    
+    void accumulate(edm::Event const&, edm::EventSetup const&) override {
+      ++m_count;
+    }
+    
+    static std::shared_ptr<int> globalBeginLuminosityBlockSummary(edm::LuminosityBlock const&, edm::EventSetup const&, LuminosityBlockContext const*) {
+      ++m_count;
+      return std::shared_ptr<int>{};
+    }
+    
+    void endLuminosityBlockSummary(edm::LuminosityBlock const&, edm::EventSetup const&, int*) const override {
+      ++m_count;
+    }
+    
+    static void globalEndLuminosityBlockSummary(edm::LuminosityBlock const&, edm::EventSetup const&, LuminosityBlockContext const*, int*) {
+      ++m_count;
+    }
+    
+    static void globalEndLuminosityBlockProduce(edm::LuminosityBlock&, edm::EventSetup const&, LuminosityBlockContext const*, int const*) {
+      ++m_count;
+    }
+  };
+
 };
 unsigned int testStreamModule::BasicProd::m_count = 0;
 unsigned int testStreamModule::GlobalProd::m_count = 0;
@@ -341,7 +400,9 @@ unsigned int testStreamModule::EndRunProd::m_count = 0;
 unsigned int testStreamModule::BeginLumiProd::m_count = 0;
 unsigned int testStreamModule::EndLumiProd::m_count = 0;
 unsigned int testStreamModule::EndRunSummaryProd::m_count = 0;
+unsigned int testStreamModule::RunSummaryProd2::m_count = 0;
 unsigned int testStreamModule::EndLumiSummaryProd::m_count = 0;
+unsigned int testStreamModule::LumiSummaryProd2::m_count = 0;
 ///registration of the test so that the runner can find it
 CPPUNIT_TEST_SUITE_REGISTRATION(testStreamModule);
 
@@ -552,8 +613,18 @@ void testStreamModule::endRunSummaryProdTest()
   runTest<EndRunSummaryProd>({Trans::kGlobalEndRun, Trans::kEvent, Trans::kGlobalBeginRun, Trans::kStreamEndRun, Trans::kGlobalEndRun} );
 }
 
+void testStreamModule::runSummaryProd2Test()
+{
+  runTest<RunSummaryProd2>({Trans::kGlobalEndRun, Trans::kEvent, Trans::kGlobalBeginRun, Trans::kStreamEndRun, Trans::kGlobalEndRun} );
+}
+
 void testStreamModule::endLumiSummaryProdTest()
 {
   runTest<EndLumiSummaryProd>({Trans::kGlobalEndLuminosityBlock, Trans::kEvent, Trans::kGlobalBeginLuminosityBlock, Trans::kStreamEndLuminosityBlock, Trans::kGlobalEndLuminosityBlock} );
+}
+
+void testStreamModule::lumiSummaryProd2Test()
+{
+  runTest<LumiSummaryProd2>({Trans::kGlobalEndLuminosityBlock, Trans::kEvent, Trans::kGlobalBeginLuminosityBlock, Trans::kStreamEndLuminosityBlock, Trans::kGlobalEndLuminosityBlock} );
 }
 
