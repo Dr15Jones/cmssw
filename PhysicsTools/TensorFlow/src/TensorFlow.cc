@@ -28,6 +28,7 @@ MetaGraphDef* loadMetaGraph(const std::string& exportDir, bool multiThreaded,
     // objects to load the graph
     Status status;
     SessionOptions sessionOptions;
+    sessionOptions.target = "no_threads";
     RunOptions runOptions;
     SavedModelBundle bundle;
 
@@ -51,6 +52,7 @@ Session* createSession(bool multiThreaded)
     // objects to create the session
     Status status;
     SessionOptions sessionOptions;
+    sessionOptions.target = "no_threads";
 
     // set the number of threads
     setThreading(sessionOptions, multiThreaded ? 0 : 1);
