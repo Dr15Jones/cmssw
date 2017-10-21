@@ -39,7 +39,6 @@ limitations under the License.
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/platform/macros.h"
 #include "tensorflow/core/platform/mutex.h"
-#include "tensorflow/core/platform/thread_annotations.h"
 #include "tensorflow/core/platform/types.h"
 #include "tensorflow/core/public/session.h"
 
@@ -188,7 +187,7 @@ class NTSession : public Session {
   // Retrieves an already existing set of executors to run 'inputs' and
   // 'outputs', or creates and caches them for future use.
   ::tensorflow::Status GetOrCreateExecutors(
-      thread::ThreadPool* pool, gtl::ArraySlice<string> inputs,
+      gtl::ArraySlice<string> inputs,
       gtl::ArraySlice<string> outputs, gtl::ArraySlice<string> target_nodes,
       ExecutorsAndKeys** executors_and_keys, RunStateArgs* run_state_args);
 
@@ -266,16 +265,11 @@ class NTSession : public Session {
   mutex graph_def_lock_;
   GraphDef graph_def_ GUARDED_BY(graph_def_lock_);
 
-  // The thread-pools to use for running ops, with a bool indicating if the pool
-  // is owned.
-  std::vector<std::pair<thread::ThreadPool*, bool>> thread_pools_;
-
   Status init_error_;  // Set to an error if construction failed.
 
   // If true, blocks until device has finished all queued operations in a step.
   bool sync_on_finish_ = true;
-  // Schedules 'c' for execution on pool.
-  void SchedClosure(thread::ThreadPool* pool, std::function<void()> c);
+  void SchedClosure(std::function<void()> c);
 
   mutex executor_lock_;  // protects executors_
   // Holds mappings from signature to the executors that process

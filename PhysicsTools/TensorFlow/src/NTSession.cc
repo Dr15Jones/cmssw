@@ -53,7 +53,6 @@ limitations under the License.
 #include "tensorflow/core/lib/core/notification.h"
 #include "tensorflow/core/lib/core/refcount.h"
 #include "tensorflow/core/lib/core/status.h"
-#include "tensorflow/core/lib/core/threadpool.h"
 #include "tensorflow/core/lib/gtl/array_slice.h"
 #include "tensorflow/core/lib/gtl/stl_util.h"
 #include "tensorflow/core/lib/monitoring/counter.h"
@@ -75,73 +74,10 @@ namespace tensorflow {
 
 namespace {
 
-auto* direct_session_runs = monitoring::Counter<0>::New(
+auto* nothreads_session_runs = monitoring::Counter<0>::New(
     "/tensorflow/core/nothreads_session_runs",
     "The number of times NTSession::Run() has been called.");
 
-int32 NumInterOpThreadsFromSessionOptions(const SessionOptions& options) {
-  const int32 t = options.config.inter_op_parallelism_threads();
-  if (t != 0) return t;
-  // Default to using the number of cores available in the process.
-  return port::NumSchedulableCPUs();
-}
-
-thread::ThreadPool* NewThreadPoolFromSessionOptions(
-    const SessionOptions& options) {
-  const int32 num_threads = NumInterOpThreadsFromSessionOptions(options);
-  VLOG(1) << "Direct session inter op parallelism threads: " << num_threads;
-  return new thread::ThreadPool(options.env, "Compute", num_threads);
-}
-
-Status NewThreadPoolFromThreadPoolOptions(
-    const SessionOptions& options,
-    const ThreadPoolOptionProto& thread_pool_options, int pool_number,
-    thread::ThreadPool** pool, bool* owned) {
-  int32 num_threads = thread_pool_options.num_threads();
-  if (num_threads == 0) {
-    num_threads = NumInterOpThreadsFromSessionOptions(options);
-  }
-  const string& name = thread_pool_options.global_name();
-  if (name.empty()) {
-    // Session-local threadpool.
-    VLOG(1) << "Direct session inter op parallelism threads for pool "
-            << pool_number << ": " << num_threads;
-    *pool = new thread::ThreadPool(
-        options.env, strings::StrCat("Compute", pool_number), num_threads);
-    *owned = true;
-    return Status::OK();
-  }
-
-  // Global, named threadpool.
-  typedef std::pair<int32, thread::ThreadPool*> MapValue;
-  static std::map<string, MapValue>* global_pool_map =
-      new std::map<string, MapValue>;
-  static mutex* mu = new mutex();
-  mutex_lock l(*mu);
-  MapValue* mvalue = &(*global_pool_map)[name];
-  if (mvalue->second == nullptr) {
-    mvalue->first = thread_pool_options.num_threads();
-    mvalue->second = new thread::ThreadPool(
-        options.env, strings::StrCat("Compute", pool_number), num_threads);
-  } else {
-    if (mvalue->first != thread_pool_options.num_threads()) {
-      return errors::InvalidArgument(
-          "Pool ", name,
-          " configured previously with num_threads=", mvalue->first,
-          "; cannot re-configure with num_threads=",
-          thread_pool_options.num_threads());
-    }
-  }
-  *owned = false;
-  *pool = mvalue->second;
-  return Status::OK();
-}
-
-thread::ThreadPool* GlobalThreadPool(const SessionOptions& options) {
-  static thread::ThreadPool* const thread_pool =
-      NewThreadPoolFromSessionOptions(options);
-  return thread_pool;
-}
 
 // TODO(vrv): Figure out how to unify the many different functions
 // that generate RendezvousKey, since many of them have to be
@@ -245,8 +181,7 @@ std::atomic_int_fast64_t NTSession::step_id_counter_(1);
 // This may change down the road when we add support for multiple
 // devices that run concurrently, in which case we will need to
 // revisit this decision.
-void NTSession::SchedClosure(thread::ThreadPool* pool,
-                                 std::function<void()> c) {
+void NTSession::SchedClosure(std::function<void()> c) {
 
   // On Android, there is no implementation of ThreadPool that takes
   // std::function, only Closure, which we cannot easily convert.
@@ -267,22 +202,6 @@ NTSession::NTSession(const SessionOptions& options,
       factory_(factory),
       cancellation_manager_(new CancellationManager()),
       operation_timeout_in_ms_(options_.config.operation_timeout_in_ms()) {
-  if (options_.config.session_inter_op_thread_pool_size() > 0) {
-    for (int i = 0; i < options_.config.session_inter_op_thread_pool_size();
-         ++i) {
-      thread::ThreadPool* pool = nullptr;
-      bool owned = false;
-      init_error_.Update(NewThreadPoolFromThreadPoolOptions(
-          options_, options_.config.session_inter_op_thread_pool(i), i, &pool,
-          &owned));
-      thread_pools_.emplace_back(pool, owned);
-    }
-  } else if (options_.config.use_per_session_threads()) {
-    thread_pools_.emplace_back(NewThreadPoolFromSessionOptions(options_),
-                               true /* owned */);
-  } else {
-    thread_pools_.emplace_back(GlobalThreadPool(options), false /* owned */);
-  }
   // The default value of sync_on_finish will be flipped soon and this
   // environment variable will be removed as well.
   Status status =
@@ -293,7 +212,7 @@ NTSession::NTSession(const SessionOptions& options,
   // NOTE(mrry): We do not need to use a unique string for the session
   // handle, because NTSession owns its devices. This may change
   // in future versions.
-  session_handle_ = "direct";
+  session_handle_ = "no_threads";
   int devices_added = 0;
   if (options.config.log_device_placement()) {
     const string mapping_str = device_mgr_->DeviceMappingString();
@@ -330,9 +249,6 @@ NTSession::~NTSession() {
     d->op_segment()->RemoveHold(session_handle_);
   }
   delete cancellation_manager_;
-  for (const auto& p_and_owned : thread_pools_) {
-    if (p_and_owned.second) delete p_and_owned.first;
-  }
 
   execution_state_.reset(nullptr);
   flib_def_.reset(nullptr);
@@ -444,7 +360,7 @@ Status NTSession::Run(const RunOptions& run_options,
                           std::vector<Tensor>* outputs,
                           RunMetadata* run_metadata) {
   TF_RETURN_IF_ERROR(CheckNotClosed());
-  direct_session_runs->GetCell()->IncrementBy(1);
+  nothreads_session_runs->GetCell()->IncrementBy(1);
   {
     mutex_lock l(graph_def_lock_);
     if (!graph_created_) {
@@ -460,13 +376,6 @@ Status NTSession::Run(const RunOptions& run_options,
     input_tensor_names.push_back(it.first);
   }
 
-  if (run_options.inter_op_thread_pool() < 0 ||
-      run_options.inter_op_thread_pool() >= static_cast<int>(thread_pools_.size())) {
-    return errors::InvalidArgument("Invalid inter_op_thread_pool: ",
-                                   run_options.inter_op_thread_pool());
-  }
-  thread::ThreadPool* pool =
-      thread_pools_[run_options.inter_op_thread_pool()].first;
 
   // Check if we already have an executor for these arguments.
   ExecutorsAndKeys* executors_and_keys;
@@ -476,7 +385,7 @@ Status NTSession::Run(const RunOptions& run_options,
   args.step_id = step_id_counter_.fetch_add(1);
 
   TF_RETURN_IF_ERROR(
-      GetOrCreateExecutors(pool, input_tensor_names, output_names, target_nodes,
+      GetOrCreateExecutors(input_tensor_names, output_names, target_nodes,
                            &executors_and_keys, &run_state_args));
   const int64 executor_step_count = executors_and_keys->step_count.fetch_add(1);
 
@@ -529,8 +438,8 @@ Status NTSession::Run(const RunOptions& run_options,
 
   args.rendezvous = run_state.rendez;
   args.cancellation_manager = &step_cancellation_manager;
-  args.runner = [this, pool](Executor::Args::Closure c) {
-    SchedClosure(pool, std::move(c));
+  args.runner = [this](Executor::Args::Closure c) {
+    SchedClosure(std::move(c));
   };
   args.session_state = &session_state_;
   args.tensor_store = &run_state.tensor_store;
@@ -707,16 +616,13 @@ Status NTSession::PRunSetup(const std::vector<string>& input_names,
     }
   }
 
-  // RunOptions is not available in PRunSetup, so use thread pool 0.
-  thread::ThreadPool* pool = thread_pools_[0].first;
-
   // Check if we already have an executor for these arguments.
   ExecutorsAndKeys* executors_and_keys;
   // TODO(cais): TFDBG support for partial runs.
   DebugOptions debug_options;
   RunStateArgs run_state_args(debug_options);
   run_state_args.is_partial_run = true;
-  TF_RETURN_IF_ERROR(GetOrCreateExecutors(pool, input_names, output_names,
+  TF_RETURN_IF_ERROR(GetOrCreateExecutors(input_names, output_names,
                                           target_nodes, &executors_and_keys,
                                           &run_state_args));
 
@@ -750,8 +656,8 @@ Status NTSession::PRunSetup(const std::vector<string>& input_names,
 
   args.rendezvous = run_state->rendez;
   args.cancellation_manager = cancellation_manager_;
-  args.runner = [this, pool](Executor::Args::Closure c) {
-    SchedClosure(pool, std::move(c));
+  args.runner = [this](Executor::Args::Closure c) {
+    SchedClosure(std::move(c));
   };
   args.session_state = &session_state_;
   args.tensor_store = &run_state->tensor_store;
@@ -1042,7 +948,7 @@ Status NTSession::CheckFetch(const NamedTensorList& feeds,
 }
 
 Status NTSession::GetOrCreateExecutors(
-    thread::ThreadPool* pool, gtl::ArraySlice<string> inputs,
+    gtl::ArraySlice<string> inputs,
     gtl::ArraySlice<string> outputs, gtl::ArraySlice<string> target_nodes,
     ExecutorsAndKeys** executors_and_keys, RunStateArgs* run_state_args) {
   int64 handle_name_counter_value = -1;
