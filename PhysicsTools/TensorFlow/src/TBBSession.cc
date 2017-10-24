@@ -423,6 +423,9 @@ Status TBBSession::Run(const RunOptions& run_options,
   // running on this thread (which could start deadlocks)
   tbb::task_arena taskArena;
   tbb::task_group taskGroup;
+  //we are required to always call wait before destructor
+  auto doneWithTaskGroup = [&taskArena, &taskGroup](void *) { taskArena.execute([&taskGroup]() { taskGroup.wait();}); };
+  std::unique_ptr<tbb::task_group, decltype(doneWithTaskGroup) > guard(&taskGroup, doneWithTaskGroup);
 
   // Start parallel Executors.
   const size_t num_executors = executors_and_keys->items.size();
@@ -499,6 +502,8 @@ Status TBBSession::Run(const RunOptions& run_options,
     item.executor->RunAsync(args, barrier->Get());
   }
 
+  //WaitForNotification will handle calling wait on taskGroup
+  guard.release();
   WaitForNotification(taskArena, taskGroup, &run_state, &step_cancellation_manager,
                       run_options.timeout_in_ms() > 0
                           ? run_options.timeout_in_ms()
@@ -1079,6 +1084,10 @@ void TBBSession::WaitForNotification(tbb::task_arena& arena,
                                        RunState* run_state,
                                         CancellationManager* cm,
                                         int64 timeout_in_ms) {
+  // Doing the wait in the arena adds this thread to the arena
+  // and therefore tasks associated to the group can run on this thread
+  arena.execute([&taskGroup]() { taskGroup.wait();} );
+
   Status status =
       WaitForNotification(&run_state->executors_done, timeout_in_ms);
   if (!status.ok()) {
@@ -1090,10 +1099,6 @@ void TBBSession::WaitForNotification(tbb::task_arena& arena,
     // We must wait for the executors to complete, because they have borrowed
     // references to `cm` and other per-step state. After this notification, it
     // is safe to clean up the step.
-
-    // Doing the wait in the arena adds this thread to the arena
-    // and therefore tasks associated to the group can run on this thread
-    arena.execute([&taskGroup] () {taskGroup.wait();} );
     run_state->executors_done.WaitForNotification();
   }
 }
