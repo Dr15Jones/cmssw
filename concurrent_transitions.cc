@@ -49,31 +49,6 @@ struct Sync {
    }
 };
 
-class EventPrincipal {
-public:
-   EventPrincipal(int iStreamID): m_id{iStreamID} {}
-   
-   int streamID() const {return m_id;}
-   
-   const Sync& sync() const { return m_sync;}
-
-   void setSync( Sync iSync) { m_sync = std::move(iSync);}
-private:
-   Sync m_sync;
-   int m_id;
-};
-
-class LumiPrincipal {
-public:
-   LumiPrincipal() {}
-   
-   const Sync& sync() const { return m_sync;}
-
-   void setSync( Sync iSync) { m_sync = std::move(iSync);}
-private:
-   Sync m_sync;
-};
-
 class RunPrincipal {
 public:
    RunPrincipal() {}
@@ -83,6 +58,35 @@ public:
    void setSync( Sync iSync) { m_sync = std::move(iSync);}
 private:
    Sync m_sync;
+};
+
+class LumiPrincipal {
+public:
+   LumiPrincipal() {}
+   
+   const Sync& sync() const { return m_sync;}
+
+   void setSync( Sync iSync) { m_sync = std::move(iSync);}
+   void setRun(std::shared_ptr<RunPrincipal> iRun) { m_run = std::move(iRun);}
+private:
+   Sync m_sync;
+   std::shared_ptr<RunPrincipal> m_run;
+};
+
+class EventPrincipal {
+public:
+   EventPrincipal(int iStreamID): m_id{iStreamID} {}
+   
+   int streamID() const {return m_id;}
+   
+   const Sync& sync() const { return m_sync;}
+
+   void setSync( Sync iSync) { m_sync = std::move(iSync);}
+   void setLumi(std::shared_ptr<LumiPrincipal> iLumi) { m_lumi = std::move(iLumi);}
+private:
+   Sync m_sync;
+   std::shared_ptr<LumiPrincipal> m_lumi;
+   int m_id;
 };
 
 
@@ -307,7 +311,13 @@ public:
    void writeRun(int iRunNumber) {}
    void deleteRunFromCache(int iRunNumber) {}
 
-   void readLuminosityBlock() {}
+   void readLuminosityBlock() {
+      //actually creates a new lumi
+      auto lumiP = principalCache_.lumiPrincipal();
+      
+      auto runP = principalCache_.runPrincipal(); //handed to lumi
+      lumiP->setRun(std::move(runP));
+   }
    void beginLumi(Sync const& iSync) {
       {
          std::lock_guard<std::mutex> g{s_logMutex};
@@ -461,6 +471,8 @@ private:
    
    void processEventAsyncImpl(edm::WaitingTaskHolder iHolder,
       unsigned int iStreamIndex, EventPrincipal& iEP) {
+         auto l = principalCache_.lumiPrincipal(); //passed to event
+         iEP.setLumi(std::move(l));
          m_streamSchedules[iStreamIndex].processOneEventAsync(std::move(iHolder),iEP);
    }
    
