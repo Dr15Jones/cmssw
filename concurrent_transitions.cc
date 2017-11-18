@@ -49,6 +49,43 @@ struct Sync {
    }
 };
 
+class EventPrincipal {
+public:
+   EventPrincipal(int iStreamID): m_id{iStreamID} {}
+   
+   int streamID() const {return m_id;}
+   
+   const Sync& sync() const { return m_sync;}
+
+   void setSync( Sync iSync) { m_sync = std::move(iSync);}
+private:
+   Sync m_sync;
+   int m_id;
+};
+
+class LumiPrincipal {
+public:
+   LumiPrincipal() {}
+   
+   const Sync& sync() const { return m_sync;}
+
+   void setSync( Sync iSync) { m_sync = std::move(iSync);}
+private:
+   Sync m_sync;
+};
+
+class RunPrincipal {
+public:
+   RunPrincipal() {}
+   
+   const Sync& sync() const { return m_sync;}
+
+   void setSync( Sync iSync) { m_sync = std::move(iSync);}
+private:
+   Sync m_sync;
+};
+
+
 class Source {
 public:
    Source(std::vector<std::pair<Transition,Sync>> iTransitions): m_transitions(std::move(iTransitions)),
@@ -77,21 +114,21 @@ class StreamSchedule {
   public:
      StreamSchedule(int iStreamID): m_streamID{iStreamID}{}
      
-     void processOneEventAsync(edm::WaitingTaskHolder iTask) {
-        dummyWorkAsync(std::move(iTask),"Event",Sync{0,0,0});
+     void processOneEventAsync(edm::WaitingTaskHolder iTask, EventPrincipal& iEP) {
+        dummyWorkAsync(std::move(iTask),"Event", iEP.sync());
      }
-     void processOneBeginLumiAsync(edm::WaitingTaskHolder iTask, const Sync& iLumiID) {
-        dummyWorkAsync(std::move(iTask),"beginLumi",iLumiID);
+     void processOneBeginLumiAsync(edm::WaitingTaskHolder iTask,  LumiPrincipal& iLumi) {
+        dummyWorkAsync(std::move(iTask),"beginLumi",iLumi.sync());
      }
-     void processOneBeginRunAsync(edm::WaitingTaskHolder iTask, int iRun) {
-        dummyWorkAsync(std::move(iTask),"beginRun",Sync{iRun,0,0});        
+     void processOneBeginRunAsync(edm::WaitingTaskHolder iTask,  RunPrincipal& iRun) {
+        dummyWorkAsync(std::move(iTask),"beginRun",iRun.sync());        
      }
 
-     void processOneEndLumiAsync(edm::WaitingTaskHolder iTask, const Sync& iLumiID) {
-        dummyWorkAsync(std::move(iTask),"endLumi",iLumiID);
+     void processOneEndLumiAsync(edm::WaitingTaskHolder iTask,  LumiPrincipal& iLumi) {
+        dummyWorkAsync(std::move(iTask),"endLumi",iLumi.sync());
      }
-     void processOneEndRunAsync(edm::WaitingTaskHolder iTask, int iRun) {
-        dummyWorkAsync(std::move(iTask),"endRun",Sync{iRun,0,0});        
+     void processOneEndRunAsync(edm::WaitingTaskHolder iTask, RunPrincipal& iRun) {
+        dummyWorkAsync(std::move(iTask),"endRun",iRun.sync());        
      }
      
   private:
@@ -102,7 +139,7 @@ class StreamSchedule {
              using namespace std::chrono_literals;
              {
                 std::lock_guard<std::mutex> g{s_logMutex};
-                std::cout <<"Stream transition "<<iSync.m_run<<" "<<iSync.m_lumi<<" "<<iTran<<" stream:"<<streamID<<std::endl;
+                std::cout <<"Stream transition "<<iSync.m_run<<" "<<iSync.m_lumi<<" "<<iSync.m_event<<" "<<iTran<<" stream:"<<streamID<<std::endl;
              }
              std::this_thread::sleep_for(1s);
              iTask.doneWaiting(std::exception_ptr{});
@@ -118,31 +155,35 @@ class StreamSchedule {
 
 class GlobalSchedule {
   public:
-     void processOneBeginLumiAsync(edm::WaitingTaskHolder iTask,Sync const& iSync) {
-        dummyWorkAsync(std::move(iTask), [iSync]() { 
+     void processOneBeginLumiAsync(edm::WaitingTaskHolder iTask,LumiPrincipal& iLumi) {
+        auto s = iLumi.sync();
+        dummyWorkAsync(std::move(iTask), [s]() { 
            std::lock_guard<std::mutex> g{s_logMutex};
-           std::cout <<"Begin Global Lumi "<<iSync.m_run<<" "<<iSync.m_lumi<<std::endl;
+           std::cout <<"Begin Global Lumi "<<s.m_run<<" "<<s.m_lumi<<std::endl;
            });
      }
-     void processOneBeginRunAsync(edm::WaitingTaskHolder iTask, int iRun) {
+     void processOneBeginRunAsync(edm::WaitingTaskHolder iTask, RunPrincipal& iRun) {
+        auto r = iRun.sync().m_run;
         dummyWorkAsync(std::move(iTask), 
-        [iRun]() { 
+        [r]() { 
              std::lock_guard<std::mutex> g{s_logMutex};
-             std::cout <<"Begin Global Run "<<iRun<<std::endl;
+             std::cout <<"Begin Global Run "<<r<<std::endl;
              });
      }
 
-     void processOneEndLumiAsync(edm::WaitingTaskHolder iTask,Sync const& iSync) {
-        dummyWorkAsync(std::move(iTask), [iSync]() { 
+     void processOneEndLumiAsync(edm::WaitingTaskHolder iTask,LumiPrincipal& iLumi) {
+        auto s = iLumi.sync();
+        dummyWorkAsync(std::move(iTask), [s]() { 
            std::lock_guard<std::mutex> g{s_logMutex};
-           std::cout <<"End Global Lumi "<<iSync.m_run<<" "<<iSync.m_lumi<<std::endl;
+           std::cout <<"End Global Lumi "<<s.m_run<<" "<<s.m_lumi<<std::endl;
            });
      }
-     void processOneEndRunAsync(edm::WaitingTaskHolder iTask, int iRun) {
+     void processOneEndRunAsync(edm::WaitingTaskHolder iTask, RunPrincipal& iRun) {
+        auto r = iRun.sync().m_run;
         dummyWorkAsync(std::move(iTask), 
-        [iRun]() { 
+        [r]() { 
              std::lock_guard<std::mutex> g{s_logMutex};
-             std::cout <<"End Global Run "<<iRun<<std::endl;
+             std::cout <<"End Global Run "<<r<<std::endl;
              });
      }
      
@@ -158,10 +199,32 @@ class GlobalSchedule {
      }
 };
 
+class PrincipalCache {
+public:
+   PrincipalCache(unsigned int iNStreams):
+   lumiPrincipal_{std::make_shared<LumiPrincipal>()},
+   runPrincipal_{std::make_shared<RunPrincipal>()}
+    {
+      eventPrincipals_.reserve(iNStreams);
+      for(unsigned int i=0; i<iNStreams;++i) {
+         eventPrincipals_.emplace_back( std::make_unique<EventPrincipal>(i));
+      }
+   }
+   EventPrincipal& eventPrincipal(int streamID) const {return *eventPrincipals_[streamID];}
+   
+   std::shared_ptr<LumiPrincipal> lumiPrincipal() { return lumiPrincipal_;}
+   std::shared_ptr<RunPrincipal> runPrincipal() { return runPrincipal_;}
+private:
+   std::vector<std::unique_ptr<EventPrincipal>> eventPrincipals_;
+   std::shared_ptr<LumiPrincipal> lumiPrincipal_;
+   std::shared_ptr<RunPrincipal> runPrincipal_;
+};
+
 class EventProcessor {
 public:
    EventProcessor(std::vector<std::pair<Transition,Sync>> iTransitions,
    int iNStreams):
+   principalCache_(iNStreams),
    m_source(std::move(iTransitions)),
    m_streamSchedules(),
    m_nStreams(iNStreams),
@@ -185,10 +248,14 @@ public:
          std::lock_guard<std::mutex> g{s_logMutex};
          std::cout <<" beginRun "<<iRunNumber<<std::endl;      
       }
+      
+      auto runP = principalCache_.runPrincipal();
+      runP->setSync({iRunNumber,0,0});
+      
       auto globalWaitTask = edm::make_empty_waiting_task();
       auto globalWaitTaskPtr = globalWaitTask.get();
       globalWaitTask->increment_ref_count();
-      m_globalSchedule.processOneBeginRunAsync(edm::WaitingTaskHolder{globalWaitTask.get()},iRunNumber);
+      m_globalSchedule.processOneBeginRunAsync(edm::WaitingTaskHolder{globalWaitTask.get()},*runP);
       globalWaitTask->wait_for_all();
       
       {
@@ -199,7 +266,7 @@ public:
          {
             edm::WaitingTaskHolder holdUntilAllStreamsCalled{streamWaitTask.get()};
             for(unsigned int i=0; i<m_nStreams;++i) {
-               m_streamSchedules[i].processOneBeginRunAsync(edm::WaitingTaskHolder(holdUntilAllStreamsCalled), iRunNumber);
+               m_streamSchedules[i].processOneBeginRunAsync(edm::WaitingTaskHolder(holdUntilAllStreamsCalled), *runP);
             }
          }
          streamWaitTask->wait_for_all();
@@ -211,11 +278,14 @@ public:
    }
       
    void endRun(int iRunNumber) {
+      auto runP = principalCache_.runPrincipal();
+      
       {
          {
             std::lock_guard<std::mutex> g{s_logMutex};
             std::cout <<"endRun "<<iRunNumber<<std::endl;
          }
+         
          auto streamWaitTask = edm::make_empty_waiting_task();
          auto streamWaitTaskPtr = streamWaitTask.get();
          streamWaitTask->increment_ref_count();
@@ -223,7 +293,7 @@ public:
          {
             edm::WaitingTaskHolder holdUntilAllStreamsCalled{streamWaitTask.get()};
             for(unsigned int i=0; i<m_nStreams;++i) {
-               m_streamSchedules[i].processOneEndRunAsync(edm::WaitingTaskHolder(holdUntilAllStreamsCalled), iRunNumber);
+               m_streamSchedules[i].processOneEndRunAsync(edm::WaitingTaskHolder(holdUntilAllStreamsCalled), *runP);
             }
          }
          streamWaitTask->wait_for_all();
@@ -231,7 +301,7 @@ public:
       auto globalWaitTask = edm::make_empty_waiting_task();
       auto globalWaitTaskPtr = globalWaitTask.get();
       globalWaitTask->increment_ref_count();
-      m_globalSchedule.processOneEndRunAsync(edm::WaitingTaskHolder{globalWaitTask.get()},iRunNumber);
+      m_globalSchedule.processOneEndRunAsync(edm::WaitingTaskHolder{globalWaitTask.get()},*runP);
       globalWaitTask->wait_for_all();      
    }
    void writeRun(int iRunNumber) {}
@@ -243,10 +313,13 @@ public:
          std::lock_guard<std::mutex> g{s_logMutex};
          std::cout <<"beginLumi "<< iSync.m_run<<" "<<iSync.m_lumi<<std::endl;
       }
+      auto lumiP = principalCache_.lumiPrincipal();
+      lumiP->setSync(iSync);
+      
       auto globalWaitTask = edm::make_empty_waiting_task();
       auto globalWaitTaskPtr = globalWaitTask.get();
       globalWaitTask->increment_ref_count();
-      m_globalSchedule.processOneBeginLumiAsync(edm::WaitingTaskHolder{globalWaitTask.get()},iSync);
+      m_globalSchedule.processOneBeginLumiAsync(edm::WaitingTaskHolder{globalWaitTask.get()},*lumiP);
       globalWaitTask->wait_for_all();
       
       {
@@ -257,7 +330,7 @@ public:
          {
             edm::WaitingTaskHolder holdUntilAllStreamsCalled{streamWaitTask.get()};
             for(unsigned int i=0; i<m_nStreams;++i) {
-               m_streamSchedules[i].processOneBeginLumiAsync(edm::WaitingTaskHolder(holdUntilAllStreamsCalled),iSync);
+               m_streamSchedules[i].processOneBeginLumiAsync(edm::WaitingTaskHolder(holdUntilAllStreamsCalled),*lumiP);
             }
          }
          streamWaitTask->wait_for_all();
@@ -274,6 +347,8 @@ public:
          std::cout <<"endLumi "<< iSync.m_run<<" "<<iSync.m_lumi<<std::endl;
       }
       
+      auto lumiP = principalCache_.lumiPrincipal();
+      
       {
          auto streamWaitTask = edm::make_empty_waiting_task();
          auto streamWaitTaskPtr = streamWaitTask.get();
@@ -282,7 +357,7 @@ public:
          {
             edm::WaitingTaskHolder holdUntilAllStreamsCalled{streamWaitTask.get()};
             for(unsigned int i=0; i<m_nStreams;++i) {
-               m_streamSchedules[i].processOneEndLumiAsync(edm::WaitingTaskHolder(holdUntilAllStreamsCalled),iSync);
+               m_streamSchedules[i].processOneEndLumiAsync(edm::WaitingTaskHolder(holdUntilAllStreamsCalled),*lumiP);
             }
          }
          streamWaitTask->wait_for_all();
@@ -291,7 +366,7 @@ public:
          auto globalWaitTask = edm::make_empty_waiting_task();
          auto globalWaitTaskPtr = globalWaitTask.get();
          globalWaitTask->increment_ref_count();
-         m_globalSchedule.processOneEndLumiAsync(edm::WaitingTaskHolder{globalWaitTask.get()},iSync);
+         m_globalSchedule.processOneEndLumiAsync(edm::WaitingTaskHolder{globalWaitTask.get()},*lumiP);
          globalWaitTask->wait_for_all();
       }
    }
@@ -314,12 +389,12 @@ public:
     for(; iStreamIndex<m_nStreams-1; ++iStreamIndex) {
       eventLoopWaitTask->increment_ref_count();
       tbb::task::enqueue( *edm::make_waiting_task(tbb::task::allocate_root(),[this,iStreamIndex,eventLoopWaitTaskPtr](std::exception_ptr const*){
-        handleNextEventForStreamAsync(eventLoopWaitTaskPtr,iStreamIndex);
+        handleNextEventForStreamAsync(eventLoopWaitTaskPtr,iStreamIndex, principalCache_.eventPrincipal(iStreamIndex));
       }) );
     }
     eventLoopWaitTask->increment_ref_count();
     eventLoopWaitTask->spawn_and_wait_for_all( *edm::make_waiting_task(tbb::task::allocate_root(),[this,iStreamIndex,eventLoopWaitTaskPtr](std::exception_ptr const*){
-      handleNextEventForStreamAsync(eventLoopWaitTaskPtr,iStreamIndex);
+      handleNextEventForStreamAsync(eventLoopWaitTaskPtr,iStreamIndex, principalCache_.eventPrincipal(iStreamIndex));
     }));
 
     return nextItemTypeFromProcessingEvents_.load();
@@ -328,8 +403,8 @@ public:
    
 private:
    
-   void handleNextEventForStreamAsync(edm::WaitingTask* iTask, unsigned int iStreamIndex) {
-      auto recursionTask = edm::make_waiting_task(tbb::task::allocate_root(), [this,iTask,iStreamIndex](std::exception_ptr const* iPtr) {
+   void handleNextEventForStreamAsync(edm::WaitingTask* iTask, unsigned int iStreamIndex, EventPrincipal& iEP) {
+      auto recursionTask = edm::make_waiting_task(tbb::task::allocate_root(), [this,iTask,iStreamIndex,&iEP](std::exception_ptr const* iPtr) {
         if(iPtr) {
            edm::WaitingTaskHolder h(iTask);
            h.doneWaiting(*iPtr);
@@ -338,14 +413,15 @@ private:
           return;
         }
 
-        handleNextEventForStreamAsync(iTask, iStreamIndex);
+        handleNextEventForStreamAsync(iTask, iStreamIndex, iEP);
       });
 
-      m_sourceQueue.push([this,recursionTask,iTask,iStreamIndex]() {
+      m_sourceQueue.push([this,recursionTask,iTask,iStreamIndex,&iEP]() {
 
              try {
                if(readNextEventForStream(iStreamIndex) ) {
-                 processEventAsync( edm::WaitingTaskHolder(recursionTask), iStreamIndex);
+                  iEP.setSync(m_source.sync());
+                 processEventAsync( edm::WaitingTaskHolder(recursionTask), iStreamIndex,iEP);
                } else {
                  //the stream will stop now
                  tbb::task::destroy(*recursionTask);
@@ -376,18 +452,19 @@ private:
    }
    
    void processEventAsync(edm::WaitingTaskHolder iHolder,
-                          unsigned int iStreamIndex) {
-     tbb::task::spawn( *edm::make_functor_task( tbb::task::allocate_root(), [=]() {
-       processEventAsyncImpl(iHolder, iStreamIndex);
+                          unsigned int iStreamIndex,
+                          EventPrincipal& iEP) {
+     tbb::task::spawn( *edm::make_functor_task( tbb::task::allocate_root(), [iHolder,iStreamIndex,this,&iEP]() {
+       processEventAsyncImpl(iHolder, iStreamIndex,iEP);
      }) );
    }
    
    void processEventAsyncImpl(edm::WaitingTaskHolder iHolder,
-      unsigned int iStreamIndex) {
-         m_streamSchedules[iStreamIndex].processOneEventAsync(std::move(iHolder));
-      }
+      unsigned int iStreamIndex, EventPrincipal& iEP) {
+         m_streamSchedules[iStreamIndex].processOneEventAsync(std::move(iHolder),iEP);
+   }
    
-   
+   PrincipalCache principalCache_;
    edm::SerialTaskQueue m_sourceQueue;
    Source m_source;
    GlobalSchedule m_globalSchedule;
