@@ -7,6 +7,7 @@
 #include <thread>
 #include <mutex>
 #include "tbb/task_scheduler_init.h"
+#include "tbb/concurrent_vector.h"
 #include "FWCore/Concurrency/interface/WaitingTaskHolder.h"
 #include "FWCore/Concurrency/interface/WaitingTaskList.h"
 #include "FWCore/Concurrency/interface/FunctorTask.h"
@@ -23,7 +24,7 @@ enum class Transition {
 
 static std::mutex s_logMutex;
 
-static std::map<Transition,std::string> s_transToName = {
+static const std::map<Transition,std::string> s_transToName = {
   {Transition::IsStop, "Stop"},
   {Transition::IsFile, "File"},
   {Transition::IsRun, "Run"},
@@ -33,7 +34,7 @@ static std::map<Transition,std::string> s_transToName = {
 
 void printTrans( Transition iT) {
    std::lock_guard<std::mutex> g{s_logMutex};
-   std::cout <<"Source: "<<s_transToName[iT]<<std::endl;
+   std::cout <<"Source: "<<s_transToName.find(iT)->second<<std::endl;
 }
 
 struct Sync {
@@ -47,7 +48,18 @@ struct Sync {
    bool operator!=(Sync const& iOther) const {
       return not (*this == iOther);
    }
+   
+   bool operator<(Sync const& iOther) const {
+      if(m_run == iOther.m_run) {
+         if(m_lumi == iOther.m_lumi) {
+            return m_event < iOther.m_event;
+         }
+         return m_lumi < iOther.m_lumi;
+      }
+      return m_run < iOther.m_run;
+   }
 };
+static tbb::concurrent_vector<std::pair<Sync,int>> s_seenSyncs;
 
 class RunPrincipal {
 public:
@@ -141,6 +153,7 @@ class StreamSchedule {
         
         auto t = edm::make_functor_task(tbb::task::allocate_root(), [iTask,iTran,streamID,iSync]() mutable {
              using namespace std::chrono_literals;
+             s_seenSyncs.emplace_back(iSync,streamID);
              {
                 std::lock_guard<std::mutex> g{s_logMutex};
                 std::cout <<"Stream transition "<<iSync.m_run<<" "<<iSync.m_lumi<<" "<<iSync.m_event<<" "<<iTran<<" stream:"<<streamID<<std::endl;
@@ -162,32 +175,36 @@ class GlobalSchedule {
      void processOneBeginLumiAsync(edm::WaitingTaskHolder iTask,LumiPrincipal& iLumi) {
         auto s = iLumi.sync();
         dummyWorkAsync(std::move(iTask), [s]() { 
+           s_seenSyncs.emplace_back(s,-1);
            std::lock_guard<std::mutex> g{s_logMutex};
            std::cout <<"Begin Global Lumi "<<s.m_run<<" "<<s.m_lumi<<std::endl;
            });
      }
      void processOneBeginRunAsync(edm::WaitingTaskHolder iTask, RunPrincipal& iRun) {
-        auto r = iRun.sync().m_run;
+        auto s = iRun.sync();
         dummyWorkAsync(std::move(iTask), 
-        [r]() { 
+        [s]() { 
+             s_seenSyncs.emplace_back(s,-1);
              std::lock_guard<std::mutex> g{s_logMutex};
-             std::cout <<"Begin Global Run "<<r<<std::endl;
+             std::cout <<"Begin Global Run "<<s.m_run<<std::endl;
              });
      }
 
      void processOneEndLumiAsync(edm::WaitingTaskHolder iTask,LumiPrincipal& iLumi) {
         auto s = iLumi.sync();
         dummyWorkAsync(std::move(iTask), [s]() { 
+           s_seenSyncs.emplace_back(s,-1);
            std::lock_guard<std::mutex> g{s_logMutex};
            std::cout <<"End Global Lumi "<<s.m_run<<" "<<s.m_lumi<<std::endl;
            });
      }
      void processOneEndRunAsync(edm::WaitingTaskHolder iTask, RunPrincipal& iRun) {
-        auto r = iRun.sync().m_run;
+        auto s = iRun.sync();
         dummyWorkAsync(std::move(iTask), 
-        [r]() { 
+        [s]() { 
+             s_seenSyncs.emplace_back(s,-1);
              std::lock_guard<std::mutex> g{s_logMutex};
-             std::cout <<"End Global Run "<<r<<std::endl;
+             std::cout <<"End Global Run "<<s.m_run<<std::endl;
              });
      }
      
@@ -390,6 +407,10 @@ public:
          std::lock_guard<std::mutex> g{s_logMutex};
          std::cout <<"read and process events"<<std::endl;
       }
+      
+      std::atomic<bool> finishedProcessingEvents{false};
+      auto finishedProcessingEventsPtr = &finishedProcessingEvents;
+      
     //To wait, the ref count has to b 1+#streams
     auto eventLoopWaitTask = edm::make_empty_waiting_task();
     auto eventLoopWaitTaskPtr = eventLoopWaitTask.get();
@@ -398,13 +419,13 @@ public:
     unsigned int iStreamIndex = 0;
     for(; iStreamIndex<m_nStreams-1; ++iStreamIndex) {
       eventLoopWaitTask->increment_ref_count();
-      tbb::task::enqueue( *edm::make_waiting_task(tbb::task::allocate_root(),[this,iStreamIndex,eventLoopWaitTaskPtr](std::exception_ptr const*){
-        handleNextEventForStreamAsync(eventLoopWaitTaskPtr,iStreamIndex, principalCache_.eventPrincipal(iStreamIndex));
+      tbb::task::enqueue( *edm::make_waiting_task(tbb::task::allocate_root(),[this,iStreamIndex,eventLoopWaitTaskPtr,finishedProcessingEventsPtr](std::exception_ptr const*){
+        handleNextEventForStreamAsync(eventLoopWaitTaskPtr,iStreamIndex, principalCache_.eventPrincipal(iStreamIndex),finishedProcessingEventsPtr);
       }) );
     }
     eventLoopWaitTask->increment_ref_count();
-    eventLoopWaitTask->spawn_and_wait_for_all( *edm::make_waiting_task(tbb::task::allocate_root(),[this,iStreamIndex,eventLoopWaitTaskPtr](std::exception_ptr const*){
-      handleNextEventForStreamAsync(eventLoopWaitTaskPtr,iStreamIndex, principalCache_.eventPrincipal(iStreamIndex));
+    eventLoopWaitTask->spawn_and_wait_for_all( *edm::make_waiting_task(tbb::task::allocate_root(),[this,iStreamIndex,eventLoopWaitTaskPtr,finishedProcessingEventsPtr](std::exception_ptr const*){
+      handleNextEventForStreamAsync(eventLoopWaitTaskPtr,iStreamIndex, principalCache_.eventPrincipal(iStreamIndex),finishedProcessingEventsPtr);
     }));
 
     return nextItemTypeFromProcessingEvents_.load();
@@ -413,8 +434,8 @@ public:
    
 private:
    
-   void handleNextEventForStreamAsync(edm::WaitingTask* iTask, unsigned int iStreamIndex, EventPrincipal& iEP) {
-      auto recursionTask = edm::make_waiting_task(tbb::task::allocate_root(), [this,iTask,iStreamIndex,&iEP](std::exception_ptr const* iPtr) {
+   void handleNextEventForStreamAsync(edm::WaitingTask* iTask, unsigned int iStreamIndex, EventPrincipal& iEP, std::atomic<bool>* finishedProcessingEvents) {
+      auto recursionTask = edm::make_waiting_task(tbb::task::allocate_root(), [this,iTask,iStreamIndex,&iEP,finishedProcessingEvents](std::exception_ptr const* iPtr) {
         if(iPtr) {
            edm::WaitingTaskHolder h(iTask);
            h.doneWaiting(*iPtr);
@@ -423,13 +444,13 @@ private:
           return;
         }
 
-        handleNextEventForStreamAsync(iTask, iStreamIndex, iEP);
+        handleNextEventForStreamAsync(iTask, iStreamIndex, iEP,finishedProcessingEvents);
       });
 
-      m_sourceQueue.push([this,recursionTask,iTask,iStreamIndex,&iEP]() {
+      m_sourceQueue.push([this,recursionTask,iTask,iStreamIndex,&iEP,finishedProcessingEvents]() {
 
              try {
-               if(readNextEventForStream(iStreamIndex) ) {
+               if(readNextEventForStream(iStreamIndex,finishedProcessingEvents) ) {
                   iEP.setSync(m_source.sync());
                  processEventAsync( edm::WaitingTaskHolder(recursionTask), iStreamIndex,iEP);
                } else {
@@ -444,7 +465,10 @@ private:
       });
       
    }
-   bool readNextEventForStream(unsigned int iStreamIndex) {
+   bool readNextEventForStream(unsigned int iStreamIndex, std::atomic<bool>* finishedProcessingEvents) {
+      if(finishedProcessingEvents->load()) {
+         return false;
+      }
       if(not m_firstEventInBlock) {
          //The state machine already called input_->nextItemType
          // and found an event. We can't call input_->nextItemType
@@ -452,6 +476,7 @@ private:
          Transition itemType = m_source.nextItemType();
          if (Transition::IsEvent !=itemType) {
            nextItemTypeFromProcessingEvents_ = itemType;
+           finishedProcessingEvents->store(true);
            //std::cerr<<"next item type "<<itemType<<"\n";
            return false;
         }
@@ -720,22 +745,196 @@ private:
   RunsInFileProcessor runs_;
 };
 
+/*====================================================
+Testing
+ ====================================================*/
+
+std::vector<std::pair<Sync,int>> expectedValues(std::vector<std::pair<Transition,Sync>> const& iTrans, int iNStreams ) {
+   std::vector<std::pair<Sync,int>> returnValue;
+   returnValue.reserve(iTrans.size());
+   
+   Sync lastRun = {-1,0,0};
+   Sync lastLumi = {-1,-1,0};
+   for(auto const& tran: iTrans) {
+      switch(tran.first) {
+         case Transition::IsFile:
+         {
+            break;
+         }
+         case Transition::IsRun:
+         {
+            if(tran.second != lastRun) {
+               if(lastRun.m_run != -1) {
+                  //end transitions
+                  for(int i = 0; i<iNStreams;++i) {
+                     returnValue.emplace_back(lastRun,i);
+                  }
+                  returnValue.emplace_back(lastRun,-1);
+               }
+               //begin transitions
+               returnValue.emplace_back(tran.second,-1);
+               for(int i = 0; i<iNStreams;++i) {
+                  returnValue.emplace_back(tran.second,i);
+               }
+               lastRun = tran.second;
+            }
+            break;
+         }
+         case Transition::IsLumi:
+         {
+            if(tran.second != lastLumi) {
+               if(lastLumi.m_run != -1) {
+                  //end transitions
+                  for(int i = 0; i<iNStreams;++i) {
+                     returnValue.emplace_back(lastLumi,i);
+                  }
+                  returnValue.emplace_back(lastLumi,-1);
+               }
+               //begin transitions
+               returnValue.emplace_back(tran.second,-1);
+               for(int i = 0; i<iNStreams;++i) {
+                  returnValue.emplace_back(tran.second,i);
+               }
+               lastLumi = tran.second;
+            }
+            break;
+            
+         }
+         case Transition::IsEvent:
+         {
+            returnValue.emplace_back(tran.second,-2);
+         }
+         case Transition::IsStop:
+         {
+            break;
+         }
+      }
+   }
+   if(lastLumi.m_run != -1) {
+      //end transitions
+      for(int i = 0; i<iNStreams;++i) {
+         returnValue.emplace_back(lastLumi,i);
+      }
+      returnValue.emplace_back(lastLumi,-1);
+   }
+   if(lastRun.m_run != -1) {
+      //end transitions
+      for(int i = 0; i<iNStreams;++i) {
+         returnValue.emplace_back(lastRun,i);
+      }
+      returnValue.emplace_back(lastRun,-1);
+   }
+   return returnValue;
+}
+
+void test_config(std::vector<std::pair<Transition,Sync>> iTrans,int iNStreams) {
+   auto expectedV = expectedValues(iTrans, iNStreams);
+   {
+      std::cout <<"=============test start==========="<<std::endl;
+      EventProcessor ep(std::move(iTrans),iNStreams);
+      FilesProcessor fp;
+      fp.processFiles(ep);
+   }
+   std::vector<std::pair<Sync,int>> orderedSeen;
+   orderedSeen.reserve(s_seenSyncs.size());
+   for(auto const& i: s_seenSyncs) {
+//      std::cout <<i.first.m_run<<" "<<i.first.m_lumi<<" "<<i.first.m_event<<" "<<i.second<<std::endl;
+      auto s = i.second;
+      if(i.first.m_event > 0) {
+         s=-2;
+      }
+      orderedSeen.emplace_back(i.first,s);
+   }
+   std::sort(orderedSeen.begin(),orderedSeen.end());
+
+   auto orderedExpected = expectedV;
+   std::sort(orderedExpected.begin(),orderedExpected.end());
+/*   for(auto const& i: expectedV) {
+      std::cout <<i.first.m_run<<" "<<i.first.m_lumi<<" "<<i.first.m_event<<" "<<i.second<<std::endl;      
+   } */
+   s_seenSyncs.clear();
+   
+   
+   auto itOS = orderedSeen.begin();
+   for(auto itOE = orderedExpected.begin(); itOE != orderedExpected.end(); ++itOE) {
+      if(itOS == orderedSeen.end()) {
+         break;
+      }
+      if ( *itOE != *itOS) {
+         std::cout <<"Different ordering "<<itOE->first.m_run<<" "<<itOE->first.m_lumi<<" "<<itOE->first.m_event<<" "<<itOE->second<<"\n";
+         std::cout <<"                   "<<itOS->first.m_run<<" "<<itOS->first.m_lumi<<" "<<itOS->first.m_event<<" "<<itOS->second<<"\n";
+      }
+      ++itOS;
+   }
+
+   if(orderedSeen.size() != orderedExpected.size()) {
+      std::cout <<"Wrong number of transition "<<orderedSeen.size() <<" "<<orderedExpected.size()<<std::endl;
+      return;
+   }
+   
+}
 
 int main() {
    tbb::task_scheduler_init scheduler{2};
    
-   EventProcessor ep( {{Transition::IsFile,{0,0,0}}, 
+  test_config( 
+   {{Transition::IsFile,{0,0,0}}, 
+    {Transition::IsRun,{1,0,0}}, 
+    {Transition::IsLumi,{1,1,0}}, 
+    {Transition::IsEvent,{1,1,1}},
+    {Transition::IsEvent,{1,1,2}},
+    {Transition::IsEvent,{1,1,3}},
+    {Transition::IsEvent,{1,1,4}},
+    {Transition::IsStop,{0,0,0}}}, 2);
+
+ test_config( 
+  {{Transition::IsFile,{0,0,0}}, 
    {Transition::IsRun,{1,0,0}}, 
    {Transition::IsLumi,{1,1,0}}, 
    {Transition::IsEvent,{1,1,1}},
    {Transition::IsEvent,{1,1,2}},
-   {Transition::IsEvent,{1,1,3}},
-   {Transition::IsEvent,{1,1,4}},
+   {Transition::IsLumi,{1,2,0}}, 
+   {Transition::IsEvent,{1,2,3}},
+   {Transition::IsEvent,{1,2,4}},
    {Transition::IsStop,{0,0,0}}}, 2);
-   
-   bool contLoop = true;
-   FilesProcessor fp;
-   fp.processFiles(ep);
+
+test_config( 
+ {{Transition::IsFile,{0,0,0}}, 
+  {Transition::IsRun,{1,0,0}}, 
+  {Transition::IsLumi,{1,1,0}}, 
+  {Transition::IsEvent,{1,1,1}},
+  {Transition::IsEvent,{1,1,2}},
+  {Transition::IsRun,{2,0,0}}, 
+  {Transition::IsLumi,{2,1,0}}, 
+  {Transition::IsEvent,{2,1,1}},
+  {Transition::IsEvent,{2,1,2}},
+  {Transition::IsStop,{0,0,0}}}, 2);
+
+test_config( 
+ {{Transition::IsFile,{0,0,0}}, 
+  {Transition::IsRun,{1,0,0}}, 
+  {Transition::IsLumi,{1,1,0}}, 
+  {Transition::IsEvent,{1,1,1}},
+  {Transition::IsEvent,{1,1,2}},
+  {Transition::IsFile, {0,0,0}},
+  {Transition::IsRun,{1,0,0}}, 
+  {Transition::IsLumi,{1,2,0}}, 
+  {Transition::IsEvent,{1,2,3}},
+  {Transition::IsEvent,{1,2,4}},
+  {Transition::IsStop,{0,0,0}}}, 2);
+
+test_config( 
+ {{Transition::IsFile,{0,0,0}}, 
+  {Transition::IsRun,{1,0,0}}, 
+  {Transition::IsLumi,{1,1,0}}, 
+  {Transition::IsEvent,{1,1,1}},
+  {Transition::IsEvent,{1,1,2}},
+  {Transition::IsFile, {0,0,0}},
+  {Transition::IsRun,{1,0,0}}, 
+  {Transition::IsLumi,{1,1,0}}, 
+  {Transition::IsEvent,{1,1,2}},
+  {Transition::IsEvent,{1,1,3}},
+  {Transition::IsStop,{0,0,0}}}, 2);
    
    return 0;
 }
