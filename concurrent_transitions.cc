@@ -22,6 +22,16 @@ enum class Transition {
    IsEvent
 };
 
+enum class Phase {
+   kBeginRun,
+   kBeginLumi,
+   kEvent,
+   kEndLumi,
+   kEndRun
+};
+
+static const std::array<const char * const,5> s_phaseName = {"beginRun","beginLumi","event","endLumi","endRun"};
+
 static std::mutex s_logMutex;
 
 static const std::map<Transition,std::string> s_transToName = {
@@ -59,7 +69,7 @@ struct Sync {
       return m_run < iOther.m_run;
    }
 };
-static tbb::concurrent_vector<std::pair<Sync,int>> s_seenSyncs;
+static tbb::concurrent_vector<std::tuple<Phase,Sync,int>> s_seenSyncs;
 
 class RunPrincipal {
 public:
@@ -131,32 +141,32 @@ class StreamSchedule {
      StreamSchedule(int iStreamID): m_streamID{iStreamID}{}
      
      void processOneEventAsync(edm::WaitingTaskHolder iTask, EventPrincipal& iEP) {
-        dummyWorkAsync(std::move(iTask),"Event", iEP.sync());
+        dummyWorkAsync(std::move(iTask),Phase::kEvent, iEP.sync());
      }
      void processOneBeginLumiAsync(edm::WaitingTaskHolder iTask,  LumiPrincipal& iLumi) {
-        dummyWorkAsync(std::move(iTask),"beginLumi",iLumi.sync());
+        dummyWorkAsync(std::move(iTask),Phase::kBeginLumi,iLumi.sync());
      }
      void processOneBeginRunAsync(edm::WaitingTaskHolder iTask,  RunPrincipal& iRun) {
-        dummyWorkAsync(std::move(iTask),"beginRun",iRun.sync());        
+        dummyWorkAsync(std::move(iTask),Phase::kBeginRun,iRun.sync());        
      }
 
      void processOneEndLumiAsync(edm::WaitingTaskHolder iTask,  LumiPrincipal& iLumi) {
-        dummyWorkAsync(std::move(iTask),"endLumi",iLumi.sync());
+        dummyWorkAsync(std::move(iTask),Phase::kEndLumi,iLumi.sync());
      }
      void processOneEndRunAsync(edm::WaitingTaskHolder iTask, RunPrincipal& iRun) {
-        dummyWorkAsync(std::move(iTask),"endRun",iRun.sync());        
+        dummyWorkAsync(std::move(iTask),Phase::kEndRun,iRun.sync());        
      }
      
   private:
-     void dummyWorkAsync(edm::WaitingTaskHolder iTask, const char* iTran, const Sync& iSync) {
+     void dummyWorkAsync(edm::WaitingTaskHolder iTask, Phase iTran, const Sync& iSync) {
         auto streamID = m_streamID;
         
         auto t = edm::make_functor_task(tbb::task::allocate_root(), [iTask,iTran,streamID,iSync]() mutable {
              using namespace std::chrono_literals;
-             s_seenSyncs.emplace_back(iSync,streamID);
+             s_seenSyncs.emplace_back(iTran, iSync,streamID);
              {
                 std::lock_guard<std::mutex> g{s_logMutex};
-                std::cout <<"Stream transition "<<iSync.m_run<<" "<<iSync.m_lumi<<" "<<iSync.m_event<<" "<<iTran<<" stream:"<<streamID<<std::endl;
+                std::cout <<"Stream transition "<<iSync.m_run<<" "<<iSync.m_lumi<<" "<<iSync.m_event<<" "<<s_phaseName[static_cast<int>(iTran)]<<" stream:"<<streamID<<std::endl;
              }
              std::this_thread::sleep_for(1s);
              iTask.doneWaiting(std::exception_ptr{});
@@ -175,7 +185,7 @@ class GlobalSchedule {
      void processOneBeginLumiAsync(edm::WaitingTaskHolder iTask,LumiPrincipal& iLumi) {
         auto s = iLumi.sync();
         dummyWorkAsync(std::move(iTask), [s]() { 
-           s_seenSyncs.emplace_back(s,-1);
+           s_seenSyncs.emplace_back(Phase::kBeginLumi,s,-1);
            std::lock_guard<std::mutex> g{s_logMutex};
            std::cout <<"Begin Global Lumi "<<s.m_run<<" "<<s.m_lumi<<std::endl;
            });
@@ -184,7 +194,7 @@ class GlobalSchedule {
         auto s = iRun.sync();
         dummyWorkAsync(std::move(iTask), 
         [s]() { 
-             s_seenSyncs.emplace_back(s,-1);
+             s_seenSyncs.emplace_back(Phase::kBeginRun,s,-1);
              std::lock_guard<std::mutex> g{s_logMutex};
              std::cout <<"Begin Global Run "<<s.m_run<<std::endl;
              });
@@ -193,7 +203,7 @@ class GlobalSchedule {
      void processOneEndLumiAsync(edm::WaitingTaskHolder iTask,LumiPrincipal& iLumi) {
         auto s = iLumi.sync();
         dummyWorkAsync(std::move(iTask), [s]() { 
-           s_seenSyncs.emplace_back(s,-1);
+           s_seenSyncs.emplace_back(Phase::kEndLumi,s,1000);
            std::lock_guard<std::mutex> g{s_logMutex};
            std::cout <<"End Global Lumi "<<s.m_run<<" "<<s.m_lumi<<std::endl;
            });
@@ -202,7 +212,7 @@ class GlobalSchedule {
         auto s = iRun.sync();
         dummyWorkAsync(std::move(iTask), 
         [s]() { 
-             s_seenSyncs.emplace_back(s,-1);
+             s_seenSyncs.emplace_back(Phase::kEndRun,s,1000);
              std::lock_guard<std::mutex> g{s_logMutex};
              std::cout <<"End Global Run "<<s.m_run<<std::endl;
              });
@@ -749,8 +759,8 @@ private:
 Testing
  ====================================================*/
 
-std::vector<std::pair<Sync,int>> expectedValues(std::vector<std::pair<Transition,Sync>> const& iTrans, int iNStreams ) {
-   std::vector<std::pair<Sync,int>> returnValue;
+std::vector<std::tuple<Phase,Sync,int>> expectedValues(std::vector<std::pair<Transition,Sync>> const& iTrans, int iNStreams ) {
+   std::vector<std::tuple<Phase,Sync,int>> returnValue;
    returnValue.reserve(iTrans.size());
    
    Sync lastRun = {-1,0,0};
@@ -767,14 +777,14 @@ std::vector<std::pair<Sync,int>> expectedValues(std::vector<std::pair<Transition
                if(lastRun.m_run != -1) {
                   //end transitions
                   for(int i = 0; i<iNStreams;++i) {
-                     returnValue.emplace_back(lastRun,i);
+                     returnValue.emplace_back(Phase::kEndRun,lastRun,i);
                   }
-                  returnValue.emplace_back(lastRun,-1);
+                  returnValue.emplace_back(Phase::kEndRun,lastRun,1000);
                }
                //begin transitions
-               returnValue.emplace_back(tran.second,-1);
+               returnValue.emplace_back(Phase::kBeginRun,tran.second,-1);
                for(int i = 0; i<iNStreams;++i) {
-                  returnValue.emplace_back(tran.second,i);
+                  returnValue.emplace_back(Phase::kBeginRun,tran.second,i);
                }
                lastRun = tran.second;
             }
@@ -786,14 +796,14 @@ std::vector<std::pair<Sync,int>> expectedValues(std::vector<std::pair<Transition
                if(lastLumi.m_run != -1) {
                   //end transitions
                   for(int i = 0; i<iNStreams;++i) {
-                     returnValue.emplace_back(lastLumi,i);
+                     returnValue.emplace_back(Phase::kEndLumi,lastLumi,i);
                   }
-                  returnValue.emplace_back(lastLumi,-1);
+                  returnValue.emplace_back(Phase::kEndLumi,lastLumi,1000);
                }
                //begin transitions
-               returnValue.emplace_back(tran.second,-1);
+               returnValue.emplace_back(Phase::kBeginLumi,tran.second,-1);
                for(int i = 0; i<iNStreams;++i) {
-                  returnValue.emplace_back(tran.second,i);
+                  returnValue.emplace_back(Phase::kBeginLumi,tran.second,i);
                }
                lastLumi = tran.second;
             }
@@ -802,7 +812,7 @@ std::vector<std::pair<Sync,int>> expectedValues(std::vector<std::pair<Transition
          }
          case Transition::IsEvent:
          {
-            returnValue.emplace_back(tran.second,-2);
+            returnValue.emplace_back(Phase::kEvent,tran.second,-2);
          }
          case Transition::IsStop:
          {
@@ -813,16 +823,16 @@ std::vector<std::pair<Sync,int>> expectedValues(std::vector<std::pair<Transition
    if(lastLumi.m_run != -1) {
       //end transitions
       for(int i = 0; i<iNStreams;++i) {
-         returnValue.emplace_back(lastLumi,i);
+         returnValue.emplace_back(Phase::kEndLumi,lastLumi,i);
       }
-      returnValue.emplace_back(lastLumi,-1);
+      returnValue.emplace_back(Phase::kEndLumi,lastLumi,1000);
    }
    if(lastRun.m_run != -1) {
       //end transitions
       for(int i = 0; i<iNStreams;++i) {
-         returnValue.emplace_back(lastRun,i);
+         returnValue.emplace_back(Phase::kEndRun,lastRun,i);
       }
-      returnValue.emplace_back(lastRun,-1);
+      returnValue.emplace_back(Phase::kEndRun,lastRun,1000);
    }
    return returnValue;
 }
@@ -835,15 +845,15 @@ void test_config(std::vector<std::pair<Transition,Sync>> iTrans,int iNStreams) {
       FilesProcessor fp;
       fp.processFiles(ep);
    }
-   std::vector<std::pair<Sync,int>> orderedSeen;
+   std::vector<std::tuple<Phase,Sync,int>> orderedSeen;
    orderedSeen.reserve(s_seenSyncs.size());
    for(auto const& i: s_seenSyncs) {
 //      std::cout <<i.first.m_run<<" "<<i.first.m_lumi<<" "<<i.first.m_event<<" "<<i.second<<std::endl;
-      auto s = i.second;
-      if(i.first.m_event > 0) {
+      auto s = std::get<2>(i);
+      if(std::get<1>(i).m_event > 0) {
          s=-2;
       }
-      orderedSeen.emplace_back(i.first,s);
+      orderedSeen.emplace_back(std::get<0>(i),std::get<1>(i),s);
    }
    std::sort(orderedSeen.begin(),orderedSeen.end());
 
@@ -861,8 +871,10 @@ void test_config(std::vector<std::pair<Transition,Sync>> iTrans,int iNStreams) {
          break;
       }
       if ( *itOE != *itOS) {
-         std::cout <<"Different ordering "<<itOE->first.m_run<<" "<<itOE->first.m_lumi<<" "<<itOE->first.m_event<<" "<<itOE->second<<"\n";
-         std::cout <<"                   "<<itOS->first.m_run<<" "<<itOS->first.m_lumi<<" "<<itOS->first.m_event<<" "<<itOS->second<<"\n";
+         auto syncOE = std::get<1>(*itOE);
+         auto syncOS = std::get<1>(*itOS);
+         std::cout <<"Different ordering "<<syncOE.m_run<<" "<<syncOE.m_lumi<<" "<<syncOE.m_event<<" "<<std::get<2>(*itOE)<<"\n";
+         std::cout <<"                   "<<syncOS.m_run<<" "<<syncOS.m_lumi<<" "<<syncOS.m_event<<" "<<std::get<2>(*itOS)<<"\n";
       }
       ++itOS;
    }
@@ -885,6 +897,7 @@ int main() {
     {Transition::IsEvent,{1,1,2}},
     {Transition::IsEvent,{1,1,3}},
     {Transition::IsEvent,{1,1,4}},
+    {Transition::IsEvent,{1,1,5}},
     {Transition::IsStop,{0,0,0}}}, 2);
 
  test_config( 
