@@ -948,6 +948,34 @@ test_config(
   {Transition::IsEvent,{1,1,2}},
   {Transition::IsEvent,{1,1,3}},
   {Transition::IsStop,{0,0,0}}}, 2);
+
+//Files with delayed merge of lumis
+test_config( 
+ {{Transition::IsFile,{0,0,0}}, 
+  {Transition::IsRun,{1,0,0}}, 
+  {Transition::IsLumi,{1,1,0}}, 
+  {Transition::IsLumi,{1,1,0}}, //to merge
+  {Transition::IsEvent,{1,1,1}},
+  {Transition::IsEvent,{1,1,2}},
+  {Transition::IsLumi,{1,2,0}}, 
+  {Transition::IsEvent,{1,2,2}},
+  {Transition::IsEvent,{1,2,3}},
+  {Transition::IsStop,{0,0,0}}}, 2);
+  
+//Files with delayed merge of runs
+  test_config( 
+   {{Transition::IsFile,{0,0,0}}, 
+    {Transition::IsRun,{1,0,0}}, 
+    {Transition::IsRun,{1,0,0}}, // to erge
+    {Transition::IsLumi,{1,1,0}}, 
+    {Transition::IsEvent,{1,1,1}},
+    {Transition::IsEvent,{1,1,2}},
+    {Transition::IsRun,{2,0,0}}, 
+    {Transition::IsLumi,{2,1,0}}, 
+    {Transition::IsEvent,{2,1,1}},
+    {Transition::IsEvent,{2,1,2}},
+    {Transition::IsStop,{0,0,0}}}, 2);
+  
    
    return 0;
 }
