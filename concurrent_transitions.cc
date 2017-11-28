@@ -900,69 +900,102 @@ int main() {
     {Transition::IsEvent,{1,1,5}},
     {Transition::IsStop,{0,0,0}}}, 2);
 
- test_config( 
-  {{Transition::IsFile,{0,0,0}}, 
-   {Transition::IsRun,{1,0,0}}, 
-   {Transition::IsLumi,{1,1,0}}, 
-   {Transition::IsEvent,{1,1,1}},
-   {Transition::IsEvent,{1,1,2}},
-   {Transition::IsLumi,{1,2,0}}, 
-   {Transition::IsEvent,{1,2,3}},
-   {Transition::IsEvent,{1,2,4}},
-   {Transition::IsStop,{0,0,0}}}, 2);
+  //multiple different lumis
+  test_config( 
+   {{Transition::IsFile,{0,0,0}}, 
+    {Transition::IsRun,{1,0,0}}, 
+    {Transition::IsLumi,{1,1,0}}, 
+    {Transition::IsEvent,{1,1,1}},
+    {Transition::IsEvent,{1,1,2}},
+    {Transition::IsLumi,{1,2,0}}, 
+    {Transition::IsEvent,{1,2,3}},
+    {Transition::IsEvent,{1,2,4}},
+    {Transition::IsStop,{0,0,0}}}, 2);
 
-test_config( 
- {{Transition::IsFile,{0,0,0}}, 
-  {Transition::IsRun,{1,0,0}}, 
-  {Transition::IsLumi,{1,1,0}}, 
-  {Transition::IsEvent,{1,1,1}},
-  {Transition::IsEvent,{1,1,2}},
-  {Transition::IsRun,{2,0,0}}, 
-  {Transition::IsLumi,{2,1,0}}, 
-  {Transition::IsEvent,{2,1,1}},
-  {Transition::IsEvent,{2,1,2}},
-  {Transition::IsStop,{0,0,0}}}, 2);
+  //empty lumi
+  test_config( 
+   {{Transition::IsFile,{0,0,0}}, 
+    {Transition::IsRun,{1,0,0}}, 
+    {Transition::IsLumi,{1,1,0}}, 
+    {Transition::IsLumi,{1,2,0}}, 
+    {Transition::IsEvent,{1,2,3}},
+    {Transition::IsEvent,{1,2,4}},
+    {Transition::IsStop,{0,0,0}}}, 2);
 
-test_config( 
- {{Transition::IsFile,{0,0,0}}, 
-  {Transition::IsRun,{1,0,0}}, 
-  {Transition::IsLumi,{1,1,0}}, 
-  {Transition::IsEvent,{1,1,1}},
-  {Transition::IsEvent,{1,1,2}},
-  {Transition::IsFile, {0,0,0}},
-  {Transition::IsRun,{1,0,0}}, 
-  {Transition::IsLumi,{1,2,0}}, 
-  {Transition::IsEvent,{1,2,3}},
-  {Transition::IsEvent,{1,2,4}},
-  {Transition::IsStop,{0,0,0}}}, 2);
+  //multiple different runs
+  test_config( 
+   {{Transition::IsFile,{0,0,0}}, 
+    {Transition::IsRun,{1,0,0}}, 
+    {Transition::IsLumi,{1,1,0}}, 
+    {Transition::IsEvent,{1,1,1}},
+    {Transition::IsEvent,{1,1,2}},
+    {Transition::IsRun,{2,0,0}}, 
+    {Transition::IsLumi,{2,1,0}}, 
+    {Transition::IsEvent,{2,1,1}},
+    {Transition::IsEvent,{2,1,2}},
+    {Transition::IsStop,{0,0,0}}}, 2);
 
-test_config( 
- {{Transition::IsFile,{0,0,0}}, 
-  {Transition::IsRun,{1,0,0}}, 
-  {Transition::IsLumi,{1,1,0}}, 
-  {Transition::IsEvent,{1,1,1}},
-  {Transition::IsEvent,{1,1,2}},
-  {Transition::IsFile, {0,0,0}},
-  {Transition::IsRun,{1,0,0}}, 
-  {Transition::IsLumi,{1,1,0}}, 
-  {Transition::IsEvent,{1,1,2}},
-  {Transition::IsEvent,{1,1,3}},
-  {Transition::IsStop,{0,0,0}}}, 2);
+  //empty run
+  test_config( 
+   {{Transition::IsFile,{0,0,0}}, 
+    {Transition::IsRun,{1,0,0}}, 
+    {Transition::IsRun,{2,0,0}}, 
+    {Transition::IsLumi,{2,1,0}}, 
+    {Transition::IsEvent,{2,1,1}},
+    {Transition::IsEvent,{2,1,2}},
+    {Transition::IsStop,{0,0,0}}}, 2);
 
-//Files with delayed merge of lumis
-test_config( 
- {{Transition::IsFile,{0,0,0}}, 
-  {Transition::IsRun,{1,0,0}}, 
-  {Transition::IsLumi,{1,1,0}}, 
-  {Transition::IsLumi,{1,1,0}}, //to merge
-  {Transition::IsEvent,{1,1,1}},
-  {Transition::IsEvent,{1,1,2}},
-  {Transition::IsLumi,{1,2,0}}, 
-  {Transition::IsEvent,{1,2,2}},
-  {Transition::IsEvent,{1,2,3}},
-  {Transition::IsStop,{0,0,0}}}, 2);
+  //empty run
+  test_config( 
+   {{Transition::IsFile,{0,0,0}}, 
+    {Transition::IsFile,{0,0,0}},
+    {Transition::IsRun,{1,0,0}}, 
+    {Transition::IsLumi,{1,1,0}}, 
+    {Transition::IsEvent,{1,1,1}},
+    {Transition::IsEvent,{1,1,2}}}, 2);
+
+  //merging run across file boundary
+  test_config( 
+   {{Transition::IsFile,{0,0,0}}, 
+    {Transition::IsRun,{1,0,0}}, 
+    {Transition::IsLumi,{1,1,0}}, 
+    {Transition::IsEvent,{1,1,1}},
+    {Transition::IsEvent,{1,1,2}},
+    {Transition::IsFile, {0,0,0}},
+    {Transition::IsRun,{1,0,0}}, 
+    {Transition::IsLumi,{1,2,0}}, 
+    {Transition::IsEvent,{1,2,3}},
+    {Transition::IsEvent,{1,2,4}},
+    {Transition::IsStop,{0,0,0}}}, 2);
+
+  //merging run & lumi across file boundary
+  test_config( 
+   {{Transition::IsFile,{0,0,0}}, 
+    {Transition::IsRun,{1,0,0}}, 
+    {Transition::IsLumi,{1,1,0}}, 
+    {Transition::IsEvent,{1,1,1}},
+    {Transition::IsEvent,{1,1,2}},
+    {Transition::IsFile, {0,0,0}},
+    {Transition::IsRun,{1,0,0}}, 
+    {Transition::IsLumi,{1,1,0}}, 
+    {Transition::IsEvent,{1,1,3}},
+    {Transition::IsEvent,{1,1,4}},
+    {Transition::IsStop,{0,0,0}}}, 2);
+
+  //Files with delayed merge of lumis
+  test_config( 
+   {{Transition::IsFile,{0,0,0}}, 
+    {Transition::IsRun,{1,0,0}}, 
+    {Transition::IsLumi,{1,1,0}}, 
+    {Transition::IsLumi,{1,1,0}}, //to merge
+    {Transition::IsEvent,{1,1,1}},
+    {Transition::IsEvent,{1,1,2}},
+    {Transition::IsLumi,{1,2,0}}, 
+    {Transition::IsEvent,{1,2,2}},
+    {Transition::IsEvent,{1,2,3}},
+    {Transition::IsStop,{0,0,0}}}, 2);
   
-//Files with delayed merge of runs
+  //Files with delayed merge of runs
   test_config( 
    {{Transition::IsFile,{0,0,0}}, 
     {Transition::IsRun,{1,0,0}}, 
