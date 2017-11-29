@@ -274,7 +274,7 @@ public:
    void closeOutputFiles() {}
 
    void readRun() {}
-   void beginRun(int iRunNumber) {
+   void beginRunAsync(int iRunNumber, edm::WaitingTaskHolder iHolder) {
       {
          std::lock_guard<std::mutex> g{s_logMutex};
          std::cout <<" beginRun "<<iRunNumber<<std::endl;      
@@ -283,25 +283,14 @@ public:
       auto runP = principalCache_.runPrincipal();
       runP->setSync({iRunNumber,0,0});
       
-      auto globalWaitTask = edm::make_empty_waiting_task();
-      auto globalWaitTaskPtr = globalWaitTask.get();
-      globalWaitTask->increment_ref_count();
-      m_globalSchedule.processOneBeginRunAsync(edm::WaitingTaskHolder{globalWaitTask.get()},*runP);
-      globalWaitTask->wait_for_all();
+      auto streamBeginRunTask = edm::make_waiting_task(tbb::task::allocate_root(),
+      [this,iHolder,runP]( std::exception_ptr const* iPtr) {
+         for(unsigned int i=0; i<m_nStreams;++i) {
+            m_streamSchedules[i].processOneBeginRunAsync(iHolder,*runP);
+         }         
+      });
       
-      {
-         auto streamWaitTask = edm::make_empty_waiting_task();
-         auto streamWaitTaskPtr = globalWaitTask.get();
-         streamWaitTask->increment_ref_count();
-         
-         {
-            edm::WaitingTaskHolder holdUntilAllStreamsCalled{streamWaitTask.get()};
-            for(unsigned int i=0; i<m_nStreams;++i) {
-               m_streamSchedules[i].processOneBeginRunAsync(edm::WaitingTaskHolder(holdUntilAllStreamsCalled), *runP);
-            }
-         }
-         streamWaitTask->wait_for_all();
-      }
+      m_globalSchedule.processOneBeginRunAsync(edm::WaitingTaskHolder{streamBeginRunTask},*runP);
    }
    void readAndMergeRun() {
       std::lock_guard<std::mutex> g{s_logMutex};
@@ -653,7 +642,10 @@ private:
       currentRun_ = std::make_shared<RunResources>(iEP,runID.m_run);
       {
          //iEP.readRun();
-         iEP.beginRun(runID.m_run);         
+         auto runWaitTask = edm::make_empty_waiting_task();
+         runWaitTask->increment_ref_count();
+         iEP.beginRunAsync(runID.m_run, edm::WaitingTaskHolder{runWaitTask.get()});         
+         runWaitTask->wait_for_all();
       }
     } else {
       //merge
