@@ -30,6 +30,7 @@ enum class Phase {
    kEndRun
 };
 
+
 static const std::array<const char * const,5> s_phaseName = {"beginRun","beginLumi","event","endLumi","endRun"};
 
 static std::mutex s_logMutex;
@@ -268,6 +269,9 @@ public:
    
    Transition nextTransitionType() { return m_source.nextItemType(); }
    
+   //TO BE REMOVED
+   Transition nextItemTypeFromProcessingEvents () const { return nextItemTypeFromProcessingEvents_;}
+
    Sync sync() const { return m_source.sync();}
    
    void closeInputFile() {}
@@ -334,7 +338,7 @@ public:
       auto runP = principalCache_.runPrincipal(); //handed to lumi
       lumiP->setRun(std::move(runP));
    }
-   void beginLumiAsync(Sync const& iSync, edm::WaitingTaskHolder iHolder) {
+   void beginLumiAsync(Sync const& iSync, edm::WaitingTaskHolder iHolder, std::atomic<bool>* finishedProcessingEventsPtr) {
       {
          std::lock_guard<std::mutex> g{s_logMutex};
          std::cout <<"beginLumi "<< iSync.m_run<<" "<<iSync.m_lumi<<std::endl;
@@ -344,21 +348,19 @@ public:
       
       
       auto streamBeginLumiTask = edm::make_waiting_task(tbb::task::allocate_root(),
-      [this,iHolder,lumiP]( std::exception_ptr const* iPtr) {
-         /*
+      [this,iHolder,lumiP,finishedProcessingEventsPtr]( std::exception_ptr const* iPtr) {
          //Want to start processing events within a stream once beginStream finishes
          //we need to read from the source the next transition
          m_firstEventInBlock = false;
-         nextItemTypeFromProcessingEvents_ = Transition::IsUnknown;
-                  */
+         nextItemTypeFromProcessingEvents_ = Transition::IsInvalid;
+
          for(unsigned int i=0; i<m_nStreams;++i) {
-            /*auto eventTask = edm::make_waiting_task(tbb::task::allocate_root(),
+            auto eventTask = edm::make_waiting_task(tbb::task::allocate_root(),
                [this,i,iHolder,finishedProcessingEventsPtr](std::exception_ptr const* iPtr) {
                   handleNextEventForStreamAsync(iHolder,i, principalCache_.eventPrincipal(i),finishedProcessingEventsPtr);
                });
-            */
-            
-            m_streamSchedules[i].processOneBeginLumiAsync(iHolder,*lumiP);
+
+            m_streamSchedules[i].processOneBeginLumiAsync(edm::WaitingTaskHolder{eventTask},*lumiP);
          }         
       });
       
@@ -597,9 +599,10 @@ struct LumisInRunProcessor {
          iEP.readLuminosityBlock();
          auto lumiWaitTask = edm::make_empty_waiting_task();
          lumiWaitTask->increment_ref_count();
-         iEP.beginLumiAsync(lumiID, edm::WaitingTaskHolder{lumiWaitTask.get()});
+         std::atomic<bool> finishedProcessingEvents{false};
+         iEP.beginLumiAsync(lumiID, edm::WaitingTaskHolder{lumiWaitTask.get()},&finishedProcessingEvents);
          lumiWaitTask->wait_for_all();
-         
+         return iEP.nextItemTypeFromProcessingEvents();
       } else {
          iEP.readAndMergeLumi();
       }
