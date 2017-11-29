@@ -345,7 +345,7 @@ public:
       auto runP = principalCache_.runPrincipal(); //handed to lumi
       lumiP->setRun(std::move(runP));
    }
-   void beginLumi(Sync const& iSync) {
+   void beginLumiAsync(Sync const& iSync, edm::WaitingTaskHolder iHolder) {
       {
          std::lock_guard<std::mutex> g{s_logMutex};
          std::cout <<"beginLumi "<< iSync.m_run<<" "<<iSync.m_lumi<<std::endl;
@@ -353,26 +353,14 @@ public:
       auto lumiP = principalCache_.lumiPrincipal();
       lumiP->setSync(iSync);
       
-      auto globalWaitTask = edm::make_empty_waiting_task();
-      auto globalWaitTaskPtr = globalWaitTask.get();
-      globalWaitTask->increment_ref_count();
-      m_globalSchedule.processOneBeginLumiAsync(edm::WaitingTaskHolder{globalWaitTask.get()},*lumiP);
-      globalWaitTask->wait_for_all();
+      auto streamBeginLumiTask = edm::make_waiting_task(tbb::task::allocate_root(),
+      [this,iHolder,lumiP]( std::exception_ptr const* iPtr) {
+         for(unsigned int i=0; i<m_nStreams;++i) {
+            m_streamSchedules[i].processOneBeginLumiAsync(iHolder,*lumiP);
+         }         
+      });
       
-      {
-         auto streamWaitTask = edm::make_empty_waiting_task();
-         auto streamWaitTaskPtr = streamWaitTask.get();
-         streamWaitTask->increment_ref_count();
-         
-         {
-            edm::WaitingTaskHolder holdUntilAllStreamsCalled{streamWaitTask.get()};
-            for(unsigned int i=0; i<m_nStreams;++i) {
-               m_streamSchedules[i].processOneBeginLumiAsync(edm::WaitingTaskHolder(holdUntilAllStreamsCalled),*lumiP);
-            }
-         }
-         streamWaitTask->wait_for_all();
-      }
-      
+      m_globalSchedule.processOneBeginLumiAsync(edm::WaitingTaskHolder{streamBeginLumiTask},*lumiP);
    }
    void readAndMergeLumi() {
       std::lock_guard<std::mutex> g{s_logMutex};
@@ -439,7 +427,6 @@ public:
     }));
 
     return nextItemTypeFromProcessingEvents_.load();
-      
    }
    
 private:
@@ -610,7 +597,10 @@ struct LumisInRunProcessor {
          //switch to different lumi
          m_currentLumi = std::make_shared<LumiResources>(std::move(iRun), lumiID.m_lumi );
          iEP.readLuminosityBlock();
-         iEP.beginLumi(lumiID);
+         auto lumiWaitTask = edm::make_empty_waiting_task();
+         lumiWaitTask->increment_ref_count();
+         iEP.beginLumiAsync(lumiID, edm::WaitingTaskHolder{lumiWaitTask.get()});
+         lumiWaitTask->wait_for_all();
          
       } else {
          iEP.readAndMergeLumi();
