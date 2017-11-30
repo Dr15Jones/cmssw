@@ -834,10 +834,10 @@ std::vector<std::tuple<Phase,Sync,int>> expectedValues(std::vector<std::pair<Tra
    return returnValue;
 }
 
-void test_config(std::vector<std::pair<Transition,Sync>> iTrans,int iNStreams) {
+void test_config(const char* iDescription, std::vector<std::pair<Transition,Sync>> iTrans,int iNStreams) {
    auto expectedV = expectedValues(iTrans, iNStreams);
    {
-      std::cout <<"=============test start==========="<<std::endl;
+      std::cout <<"=============test start: "<<iDescription<<"==========="<<std::endl;
       EventProcessor ep(std::move(iTrans),iNStreams);
       FilesProcessor fp;
       fp.processFiles(ep);
@@ -886,7 +886,7 @@ void test_config(std::vector<std::pair<Transition,Sync>> iTrans,int iNStreams) {
 int main() {
    tbb::task_scheduler_init scheduler{2};
    
-  test_config( 
+  test_config( "Simple",
    {{Transition::IsFile,{0,0,0}}, 
     {Transition::IsRun,{1,0,0}}, 
     {Transition::IsLumi,{1,1,0}}, 
@@ -898,7 +898,7 @@ int main() {
     {Transition::IsStop,{0,0,0}}}, 2);
 
   //multiple different lumis
-  test_config( 
+  test_config( "Multiple different Lumis",
    {{Transition::IsFile,{0,0,0}}, 
     {Transition::IsRun,{1,0,0}}, 
     {Transition::IsLumi,{1,1,0}}, 
@@ -910,7 +910,7 @@ int main() {
     {Transition::IsStop,{0,0,0}}}, 2);
 
   //empty lumi
-  test_config( 
+  test_config( "Empty Lumi",
    {{Transition::IsFile,{0,0,0}}, 
     {Transition::IsRun,{1,0,0}}, 
     {Transition::IsLumi,{1,1,0}}, 
@@ -920,7 +920,7 @@ int main() {
     {Transition::IsStop,{0,0,0}}}, 2);
 
   //multiple different runs
-  test_config( 
+  test_config( "Multiple different runs",
    {{Transition::IsFile,{0,0,0}}, 
     {Transition::IsRun,{1,0,0}}, 
     {Transition::IsLumi,{1,1,0}}, 
@@ -933,7 +933,7 @@ int main() {
     {Transition::IsStop,{0,0,0}}}, 2);
 
   //empty run
-  test_config( 
+  test_config( "Empty run",
    {{Transition::IsFile,{0,0,0}}, 
     {Transition::IsRun,{1,0,0}}, 
     {Transition::IsRun,{2,0,0}}, 
@@ -942,8 +942,8 @@ int main() {
     {Transition::IsEvent,{2,1,2}},
     {Transition::IsStop,{0,0,0}}}, 2);
 
-  //empty run
-  test_config( 
+  //empty file
+  test_config( "Empty file",
    {{Transition::IsFile,{0,0,0}}, 
     {Transition::IsFile,{0,0,0}},
     {Transition::IsRun,{1,0,0}}, 
@@ -952,7 +952,7 @@ int main() {
     {Transition::IsEvent,{1,1,2}}}, 2);
 
   //merging run across file boundary
-  test_config( 
+  test_config( "Merge run across files",
    {{Transition::IsFile,{0,0,0}}, 
     {Transition::IsRun,{1,0,0}}, 
     {Transition::IsLumi,{1,1,0}}, 
@@ -966,7 +966,7 @@ int main() {
     {Transition::IsStop,{0,0,0}}}, 2);
 
   //merging run & lumi across file boundary
-  test_config( 
+  test_config( "Merge run & lumi across files",
    {{Transition::IsFile,{0,0,0}}, 
     {Transition::IsRun,{1,0,0}}, 
     {Transition::IsLumi,{1,1,0}}, 
@@ -980,7 +980,7 @@ int main() {
     {Transition::IsStop,{0,0,0}}}, 2);
 
   //Files with delayed merge of lumis
-  test_config( 
+  test_config( "Delayed lumi merge",
    {{Transition::IsFile,{0,0,0}}, 
     {Transition::IsRun,{1,0,0}}, 
     {Transition::IsLumi,{1,1,0}}, 
@@ -993,7 +993,7 @@ int main() {
     {Transition::IsStop,{0,0,0}}}, 2);
   
   //Files with delayed merge of runs
-  test_config( 
+  test_config( "Delayed run merge",
    {{Transition::IsFile,{0,0,0}}, 
     {Transition::IsRun,{1,0,0}}, 
     {Transition::IsRun,{1,0,0}}, // to erge
