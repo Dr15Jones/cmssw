@@ -139,20 +139,32 @@ private:
 
 class StreamSchedule {
   public:
-     StreamSchedule(int iStreamID): m_streamID{iStreamID}{}
+     StreamSchedule(int iStreamID): m_streamID{iStreamID}, m_queue{std::make_unique<edm::SerialTaskQueue>()}{}
      
      void processOneEventAsync(edm::WaitingTaskHolder iTask, EventPrincipal& iEP) {
         dummyWorkAsync(std::move(iTask),Phase::kEvent, iEP.sync());
      }
      void processOneBeginLumiAsync(edm::WaitingTaskHolder iTask,  LumiPrincipal& iLumi) {
-        dummyWorkAsync(std::move(iTask),Phase::kBeginLumi,iLumi.sync());
+        m_queue->push([this,iTask,&iLumi] () {
+           m_queue->pause();
+           dummyWorkAsync(std::move(iTask),Phase::kBeginLumi,iLumi.sync());
+           });
      }
      void processOneBeginRunAsync(edm::WaitingTaskHolder iTask,  RunPrincipal& iRun) {
         dummyWorkAsync(std::move(iTask),Phase::kBeginRun,iRun.sync());        
      }
 
      void processOneEndLumiAsync(edm::WaitingTaskHolder iTask,  LumiPrincipal& iLumi) {
-        dummyWorkAsync(std::move(iTask),Phase::kEndLumi,iLumi.sync());
+        auto t = edm::make_waiting_task(tbb::task::allocate_root(), [this, iTask,&iLumi](std::exception_ptr const* iPtr) mutable {
+           std::exception_ptr ptr;
+           if(iPtr) {
+              ptr = *iPtr;
+           }
+           //NOTE: what order do I want the spawns to be done?
+           m_queue->resume();
+           iTask.doneWaiting(ptr);
+        });
+        dummyWorkAsync(edm::WaitingTaskHolder{t},Phase::kEndLumi,iLumi.sync());
      }
      void processOneEndRunAsync(edm::WaitingTaskHolder iTask, RunPrincipal& iRun) {
         dummyWorkAsync(std::move(iTask),Phase::kEndRun,iRun.sync());        
@@ -179,6 +191,7 @@ class StreamSchedule {
         }
      }
      const int m_streamID;
+     std::unique_ptr<edm::SerialTaskQueue> m_queue;
 };
 
 class GlobalSchedule {
