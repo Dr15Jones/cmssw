@@ -12,6 +12,7 @@
 #include "FWCore/Concurrency/interface/WaitingTaskList.h"
 #include "FWCore/Concurrency/interface/FunctorTask.h"
 #include "FWCore/Concurrency/interface/SerialTaskQueue.h"
+#include "FWCore/Utilities/interface/ReusableObjectHolder.h"
 
 enum class Transition {
    IsInvalid,
@@ -85,15 +86,19 @@ private:
 
 class LumiPrincipal {
 public:
-   LumiPrincipal() {}
+   LumiPrincipal(int iID) : m_id{iID}{}
    
    const Sync& sync() const { return m_sync;}
 
    void setSync( Sync iSync) { m_sync = std::move(iSync);}
    void setRun(std::shared_ptr<RunPrincipal> iRun) { m_run = std::move(iRun);}
+   
+   int replicaID() const {return m_id;}
+   
 private:
    Sync m_sync;
    std::shared_ptr<RunPrincipal> m_run;
+   int m_id;
 };
 
 class EventPrincipal {
@@ -107,10 +112,10 @@ public:
    void setSync( Sync iSync) { m_sync = std::move(iSync);}
    void setLumi(std::shared_ptr<LumiPrincipal> iLumi) { m_lumi = std::move(iLumi);}
    
-   std::shared_ptr<LumiPrincipal> lumi() { return m_lumi; }
+   std::shared_ptr<LumiPrincipal> lumi() { return m_lumi.lock(); }
 private:
    Sync m_sync;
-   std::shared_ptr<LumiPrincipal> m_lumi;
+   std::weak_ptr<LumiPrincipal> m_lumi;
    int m_id;
 };
 
@@ -249,21 +254,21 @@ class GlobalSchedule {
 class PrincipalCache {
 public:
    PrincipalCache(unsigned int iNStreams):
-   lumiPrincipal_{std::make_shared<LumiPrincipal>()},
    runPrincipal_{std::make_shared<RunPrincipal>()}
     {
       eventPrincipals_.reserve(iNStreams);
       for(unsigned int i=0; i<iNStreams;++i) {
          eventPrincipals_.emplace_back( std::make_unique<EventPrincipal>(i));
       }
+      lumiHolder_.add(std::make_unique<LumiPrincipal>(0));
    }
    EventPrincipal& eventPrincipal(int streamID) const {return *eventPrincipals_[streamID];}
    
-   std::shared_ptr<LumiPrincipal> lumiPrincipal() { return lumiPrincipal_;}
+   std::shared_ptr<LumiPrincipal> getAvailableLumiPrincipal() { return lumiHolder_.tryToGet();}
    std::shared_ptr<RunPrincipal> runPrincipal() { return runPrincipal_;}
 private:
    std::vector<std::unique_ptr<EventPrincipal>> eventPrincipals_;
-   std::shared_ptr<LumiPrincipal> lumiPrincipal_;
+   edm::ReusableObjectHolder<LumiPrincipal> lumiHolder_;
    std::shared_ptr<RunPrincipal> runPrincipal_;
 };
 
@@ -353,7 +358,7 @@ public:
    
    void readLuminosityBlock(LumiProcessingStatus& iStatus) {
       //actually creates a new lumi
-      auto lumiP = principalCache_.lumiPrincipal();
+      auto lumiP = principalCache_.getAvailableLumiPrincipal();
       iStatus.lumiPrincipal_ = lumiP;
       
       auto runP = principalCache_.runPrincipal(); //handed to lumi
