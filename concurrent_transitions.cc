@@ -106,6 +106,8 @@ public:
 
    void setSync( Sync iSync) { m_sync = std::move(iSync);}
    void setLumi(std::shared_ptr<LumiPrincipal> iLumi) { m_lumi = std::move(iLumi);}
+   
+   std::shared_ptr<LumiPrincipal> lumi() { return m_lumi; }
 private:
    Sync m_sync;
    std::shared_ptr<LumiPrincipal> m_lumi;
@@ -349,9 +351,11 @@ public:
    }
    
    struct LumiProcessingStatus {
-      std::atomic<bool> finishedProcessingEvents_{false};
-      bool seenNextItemType_=false;
       Transition nextItemTypeSeen_ = Transition::IsInvalid;
+      std::atomic<bool> finishedProcessingEvents_{false};
+      std::atomic<bool> lumiEnding_{false};
+      bool seenNextItemType_=false;
+      bool startedProcessingEvents_{false};
    };
    
    void beginLumiAsync(Sync const& iSync, edm::WaitingTaskHolder iHolder, LumiProcessingStatus& iLumiStatus) {
@@ -390,7 +394,7 @@ public:
       std::lock_guard<std::mutex> g{s_logMutex};
       std::cout <<" merge lumi "<<std::endl; //<<runID.m_run<<std::endl;
    }
-   void endLumi(Sync const& iSync) {
+   void endLumi(Sync const& iSync, LumiProcessingStatus const& iLumiStatus) {
       {
          std::lock_guard<std::mutex> g{s_logMutex};
          std::cout <<"endLumi "<< iSync.m_run<<" "<<iSync.m_lumi<<std::endl;
@@ -398,7 +402,7 @@ public:
       
       auto lumiP = principalCache_.lumiPrincipal();
       
-      {
+      if(not iLumiStatus.lumiEnding_){
          auto streamWaitTask = edm::make_empty_waiting_task();
          auto streamWaitTaskPtr = streamWaitTask.get();
          streamWaitTask->increment_ref_count();
@@ -471,7 +475,11 @@ private:
                  processEventAsync( edm::WaitingTaskHolder(recursionTask), iStreamIndex,iEP);
                } else {
                  //the stream will stop now
-                 iTask.doneWaiting(std::exception_ptr{});
+                 if(iLumiStatus.lumiEnding_) {
+                    m_streamSchedules[iStreamIndex].processOneEndLumiAsync(iTask,*(principalCache_.lumiPrincipal()));
+                 }else {
+                    iTask.doneWaiting(std::exception_ptr{});
+                 }
                }
              } catch(...) {
                iTask.doneWaiting(std::current_exception());
@@ -491,9 +499,20 @@ private:
          if (Transition::IsEvent !=itemType) {
            iLumiStatus.nextItemTypeSeen_ = itemType;
            iLumiStatus.finishedProcessingEvents_.store(true);
+           
+           if(Transition::IsFile !=itemType) {
+              //If this is a lumi and we have not started processing any events, 
+              // this might be just a merger of our current lumi
+              if(Transition::IsLumi != itemType or iLumiStatus.startedProcessingEvents_ == true) {
+                 iLumiStatus.lumiEnding_.store(true);
+              }
+           }
+           
            //std::cerr<<"next item type "<<itemType<<"\n";
            return false;
-        }
+         } else {
+           iLumiStatus.startedProcessingEvents_ = true;
+         }
       } else {
          iLumiStatus.seenNextItemType_=false;
       }
@@ -548,7 +567,7 @@ struct RunResources {
    Sync runID() const { return {m_run, 0, 0}; }
    
    EventProcessor& m_ep;
-   int m_run;
+   const int m_run;
 };
 
 struct LumiResources {
@@ -557,14 +576,14 @@ struct LumiResources {
    m_lumi(iLumi) {}
    
    ~LumiResources() noexcept {
-      m_run->m_ep.endLumi(lumiID());
+      m_run->m_ep.endLumi(lumiID(), m_status);
    }
    
    Sync lumiID() const { return {m_run->m_run, m_lumi, 0}; }
    
    std::shared_ptr<RunResources> m_run;
    EventProcessor::LumiProcessingStatus m_status;
-   int m_lumi;
+   const int m_lumi;
 };
 
 
@@ -583,6 +602,7 @@ struct LumisInRunProcessor {
             {
                m_currentLumi->m_status.seenNextItemType_ = true;
                m_currentLumi->m_status.nextItemTypeSeen_ = Transition::IsEvent;
+               m_currentLumi->m_status.startedProcessingEvents_ = true;
                m_currentLumi->m_status.finishedProcessingEvents_ = false;
                //To wait, the ref count has to b 1+#streams
                auto eventLoopWaitTask = edm::make_empty_waiting_task();
@@ -909,6 +929,13 @@ int main() {
     {Transition::IsEvent,{1,1,4}},
     {Transition::IsEvent,{1,1,5}},
     {Transition::IsStop,{0,0,0}}}, 2);
+
+ test_config( "Less events than streams",
+  {{Transition::IsFile,{0,0,0}}, 
+   {Transition::IsRun,{1,0,0}}, 
+   {Transition::IsLumi,{1,1,0}}, 
+   {Transition::IsEvent,{1,1,1}},
+   {Transition::IsStop,{0,0,0}}}, 2);
 
   //multiple different lumis
   test_config( "Multiple different Lumis",
