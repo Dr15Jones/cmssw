@@ -12,6 +12,7 @@
 #include "FWCore/Concurrency/interface/WaitingTaskList.h"
 #include "FWCore/Concurrency/interface/FunctorTask.h"
 #include "FWCore/Concurrency/interface/SerialTaskQueue.h"
+#include "FWCore/Concurrency/interface/LimitedTaskQueue.h"
 #include "FWCore/Utilities/interface/ReusableObjectHolder.h"
 
 enum class Transition {
@@ -253,14 +254,16 @@ class GlobalSchedule {
 
 class PrincipalCache {
 public:
-   PrincipalCache(unsigned int iNStreams):
+   PrincipalCache(unsigned int iNStreams, unsigned int iNConcurrentLumis):
    runPrincipal_{std::make_shared<RunPrincipal>()}
     {
       eventPrincipals_.reserve(iNStreams);
       for(unsigned int i=0; i<iNStreams;++i) {
          eventPrincipals_.emplace_back( std::make_unique<EventPrincipal>(i));
       }
-      lumiHolder_.add(std::make_unique<LumiPrincipal>(0));
+      for(auto i=0U; i< iNConcurrentLumis;++i) {
+         lumiHolder_.add(std::make_unique<LumiPrincipal>(i));
+      }
    }
    EventPrincipal& eventPrincipal(int streamID) const {return *eventPrincipals_[streamID];}
    
@@ -275,8 +278,10 @@ private:
 class EventProcessor {
 public:
    EventProcessor(std::vector<std::pair<Transition,Sync>> iTransitions,
-   int iNStreams):
-   principalCache_(iNStreams),
+   int iNStreams,
+   int iNConcurrentLumis):
+   principalCache_(iNStreams,iNConcurrentLumis),
+   m_lumiQueue(iNConcurrentLumis),
    m_source(std::move(iTransitions)),
    m_streamSchedules(),
    m_nStreams(iNStreams) {
@@ -350,6 +355,7 @@ public:
    struct LumiProcessingStatus {
       Transition nextItemTypeSeen_ = Transition::IsInvalid;
       std::shared_ptr<LumiPrincipal> lumiPrincipal_;
+      edm::LimitedTaskQueue::Resumer queueResumer_;
       std::atomic<bool> finishedProcessingEvents_{false};
       std::atomic<bool> lumiEnding_{false};
       bool seenNextItemType_=false;
@@ -371,13 +377,12 @@ public:
          std::cout <<"beginLumi "<< iSync.m_run<<" "<<iSync.m_lumi<<std::endl;
       }
       
-      m_lumiQueue.push( [this,iHolder, iSync, &iLumiStatus] {
-         m_lumiQueue.pause();
-         
+      m_lumiQueue.pushAndPause( [this,iHolder, iSync, &iLumiStatus] (edm::LimitedTaskQueue::Resumer iResumer){
          readLuminosityBlock(iLumiStatus);
          
          iLumiStatus.lumiPrincipal_->setSync(iSync);
-      
+         iLumiStatus.queueResumer_ = std::move(iResumer);
+
          auto streamBeginLumiTask = edm::make_waiting_task(tbb::task::allocate_root(),
          [this,iHolder,&iLumiStatus]( std::exception_ptr const* iPtr) {
             //Want to start processing events within a stream once beginStream finishes
@@ -405,48 +410,53 @@ public:
       std::cout <<" merge lumi "<<std::endl; //<<runID.m_run<<std::endl;
    }
    
-   void globalEndLumiAsync(edm::WaitingTaskHolder iTask, LumiPrincipal&  iLP) {
-      auto t = edm::make_waiting_task(tbb::task::allocate_root(), [t = std::move(iTask),this] (std::exception_ptr const* iPtr) mutable {
+   void globalEndLumiAsync(edm::WaitingTaskHolder iTask, LumiPrincipal&  iLP, edm::LimitedTaskQueue::Resumer iResumer) {
+      auto t = edm::make_waiting_task(tbb::task::allocate_root(), [t = std::move(iTask), resumer = std::move(iResumer), this] (std::exception_ptr const* iPtr) mutable {
          std::exception_ptr ptr;
          if(iPtr) {
             ptr = *iPtr;
          }
          t.doneWaiting(ptr);
-         //NEED TO KNOW WHICH QUEUE TO RESUME
-         m_lumiQueue.resume();
+         resumer.resume();
       });
       
       m_globalSchedule.processOneEndLumiAsync(edm::WaitingTaskHolder(t),iLP);
    }
    
-   void endLumi(Sync const& iSync, LumiProcessingStatus const& iLumiStatus) {
+   void endLumi(Sync const& iSync, LumiProcessingStatus& iLumiStatus) {
       {
          std::lock_guard<std::mutex> g{s_logMutex};
          std::cout <<"endLumi "<< iSync.m_run<<" "<<iSync.m_lumi<<std::endl;
       }
       
       auto lumiP = iLumiStatus.lumiPrincipal_;
+
+      auto globalWaitTask = edm::make_empty_waiting_task();
+      globalWaitTask->increment_ref_count();
       
-      if(not iLumiStatus.lumiEnding_){
-         auto streamWaitTask = edm::make_empty_waiting_task();
-         auto streamWaitTaskPtr = streamWaitTask.get();
-         streamWaitTask->increment_ref_count();
-         
-         {
-            edm::WaitingTaskHolder holdUntilAllStreamsCalled{streamWaitTask.get()};
+      auto globalEndLumiTask = edm::make_waiting_task(tbb::task::allocate_root(), 
+                                                      [this,
+                                                       waitTaskH = edm::WaitingTaskHolder{globalWaitTask.get()},
+                                                       lumiP,
+                                                       resumer = iLumiStatus.queueResumer_](std::exception_ptr const* iPtr) {
+            if(iPtr) {
+               //need a copy so that call to `doneWaiting` does not immediately cause the task to run
+               auto h2 = waitTaskH;
+               h2.doneWaiting(*iPtr);
+            }
+            globalEndLumiAsync(std::move(waitTaskH), *lumiP, resumer );
+         }
+      );
+   
+      { 
+         edm::WaitingTaskHolder endGlobalTaskH{globalEndLumiTask};
+         if(not iLumiStatus.lumiEnding_){
             for(unsigned int i=0; i<m_nStreams;++i) {
-               m_streamSchedules[i].processOneEndLumiAsync(edm::WaitingTaskHolder(holdUntilAllStreamsCalled),*lumiP);
+               m_streamSchedules[i].processOneEndLumiAsync(endGlobalTaskH,*lumiP);
             }
          }
-         streamWaitTask->wait_for_all();
       }
-      {
-         auto globalWaitTask = edm::make_empty_waiting_task();
-         auto globalWaitTaskPtr = globalWaitTask.get();
-         globalWaitTask->increment_ref_count();
-         globalEndLumiAsync(edm::WaitingTaskHolder{globalWaitTask.get()},*lumiP );
-         globalWaitTask->wait_for_all();
-      }
+      globalWaitTask->wait_for_all();
    }
    void writeLumi(Sync const&) {}
    void deleteLumiFromCache(Sync const&) {}
@@ -561,7 +571,7 @@ private:
    
    PrincipalCache principalCache_;
    edm::SerialTaskQueue m_sourceQueue;
-   edm::SerialTaskQueue m_lumiQueue;
+   edm::LimitedTaskQueue m_lumiQueue;
    Source m_source;
    GlobalSchedule m_globalSchedule;
    std::vector<StreamSchedule> m_streamSchedules;
@@ -891,11 +901,11 @@ std::vector<std::tuple<Phase,Sync,int>> expectedValues(std::vector<std::pair<Tra
    return returnValue;
 }
 
-void test_config(const char* iDescription, std::vector<std::pair<Transition,Sync>> iTrans,int iNStreams) {
+void test_config(const char* iDescription, std::vector<std::pair<Transition,Sync>> iTrans,int iNStreams, int iNLumis=1) {
    auto expectedV = expectedValues(iTrans, iNStreams);
    {
       std::cout <<"=============test start: "<<iDescription<<"==========="<<std::endl;
-      EventProcessor ep(std::move(iTrans),iNStreams);
+      EventProcessor ep(std::move(iTrans),iNStreams,iNLumis);
       FilesProcessor fp;
       fp.processFiles(ep);
    }
