@@ -188,7 +188,7 @@ class StreamSchedule {
                 std::lock_guard<std::mutex> g{s_logMutex};
                 std::cout <<"Stream transition "<<iSync.m_run<<" "<<iSync.m_lumi<<" "<<iSync.m_event<<" "<<s_phaseName[static_cast<int>(iTran)]<<" stream:"<<streamID<<std::endl;
              }
-             std::this_thread::sleep_for(1s);
+             std::this_thread::sleep_for(100ms);
              iTask.doneWaiting(std::exception_ptr{});
              });
         if(m_streamID == 0) {
@@ -374,6 +374,8 @@ public:
       m_lumiQueue.push( [this,iHolder, iSync, &iLumiStatus] {
          m_lumiQueue.pause();
          
+         readLuminosityBlock(iLumiStatus);
+         
          iLumiStatus.lumiPrincipal_->setSync(iSync);
       
          auto streamBeginLumiTask = edm::make_waiting_task(tbb::task::allocate_root(),
@@ -402,6 +404,21 @@ public:
       std::lock_guard<std::mutex> g{s_logMutex};
       std::cout <<" merge lumi "<<std::endl; //<<runID.m_run<<std::endl;
    }
+   
+   void globalEndLumiAsync(edm::WaitingTaskHolder iTask, LumiPrincipal&  iLP) {
+      auto t = edm::make_waiting_task(tbb::task::allocate_root(), [t = std::move(iTask),this] (std::exception_ptr const* iPtr) mutable {
+         std::exception_ptr ptr;
+         if(iPtr) {
+            ptr = *iPtr;
+         }
+         t.doneWaiting(ptr);
+         //NEED TO KNOW WHICH QUEUE TO RESUME
+         m_lumiQueue.resume();
+      });
+      
+      m_globalSchedule.processOneEndLumiAsync(edm::WaitingTaskHolder(t),iLP);
+   }
+   
    void endLumi(Sync const& iSync, LumiProcessingStatus const& iLumiStatus) {
       {
          std::lock_guard<std::mutex> g{s_logMutex};
@@ -427,10 +444,8 @@ public:
          auto globalWaitTask = edm::make_empty_waiting_task();
          auto globalWaitTaskPtr = globalWaitTask.get();
          globalWaitTask->increment_ref_count();
-         m_globalSchedule.processOneEndLumiAsync(edm::WaitingTaskHolder{globalWaitTask.get()},*lumiP);
+         globalEndLumiAsync(edm::WaitingTaskHolder{globalWaitTask.get()},*lumiP );
          globalWaitTask->wait_for_all();
-         //NEED TO KNOW WHICH QUEUE TO RESUME
-         m_lumiQueue.resume();
       }
    }
    void writeLumi(Sync const&) {}
@@ -643,7 +658,6 @@ struct LumisInRunProcessor {
       {
          //switch to different lumi
          m_currentLumi = std::make_shared<LumiResources>(std::move(iRun), lumiID.m_lumi );
-         iEP.readLuminosityBlock(m_currentLumi->m_status);
          auto lumiWaitTask = edm::make_empty_waiting_task();
          lumiWaitTask->increment_ref_count();
          
