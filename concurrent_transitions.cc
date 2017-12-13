@@ -508,34 +508,34 @@ private:
    
    void handleNextEventForStreamAsync(edm::WaitingTaskHolder iTask, unsigned int iStreamIndex, EventPrincipal& iEP) {
       m_sourceQueue.push([this,iTask,iStreamIndex,&iEP]() mutable {
+				try {
+					if(readNextEventForStream(iStreamIndex) ) {
+						iEP.setSync(m_source.sync());
+						auto recursionTask = edm::make_waiting_task(tbb::task::allocate_root(), 
+						[this,iTask,iStreamIndex,
+						&iEP](std::exception_ptr const* iPtr) mutable {
+							if(iPtr) {
+								iTask.doneWaiting(*iPtr);
+								//the stream will stop now
+								return;
+							}
 
-             try {
-               if(readNextEventForStream(iStreamIndex) ) {
-                  iEP.setSync(m_source.sync());
-                  auto recursionTask = edm::make_waiting_task(tbb::task::allocate_root(), 
-                                                              [this,iTask,iStreamIndex,
-                                                               &iEP](std::exception_ptr const* iPtr) mutable {
-                    if(iPtr) {
-                      iTask.doneWaiting(*iPtr);
-                      //the stream will stop now
-                      return;
-                    }
-
-                    handleNextEventForStreamAsync(iTask, iStreamIndex, iEP);
-                  });
+							handleNextEventForStreamAsync(iTask, iStreamIndex, iEP);
+						});
                   
-                 processEventAsync( edm::WaitingTaskHolder(recursionTask), iStreamIndex,iEP);
-               } else {
-                 //the stream will stop now
-                 if(m_streamSchedules[iStreamIndex].activeLumiProcessingStatus()->lumiEnding_) {
-                    m_streamSchedules[iStreamIndex].processOneEndLumiAsync(iTask);
-                 }else {
-                    iTask.doneWaiting(std::exception_ptr{});
-                 }
-               }
-             } catch(...) {
-               iTask.doneWaiting(std::current_exception());
-             }
+						processEventAsync( edm::WaitingTaskHolder(recursionTask), iStreamIndex,iEP);
+					} else {
+						//the stream will stop now
+						if()
+						if(m_streamSchedules[iStreamIndex].activeLumiProcessingStatus()->lumiEnding_) {
+							m_streamSchedules[iStreamIndex].processOneEndLumiAsync(iTask);
+						}else {
+							iTask.doneWaiting(std::exception_ptr{});
+						}
+					}
+				} catch(...) {
+					iTask.doneWaiting(std::current_exception());
+				}
       });
       
    }
