@@ -213,9 +213,14 @@ class StreamSchedule {
              s_seenSyncs.emplace_back(iTran, iSync,streamID);
              {
                 std::lock_guard<std::mutex> g{s_logMutex};
-                std::cout <<"Stream transition "<<iSync.m_run<<" "<<iSync.m_lumi<<" "<<iSync.m_event<<" "<<s_phaseName[static_cast<int>(iTran)]<<" stream:"<<streamID<<std::endl;
+                std::cout <<"start:Stream transition "<<iSync.m_run<<" "<<iSync.m_lumi<<" "<<iSync.m_event<<" "<<s_phaseName[static_cast<int>(iTran)]<<" stream:"<<streamID<<std::endl;
              }
-             std::this_thread::sleep_for(100ms);
+						 auto t = 10ms + 50ms*( (iSync.m_event != 0 ? ((iSync.m_event) %2+1) : 0 ) );
+             std::this_thread::sleep_for(t);
+             {
+                std::lock_guard<std::mutex> g{s_logMutex};
+                std::cout <<"end:Stream transition "<<iSync.m_run<<" "<<iSync.m_lumi<<" "<<iSync.m_event<<" "<<s_phaseName[static_cast<int>(iTran)]<<" stream:"<<streamID<<std::endl;
+             }
              iTask.doneWaiting(std::exception_ptr{});
              });
         if(m_streamID == 0) {
@@ -273,7 +278,11 @@ class GlobalSchedule {
         tbb::task::spawn( * edm::make_functor_task(tbb::task::allocate_root(), [iTask, iFunc]() mutable {
            using namespace std::chrono_literals;
            iFunc();
-           std::this_thread::sleep_for(1s);
+           std::this_thread::sleep_for(10ms);
+					 {
+						 std::lock_guard<std::mutex> g{s_logMutex};
+           	std::cout <<"	    Global Done "<<std::endl;
+					}
            iTask.doneWaiting(std::exception_ptr{});
            }));
      }
