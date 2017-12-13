@@ -157,6 +157,7 @@ struct LumiProcessingStatus {
    std::atomic<bool> lumiEnding_{false};
    bool seenNextItemType_=false;
    bool startedProcessingEvents_{false};
+	 bool startedNextLumi_{false};
 };
 void globalEndLumiAsync(edm::WaitingTaskHolder iTask, std::shared_ptr<LumiProcessingStatus> iLumiStatus);
 
@@ -400,6 +401,8 @@ public:
          readLuminosityBlock(*status);
          
          status->lumiPrincipal_->setSync(iSync);
+	 			 lastReadLumiSync_ = iSync;
+				 
          status->queueResumer_ = std::move(iResumer);
 		 status->eventProcessor_ = this;
 
@@ -425,6 +428,9 @@ public:
          m_globalSchedule.processOneBeginLumiAsync(edm::WaitingTaskHolder{streamBeginLumiTask},*(status->lumiPrincipal_));
       });
    }
+	 
+	 Sync lastReadLumiSync() const { return lastReadLumiSync_;}
+	 
    void readAndMergeLumi() {
       std::lock_guard<std::mutex> g{s_logMutex};
       std::cout <<" merge lumi "<<std::endl; //<<runID.m_run<<std::endl;
@@ -526,8 +532,12 @@ private:
 						processEventAsync( edm::WaitingTaskHolder(recursionTask), iStreamIndex,iEP);
 					} else {
 						//the stream will stop now
-						if()
-						if(m_streamSchedules[iStreamIndex].activeLumiProcessingStatus()->lumiEnding_) {
+						auto status = m_streamSchedules[iStreamIndex].activeLumiProcessingStatus();
+						if(status->lumiEnding_) {
+							if(lastTransitionType() == Transition::IsLumi and not status->startedNextLumi_) {
+								status->startedNextLumi_ = true;
+								beginLumiAsync(sync(), iTask);
+							}
 							m_streamSchedules[iStreamIndex].processOneEndLumiAsync(iTask);
 						}else {
 							iTask.doneWaiting(std::exception_ptr{});
@@ -590,6 +600,7 @@ private:
    Source m_source;
    Transition m_lastSourceTransition;
    GlobalSchedule m_globalSchedule;
+	 Sync lastReadLumiSync_ = {0,0,0};
    std::vector<StreamSchedule> m_streamSchedules;
    int m_nStreams;
    //std::atomic<Transition> nextItemTypeFromProcessingEvents_;
@@ -637,9 +648,10 @@ struct LumiResources {
    }
    
    Sync lumiID() const { return {m_run->m_run, m_lumi, 0}; }
+	 void setLumiID(int iID) { m_lumi = iID; }
    
    std::shared_ptr<RunResources> m_run;
-   const int m_lumi;
+   int m_lumi;
 };
 
 
@@ -663,6 +675,8 @@ struct LumisInRunProcessor {
                iEP.readAndProcessEventsAsync(edm::WaitingTaskHolder{eventLoopWaitTask.get()});
       
                eventLoopWaitTask->wait_for_all();
+							 //multiple lumis could have been processed 
+							 m_currentLumi->setLumiID(iEP.lastReadLumiSync().m_lumi );
                nextTrans = iEP.lastTransitionType();
                break;
             }
@@ -690,6 +704,8 @@ struct LumisInRunProcessor {
          
          iEP.beginLumiAsync(lumiID, edm::WaitingTaskHolder{lumiWaitTask.get()});
          lumiWaitTask->wait_for_all();
+				 //multiple lumis could have been processed 
+				 m_currentLumi->setLumiID(iEP.lastReadLumiSync().m_lumi );
          return iEP.lastTransitionType();
       } 
       iEP.readAndMergeLumi();      
@@ -967,8 +983,7 @@ void test_config(const char* iDescription, std::vector<std::pair<Transition,Sync
    
 }
 
-int main() {
-   tbb::task_scheduler_init scheduler{2};
+void runTests(int nLumis) {
    
   test_config( "Simple",
    {{Transition::IsFile,{0,0,0}}, 
@@ -979,14 +994,14 @@ int main() {
     {Transition::IsEvent,{1,1,3}},
     {Transition::IsEvent,{1,1,4}},
     {Transition::IsEvent,{1,1,5}},
-    {Transition::IsStop,{0,0,0}}}, 2);
+    {Transition::IsStop,{0,0,0}}}, 2, nLumis);
 
  test_config( "Less events than streams",
   {{Transition::IsFile,{0,0,0}}, 
    {Transition::IsRun,{1,0,0}}, 
    {Transition::IsLumi,{1,1,0}}, 
    {Transition::IsEvent,{1,1,1}},
-   {Transition::IsStop,{0,0,0}}}, 2);
+   {Transition::IsStop,{0,0,0}}}, 2, nLumis);
 
   //multiple different lumis
   test_config( "Multiple different Lumis",
@@ -995,10 +1010,11 @@ int main() {
     {Transition::IsLumi,{1,1,0}}, 
     {Transition::IsEvent,{1,1,1}},
     {Transition::IsEvent,{1,1,2}},
+    {Transition::IsEvent,{1,1,3}},
     {Transition::IsLumi,{1,2,0}}, 
-    {Transition::IsEvent,{1,2,3}},
     {Transition::IsEvent,{1,2,4}},
-    {Transition::IsStop,{0,0,0}}}, 2);
+    {Transition::IsEvent,{1,2,5}},
+    {Transition::IsStop,{0,0,0}}}, 2, nLumis);
 
   //empty lumi
   test_config( "Empty Lumi",
@@ -1008,7 +1024,7 @@ int main() {
     {Transition::IsLumi,{1,2,0}}, 
     {Transition::IsEvent,{1,2,3}},
     {Transition::IsEvent,{1,2,4}},
-    {Transition::IsStop,{0,0,0}}}, 2);
+    {Transition::IsStop,{0,0,0}}}, 2, nLumis);
 
   //multiple different runs
   test_config( "Multiple different runs",
@@ -1021,7 +1037,7 @@ int main() {
     {Transition::IsLumi,{2,1,0}}, 
     {Transition::IsEvent,{2,1,1}},
     {Transition::IsEvent,{2,1,2}},
-    {Transition::IsStop,{0,0,0}}}, 2);
+    {Transition::IsStop,{0,0,0}}}, 2, nLumis);
 
   //empty run
   test_config( "Empty run",
@@ -1031,7 +1047,7 @@ int main() {
     {Transition::IsLumi,{2,1,0}}, 
     {Transition::IsEvent,{2,1,1}},
     {Transition::IsEvent,{2,1,2}},
-    {Transition::IsStop,{0,0,0}}}, 2);
+    {Transition::IsStop,{0,0,0}}}, 2, nLumis);
 
   //empty file
   test_config( "Empty file",
@@ -1040,7 +1056,7 @@ int main() {
     {Transition::IsRun,{1,0,0}}, 
     {Transition::IsLumi,{1,1,0}}, 
     {Transition::IsEvent,{1,1,1}},
-    {Transition::IsEvent,{1,1,2}}}, 2);
+    {Transition::IsEvent,{1,1,2}}}, 2, nLumis);
 
   //merging run across file boundary
   test_config( "Merge run across files",
@@ -1054,7 +1070,7 @@ int main() {
     {Transition::IsLumi,{1,2,0}}, 
     {Transition::IsEvent,{1,2,3}},
     {Transition::IsEvent,{1,2,4}},
-    {Transition::IsStop,{0,0,0}}}, 2);
+    {Transition::IsStop,{0,0,0}}}, 2, nLumis);
 
   //merging run & lumi across file boundary
   test_config( "Merge run & lumi across files",
@@ -1068,7 +1084,7 @@ int main() {
     {Transition::IsLumi,{1,1,0}}, 
     {Transition::IsEvent,{1,1,3}},
     {Transition::IsEvent,{1,1,4}},
-    {Transition::IsStop,{0,0,0}}}, 2);
+    {Transition::IsStop,{0,0,0}}}, 2, nLumis);
 
   //Files with delayed merge of lumis
   test_config( "Delayed lumi merge",
@@ -1081,13 +1097,25 @@ int main() {
     {Transition::IsLumi,{1,2,0}}, 
     {Transition::IsEvent,{1,2,2}},
     {Transition::IsEvent,{1,2,3}},
-    {Transition::IsStop,{0,0,0}}}, 2);
+    {Transition::IsStop,{0,0,0}}}, 2, nLumis);
+
+  test_config( "Delayed lumi merge 2",
+   {{Transition::IsFile,{0,0,0}}, 
+    {Transition::IsRun,{1,0,0}}, 
+    {Transition::IsLumi,{1,1,0}}, 
+    {Transition::IsEvent,{1,1,1}},
+    {Transition::IsEvent,{1,1,2}},
+    {Transition::IsLumi,{1,2,0}}, 
+    {Transition::IsLumi,{1,2,0}}, //to merge
+    {Transition::IsEvent,{1,2,2}},
+    {Transition::IsEvent,{1,2,3}},
+    {Transition::IsStop,{0,0,0}}}, 2, nLumis);
   
   //Files with delayed merge of runs
   test_config( "Delayed run merge",
    {{Transition::IsFile,{0,0,0}}, 
     {Transition::IsRun,{1,0,0}}, 
-    {Transition::IsRun,{1,0,0}}, // to erge
+    {Transition::IsRun,{1,0,0}}, // to merge
     {Transition::IsLumi,{1,1,0}}, 
     {Transition::IsEvent,{1,1,1}},
     {Transition::IsEvent,{1,1,2}},
@@ -1095,9 +1123,34 @@ int main() {
     {Transition::IsLumi,{2,1,0}}, 
     {Transition::IsEvent,{2,1,1}},
     {Transition::IsEvent,{2,1,2}},
-    {Transition::IsStop,{0,0,0}}}, 2);
-  
-   
+    {Transition::IsStop,{0,0,0}}}, 2, nLumis);
+		
+  test_config( "Delayed run merge 2",
+   {{Transition::IsFile,{0,0,0}}, 
+    {Transition::IsRun,{1,0,0}}, 
+    {Transition::IsLumi,{1,1,0}}, 
+    {Transition::IsEvent,{1,1,1}},
+    {Transition::IsEvent,{1,1,2}},
+    {Transition::IsRun,{2,0,0}}, 
+    {Transition::IsRun,{2,0,0}}, // to merge
+    {Transition::IsLumi,{2,1,0}}, 
+    {Transition::IsEvent,{2,1,1}},
+    {Transition::IsEvent,{2,1,2}},
+    {Transition::IsStop,{0,0,0}}}, 2, nLumis);
+	
+}
+
+int main() {
+   tbb::task_scheduler_init scheduler{3};
+
+	 std::cout <<"********************\n"
+		 				 <<"** 1 Lumi         **\n"
+						 <<"********************"<<std::endl;
+	 runTests(1);
+	 std::cout <<"********************\n"
+		 				 <<"** 2 Lumi         **\n"
+						 <<"********************"<<std::endl;
+	 runTests(2);
    return 0;
 }
 
