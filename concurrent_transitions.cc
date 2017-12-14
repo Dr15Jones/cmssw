@@ -21,7 +21,8 @@ enum class Transition {
    IsFile,
    IsRun,
    IsLumi,
-   IsEvent
+   IsEvent,
+   IsIOV //needed for this test
 };
 
 enum class Phase {
@@ -51,6 +52,8 @@ void printTrans( Transition iT) {
 }
 
 struct Sync {
+   Sync(int iRun, int iLumi, int iEvent): m_run(iRun),m_lumi(iLumi),m_event(iEvent) {}
+   Sync() = default;
    int m_run;
    int m_lumi;
    int m_event;
@@ -131,6 +134,9 @@ public:
          return Transition::IsStop;
       }
       auto present = *(m_nextTransition++);
+      while(present.first == Transition::IsIOV) {
+        present = *(m_nextTransition++);
+      }
       m_present = present.second;
       
       printTrans(present.first);
@@ -215,7 +221,7 @@ class StreamSchedule {
                 std::lock_guard<std::mutex> g{s_logMutex};
                 std::cout <<"start:Stream transition "<<iSync.m_run<<" "<<iSync.m_lumi<<" "<<iSync.m_event<<" "<<s_phaseName[static_cast<int>(iTran)]<<" stream:"<<streamID<<std::endl;
              }
-						 auto t = 10ms + 50ms*( (iSync.m_event != 0 ? ((iSync.m_event) %2+1) : 0 ) );
+             auto t = 10ms + 50ms*( (iSync.m_event != 0 ? ((iSync.m_event) %2+1) : 0 ) );
              std::this_thread::sleep_for(t);
              {
                 std::lock_guard<std::mutex> g{s_logMutex};
@@ -318,7 +324,7 @@ public:
    int iNConcurrentLumis):
    principalCache_(iNStreams,iNConcurrentLumis),
    m_lumiQueue(iNConcurrentLumis),
-   m_source(std::move(iTransitions)),
+   m_source(iTransitions),
    m_lastSourceTransition(Transition::IsInvalid),
    m_streamSchedules(),
    m_nStreams(iNStreams) {
@@ -326,6 +332,14 @@ public:
       for(int i=0; i<m_nStreams;++i) {
          m_streamSchedules.emplace_back(i);
       }
+
+      m_iovs.emplace_back(0,0,0);
+      for(auto const& t: iTransitions ){
+        if(t.first == Transition::IsIOV) {
+          m_iovs.push_back(t.second);
+        }
+      }
+      m_iovs.emplace_back(100,0,0);
    }
    
    Transition nextTransitionType() { return (m_lastSourceTransition = m_source.nextItemType()); }
@@ -400,42 +414,55 @@ public:
    }
    
    void beginLumiAsync(Sync const& iSync, edm::WaitingTaskHolder iHolder) {
-      {
-         std::lock_guard<std::mutex> g{s_logMutex};
-         std::cout <<"beginLumi "<< iSync.m_run<<" "<<iSync.m_lumi<<std::endl;
-      }
+     {
+       std::lock_guard<std::mutex> g{s_logMutex};
+       std::cout <<"beginLumi "<< iSync.m_run<<" "<<iSync.m_lumi<<std::endl;
+     }
       
-	  auto status= std::make_shared<LumiProcessingStatus>() ;
-      m_lumiQueue.pushAndPause( [this,iHolder, iSync, status] (edm::LimitedTaskQueue::Resumer iResumer){
-         readLuminosityBlock(*status);
+     auto status= std::make_shared<LumiProcessingStatus>() ;
+     auto lumiWork = [this,iHolder, iSync, status] (edm::LimitedTaskQueue::Resumer iResumer){
+       readLuminosityBlock(*status);
          
-         status->lumiPrincipal_->setSync(iSync);
-	 			 lastReadLumiSync_ = iSync;
+       status->lumiPrincipal_->setSync(iSync);
+       lastReadLumiSync_ = iSync;
 				 
-         status->queueResumer_ = std::move(iResumer);
-		 status->eventProcessor_ = this;
+       status->queueResumer_ = std::move(iResumer);
+       status->eventProcessor_ = this;
 
-         auto streamBeginLumiTask = edm::make_waiting_task(tbb::task::allocate_root(),
-         [this,iHolder,status]( std::exception_ptr const* iPtr) {
-            //Want to start processing events within a stream once beginStream finishes
-            //we need to read from the source the next transition
-            status->seenNextItemType_ = false;
-			status->nStreamsStillProcessingLumi_ = m_nStreams;
+       auto streamBeginLumiTask = edm::make_waiting_task(tbb::task::allocate_root(),
+       [this,iHolder,status]( std::exception_ptr const* iPtr) {
+         //Want to start processing events within a stream once beginStream finishes
+         //we need to read from the source the next transition
+         status->seenNextItemType_ = false;
+         status->nStreamsStillProcessingLumi_ = m_nStreams;
 
-            for(unsigned int i=0; i<m_nStreams;++i) {
-               auto eventTask = edm::make_waiting_task(tbb::task::allocate_root(),
-                  [this,i,iHolder,status](std::exception_ptr const* iPtr) {
-                     auto& e = principalCache_.eventPrincipal(i);
-                     e.setLumi(status->lumiPrincipal_);
-                     handleNextEventForStreamAsync(iHolder,i, e );
-                  });
+         for(unsigned int i=0; i<m_nStreams;++i) {
+           auto eventTask = edm::make_waiting_task(tbb::task::allocate_root(),
+           [this,i,iHolder,status](std::exception_ptr const* iPtr) {
+             auto& e = principalCache_.eventPrincipal(i);
+             e.setLumi(status->lumiPrincipal_);
+             handleNextEventForStreamAsync(iHolder,i, e );
+           });
 
-               m_streamSchedules[i].processOneBeginLumiAsync(edm::WaitingTaskHolder{eventTask},status);
-            }
-         });
+           m_streamSchedules[i].processOneBeginLumiAsync(edm::WaitingTaskHolder{eventTask},status);
+         }
+       });
       
-         m_globalSchedule.processOneBeginLumiAsync(edm::WaitingTaskHolder{streamBeginLumiTask},*(status->lumiPrincipal_));
-      });
+       m_globalSchedule.processOneBeginLumiAsync(edm::WaitingTaskHolder{streamBeginLumiTask},*(status->lumiPrincipal_));
+     };
+     //check IOV
+     if(iSync < m_iovs[m_nextIOV]) {
+       //we are in present IOV
+       m_iovQueue.pause();
+       m_lumiQueue.pushAndPause( std::move(lumiWork) );
+     } else {
+       //need to move to next IOV
+       m_iovQueue.push([lumiWork,this]() {
+         ++m_nextIOV;
+         m_iovQueue.pause();
+         m_lumiQueue.pushAndPause( std::move(lumiWork) );
+       });
+     }
    }
 	 
 	 Sync lastReadLumiSync() const { return lastReadLumiSync_;}
@@ -453,6 +480,8 @@ public:
             ptr = *iPtr;
          }
          t.doneWaiting(ptr);
+         //release our hold on the IOV
+         m_iovQueue.resume();
          status->queueResumer_.resume();
       });
       
@@ -470,7 +499,7 @@ public:
       
       { 
          edm::WaitingTaskHolder endGlobalTaskH{globalWaitTask.get()};
-		 auto status = m_streamSchedules[0].activeLumiProcessingStatus();
+         auto status = m_streamSchedules[0].activeLumiProcessingStatus();
          if( status and not status->lumiEnding_){
             for(unsigned int i=0; i<m_nStreams;++i) {
                m_streamSchedules[i].processOneEndLumiAsync(endGlobalTaskH);
@@ -493,8 +522,8 @@ public:
     eventLoopWaitTask->increment_ref_count();
 
 	{
-		//all streams are sharing the same status at the moment
-		auto status = m_streamSchedules[0].activeLumiProcessingStatus();
+    //all streams are sharing the same status at the moment
+    auto status = m_streamSchedules[0].activeLumiProcessingStatus();
         status->seenNextItemType_ = true;
         status->startedProcessingEvents_ = true;
         status->finishedProcessingEvents_ = false;
@@ -504,7 +533,7 @@ public:
     for(; iStreamIndex<m_nStreams-1; ++iStreamIndex) {
       tbb::task::enqueue( *edm::make_waiting_task(tbb::task::allocate_root(),[this,iStreamIndex,h=iHolder](std::exception_ptr const*){
          auto& e = principalCache_.eventPrincipal(iStreamIndex);
-		 
+
          e.setLumi(m_streamSchedules[iStreamIndex].activeLumiProcessingStatus()->lumiPrincipal_);
         handleNextEventForStreamAsync(h,iStreamIndex, e);
       }) );
@@ -523,43 +552,43 @@ private:
    
    void handleNextEventForStreamAsync(edm::WaitingTaskHolder iTask, unsigned int iStreamIndex, EventPrincipal& iEP) {
       m_sourceQueue.push([this,iTask,iStreamIndex,&iEP]() mutable {
-				try {
-					if(readNextEventForStream(iStreamIndex) ) {
-						iEP.setSync(m_source.sync());
-						auto recursionTask = edm::make_waiting_task(tbb::task::allocate_root(), 
-						[this,iTask,iStreamIndex,
-						&iEP](std::exception_ptr const* iPtr) mutable {
-							if(iPtr) {
-								iTask.doneWaiting(*iPtr);
-								//the stream will stop now
-								return;
-							}
+        try {
+          if(readNextEventForStream(iStreamIndex) ) {
+            iEP.setSync(m_source.sync());
+            auto recursionTask = edm::make_waiting_task(tbb::task::allocate_root(), 
+            [this,iTask,iStreamIndex,
+            &iEP](std::exception_ptr const* iPtr) mutable {
+              if(iPtr) {
+                iTask.doneWaiting(*iPtr);
+                //the stream will stop now
+                return;
+              }
 
-							handleNextEventForStreamAsync(iTask, iStreamIndex, iEP);
-						});
+              handleNextEventForStreamAsync(iTask, iStreamIndex, iEP);
+            });
                   
-						processEventAsync( edm::WaitingTaskHolder(recursionTask), iStreamIndex,iEP);
-					} else {
-						//the stream will stop now
-						auto status = m_streamSchedules[iStreamIndex].activeLumiProcessingStatus();
-						if(status->lumiEnding_) {
-							if(lastTransitionType() == Transition::IsLumi and not status->startedNextLumi_) {
-								status->startedNextLumi_ = true;
-								beginLumiAsync(sync(), iTask);
-							}
-							m_streamSchedules[iStreamIndex].processOneEndLumiAsync(iTask);
-						}else {
-							iTask.doneWaiting(std::exception_ptr{});
-						}
-					}
-				} catch(...) {
-					iTask.doneWaiting(std::current_exception());
-				}
+            processEventAsync( edm::WaitingTaskHolder(recursionTask), iStreamIndex,iEP);
+          } else {
+            //the stream will stop now
+            auto status = m_streamSchedules[iStreamIndex].activeLumiProcessingStatus();
+            if(status->lumiEnding_) {
+              if(lastTransitionType() == Transition::IsLumi and not status->startedNextLumi_) {
+                status->startedNextLumi_ = true;
+                beginLumiAsync(sync(), iTask);
+              }
+              m_streamSchedules[iStreamIndex].processOneEndLumiAsync(iTask);
+            }else {
+              iTask.doneWaiting(std::exception_ptr{});
+            }
+          }
+        } catch(...) {
+          iTask.doneWaiting(std::current_exception());
+        }
       });
       
    }
    bool readNextEventForStream(unsigned int iStreamIndex) {
-	   auto lumiStatus = m_streamSchedules[iStreamIndex].activeLumiProcessingStatus();
+     auto lumiStatus = m_streamSchedules[iStreamIndex].activeLumiProcessingStatus();
       if(lumiStatus->finishedProcessingEvents_.load()) {
          return false;
       }
@@ -605,12 +634,15 @@ private:
    
    PrincipalCache principalCache_;
    edm::SerialTaskQueue m_sourceQueue;
+   edm::SerialTaskQueue m_iovQueue;
    edm::LimitedTaskQueue m_lumiQueue;
    Source m_source;
    Transition m_lastSourceTransition;
    GlobalSchedule m_globalSchedule;
-	 Sync lastReadLumiSync_ = {0,0,0};
+   Sync lastReadLumiSync_ = {0,0,0};
    std::vector<StreamSchedule> m_streamSchedules;
+   std::vector<Sync> m_iovs;
+   unsigned int m_nextIOV=0;
    int m_nStreams;
    //std::atomic<Transition> nextItemTypeFromProcessingEvents_;
    
@@ -618,8 +650,8 @@ private:
 };
 
 void globalEndLumiAsync(edm::WaitingTaskHolder iTask, std::shared_ptr<LumiProcessingStatus> iLumiStatus) {
-	auto s = iLumiStatus.get();
-	s->eventProcessor_->globalEndLumiAsync(std::move(iTask),std::move(iLumiStatus));
+  auto s = iLumiStatus.get();
+  s->eventProcessor_->globalEndLumiAsync(std::move(iTask),std::move(iLumiStatus));
 }
 
 
@@ -657,7 +689,7 @@ struct LumiResources {
    }
    
    Sync lumiID() const { return {m_run->m_run, m_lumi, 0}; }
-	 void setLumiID(int iID) { m_lumi = iID; }
+   void setLumiID(int iID) { m_lumi = iID; }
    
    std::shared_ptr<RunResources> m_run;
    int m_lumi;
@@ -684,8 +716,8 @@ struct LumisInRunProcessor {
                iEP.readAndProcessEventsAsync(edm::WaitingTaskHolder{eventLoopWaitTask.get()});
       
                eventLoopWaitTask->wait_for_all();
-							 //multiple lumis could have been processed 
-							 m_currentLumi->setLumiID(iEP.lastReadLumiSync().m_lumi );
+               //multiple lumis could have been processed 
+               m_currentLumi->setLumiID(iEP.lastReadLumiSync().m_lumi );
                nextTrans = iEP.lastTransitionType();
                break;
             }
@@ -713,8 +745,8 @@ struct LumisInRunProcessor {
          
          iEP.beginLumiAsync(lumiID, edm::WaitingTaskHolder{lumiWaitTask.get()});
          lumiWaitTask->wait_for_all();
-				 //multiple lumis could have been processed 
-				 m_currentLumi->setLumiID(iEP.lastReadLumiSync().m_lumi );
+         //multiple lumis could have been processed 
+         m_currentLumi->setLumiID(iEP.lastReadLumiSync().m_lumi );
          return iEP.lastTransitionType();
       } 
       iEP.readAndMergeLumi();      
@@ -923,6 +955,10 @@ std::vector<std::tuple<Phase,Sync,int>> expectedValues(std::vector<std::pair<Tra
          case Transition::IsStop:
          {
             break;
+         }
+         case Transition::IsIOV:
+         {
+           continue;
          }
       }
    }
@@ -1152,14 +1188,37 @@ void runTests(int nLumis) {
 int main() {
    tbb::task_scheduler_init scheduler{3};
 
-	 std::cout <<"********************\n"
-		 				 <<"** 1 Lumi         **\n"
-						 <<"********************"<<std::endl;
-	 runTests(1);
-	 std::cout <<"********************\n"
-		 				 <<"** 2 Lumi         **\n"
-						 <<"********************"<<std::endl;
-	 runTests(2);
+   std::cout <<"********************\n"
+     <<"** 1 Lumi         **\n"
+       <<"********************"<<std::endl;
+   runTests(1);
+   std::cout <<"********************\n"
+     <<"** 2 Lumis        **\n"
+       <<"********************"<<std::endl;
+   runTests(2);
+   std::cout <<"********************\n"
+     <<"** 2 IOVs         **\n"
+       <<"********************"<<std::endl;
+   test_config( "Multiple different IOVs",
+    {{Transition::IsFile,{0,0,0}}, 
+     {Transition::IsRun,{1,0,0}}, 
+     {Transition::IsLumi,{1,1,0}}, 
+     {Transition::IsEvent,{1,1,1}},
+     {Transition::IsEvent,{1,1,2}},
+     {Transition::IsEvent,{1,1,3}},
+     {Transition::IsLumi,{1,2,0}}, 
+     {Transition::IsEvent,{1,2,4}},
+     {Transition::IsEvent,{1,2,5}},
+     {Transition::IsIOV,{1,3,0}}, 
+     {Transition::IsLumi,{1,3,0}}, 
+     {Transition::IsEvent,{1,3,6}},
+     {Transition::IsEvent,{1,3,7}},
+     {Transition::IsIOV,{1,4,0}}, 
+     {Transition::IsLumi,{1,4,0}}, 
+     {Transition::IsEvent,{1,4,8}},
+     {Transition::IsEvent,{1,4,9}},
+     {Transition::IsStop,{0,0,0}}}, 2, 2);
+	 
    return 0;
 }
 
