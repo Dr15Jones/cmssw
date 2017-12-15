@@ -156,12 +156,12 @@ class EventProcessor;
 
 struct LumiProcessingStatus {
    std::shared_ptr<LumiPrincipal> lumiPrincipal_;
-   edm::LimitedTaskQueue::Resumer queueResumer_;
+   edm::LimitedTaskQueue::Resumer globalLumiQueueResumer_;
    EventProcessor* eventProcessor_ = nullptr;
-   std::atomic<unsigned int> nStreamsStillProcessingLumi_{0};
-   std::atomic<bool> finishedProcessingEvents_{false};
-   std::atomic<bool> lumiEnding_{false};
-   bool seenNextItemType_=false;
+   std::atomic<unsigned int> nStreamsStillProcessingLumi_{0}; //read/write as streams finish lumi so must be atomic
+   bool stopProcessingEvents_{false}; //read/write in m_sourceQueue OR from main thread when no tasks running
+   bool lumiEnding_{false}; //read/write in m_sourceQueue OR from main thread when no tasks running
+   bool seenNextItemType_{false};
    bool startedProcessingEvents_{false}; //read/write in m_sourceQueue OR from main thread when no tasks running
    bool startedNextLumi_{false};
 };
@@ -169,16 +169,16 @@ void globalEndLumiAsync(edm::WaitingTaskHolder iTask, std::shared_ptr<LumiProces
 
 class StreamSchedule {
   public:
-     StreamSchedule(int iStreamID): m_streamID{iStreamID}, m_queue{std::make_unique<edm::SerialTaskQueue>()}{}
+     StreamSchedule(int iStreamID): m_streamID{iStreamID}, m_lumiQueue{} {}
      
      void processOneEventAsync(edm::WaitingTaskHolder iTask, EventPrincipal& iEP) {
         dummyWorkAsync(std::move(iTask),Phase::kEvent, iEP.sync());
      }
      void processOneBeginLumiAsync(edm::WaitingTaskHolder iTask,  std::shared_ptr<LumiProcessingStatus> iLumi) {
-        m_queue->push([this,iTask,iLumi] () {
-           m_queue->pause();
-		       m_lumiStatus = std::move(iLumi);
-           dummyWorkAsync(std::move(iTask),Phase::kBeginLumi,iLumi->lumiPrincipal_->sync());
+        m_lumiQueue.push([this,iTask,iLumi] () {
+           m_lumiQueue.pause();
+           m_lumiStatus = std::move(iLumi);
+           dummyWorkAsync(std::move(iTask),Phase::kBeginLumi,m_lumiStatus->lumiPrincipal_->sync());
            });
      }
      void processOneBeginRunAsync(edm::WaitingTaskHolder iTask,  RunPrincipal& iRun) {
@@ -191,16 +191,18 @@ class StreamSchedule {
            if(iPtr) {
               ptr = *iPtr;
            }
-           //NOTE: what order do I want the spawns to be done?
            auto status = m_lumiStatus;
-           m_queue->resume();
-		   
-		       //Are we the last one?
-		       auto count = --(status->nStreamsStillProcessingLumi_);
-		       if( 0 == count) {
-			       globalEndLumiAsync(iTask, std::move(status));
-		       }
-		       m_lumiStatus.reset();
+           m_lumiStatus.reset(); //reset status before releasing queue else get race condition
+           m_lumiQueue.resume();
+
+           //Are we the last one?
+           auto count = --(status->nStreamsStillProcessingLumi_);
+           if( 0 == count) {
+             //resuming the m_lumiQueue first means in single threaded mode
+             // globalEndLumi will happen before the next streamBeginLumi starts
+             // since spawned tasks are last in, first out
+             globalEndLumiAsync(iTask, std::move(status));
+           }
            iTask.doneWaiting(ptr);
         });
         dummyWorkAsync(edm::WaitingTaskHolder{t},Phase::kEndLumi,m_lumiStatus->lumiPrincipal_->sync());
@@ -235,8 +237,8 @@ class StreamSchedule {
            tbb::task::enqueue( *t );
         }
      }
-     std::unique_ptr<edm::SerialTaskQueue> m_queue;
-	 std::shared_ptr<LumiProcessingStatus> m_lumiStatus;
+     edm::SerialTaskQueue m_lumiQueue;
+     std::shared_ptr<LumiProcessingStatus> m_lumiStatus;
      const int m_streamID;
 };
 
@@ -408,6 +410,10 @@ public:
       //actually creates a new lumi
       auto lumiP = principalCache_.getAvailableLumiPrincipal();
       iStatus.lumiPrincipal_ = lumiP;
+      {
+        std::lock_guard<std::mutex> g{s_logMutex};
+        std::cout <<"readLuminosityBlock"<<std::endl;
+      }
       
       auto runP = principalCache_.runPrincipal(); //handed to lumi
       lumiP->setRun(std::move(runP));
@@ -420,35 +426,36 @@ public:
      }
       
      auto status= std::make_shared<LumiProcessingStatus>() ;
+     status->eventProcessor_ = this;
+     status->seenNextItemType_ = false;
+     status->nStreamsStillProcessingLumi_ = m_nStreams;
      auto lumiWork = [this,iHolder, iSync, status] (edm::LimitedTaskQueue::Resumer iResumer){
-       readLuminosityBlock(*status);
+       status->globalLumiQueueResumer_ = std::move(iResumer);
+       m_sourceQueue.push([this,iHolder,iSync,status]() {
+         readLuminosityBlock(*status);  //needs to be called from the m_sourceQueue
          
-       status->lumiPrincipal_->setSync(iSync);
-       lastReadLumiSync_ = iSync;
-				 
-       status->queueResumer_ = std::move(iResumer);
-       status->eventProcessor_ = this;
+         status->lumiPrincipal_->setSync(iSync);
+         lastReadLumiSync_ = iSync;
 
-       auto streamBeginLumiTask = edm::make_waiting_task(tbb::task::allocate_root(),
-       [this,iHolder,status]( std::exception_ptr const* iPtr) {
          //Want to start processing events within a stream once beginStream finishes
          //we need to read from the source the next transition
-         status->seenNextItemType_ = false;
-         status->nStreamsStillProcessingLumi_ = m_nStreams;
 
-         for(unsigned int i=0; i<m_nStreams;++i) {
-           auto eventTask = edm::make_waiting_task(tbb::task::allocate_root(),
-           [this,i,iHolder,status](std::exception_ptr const* iPtr) {
-             auto& e = principalCache_.eventPrincipal(i);
-             e.setLumi(status->lumiPrincipal_);
-             handleNextEventForStreamAsync(iHolder,i, e );
-           });
+         auto streamBeginLumiTask = edm::make_waiting_task(tbb::task::allocate_root(),
+         [this,iHolder,status]( std::exception_ptr const* iPtr) {
+           for(unsigned int i=0; i<m_nStreams;++i) {
+             auto eventTask = edm::make_waiting_task(tbb::task::allocate_root(),
+             [this,i,iHolder,status](std::exception_ptr const* iPtr) {
+               auto& e = principalCache_.eventPrincipal(i);
+               e.setLumi(status->lumiPrincipal_);
+               handleNextEventForStreamAsync(iHolder,i, e );
+             });
 
-           m_streamSchedules[i].processOneBeginLumiAsync(edm::WaitingTaskHolder{eventTask},status);
-         }
-       });
+             m_streamSchedules[i].processOneBeginLumiAsync(edm::WaitingTaskHolder{eventTask},status);
+           }
+         });
       
-       m_globalSchedule.processOneBeginLumiAsync(edm::WaitingTaskHolder{streamBeginLumiTask},*(status->lumiPrincipal_));
+         m_globalSchedule.processOneBeginLumiAsync(edm::WaitingTaskHolder{streamBeginLumiTask},*(status->lumiPrincipal_));
+       });
      };
      //check IOV
      if(iSync < m_iovs[m_nextIOV]) {
@@ -482,7 +489,7 @@ public:
          t.doneWaiting(ptr);
          //release our hold on the IOV
          m_iovQueue.resume();
-         status->queueResumer_.resume();
+         status->globalLumiQueueResumer_.resume();
       });
       
       m_globalSchedule.processOneEndLumiAsync(edm::WaitingTaskHolder(t),lp);
@@ -511,41 +518,41 @@ public:
    void writeLumi(Sync const&) {}
    void deleteLumiFromCache(Sync const&) {}
    
-   Transition readAndProcessEventsAsync(edm::WaitingTaskHolder iHolder) {
-      {
-         std::lock_guard<std::mutex> g{s_logMutex};
-         std::cout <<"read and process events"<<std::endl;
-      }
+   Transition continueLumiAsync(edm::WaitingTaskHolder iHolder) {
+     {
+       std::lock_guard<std::mutex> g{s_logMutex};
+       std::cout <<"read and process events"<<std::endl;
+     }
       
-    //To wait, the ref count has to b 1+#streams
-    auto eventLoopWaitTask = edm::make_empty_waiting_task();
-    eventLoopWaitTask->increment_ref_count();
+     //To wait, the ref count has to b 1+#streams
+     auto eventLoopWaitTask = edm::make_empty_waiting_task();
+     eventLoopWaitTask->increment_ref_count();
 
-	{
-    //all streams are sharing the same status at the moment
-    auto status = m_streamSchedules[0].activeLumiProcessingStatus();
-        status->seenNextItemType_ = true;
-        status->startedProcessingEvents_ = true;
-        status->finishedProcessingEvents_ = false;
-	}
+     {
+       //all streams are sharing the same status at the moment
+       auto status = m_streamSchedules[0].activeLumiProcessingStatus();
+       status->seenNextItemType_ = true;
+       status->startedProcessingEvents_ = true;
+       status->stopProcessingEvents_ = false;
+     }
 
-    unsigned int iStreamIndex = 0;
-    for(; iStreamIndex<m_nStreams-1; ++iStreamIndex) {
-      tbb::task::enqueue( *edm::make_waiting_task(tbb::task::allocate_root(),[this,iStreamIndex,h=iHolder](std::exception_ptr const*){
+     unsigned int iStreamIndex = 0;
+     for(; iStreamIndex<m_nStreams-1; ++iStreamIndex) {
+       tbb::task::enqueue( *edm::make_waiting_task(tbb::task::allocate_root(),[this,iStreamIndex,h=iHolder](std::exception_ptr const*){
          auto& e = principalCache_.eventPrincipal(iStreamIndex);
 
          e.setLumi(m_streamSchedules[iStreamIndex].activeLumiProcessingStatus()->lumiPrincipal_);
-        handleNextEventForStreamAsync(h,iStreamIndex, e);
-      }) );
-    }
-    //need a temporary Task so that the temporary WaitingTaskHolder assigned to h will go out of scope
-    // before the call to spawn_and_wait_for_all
-    auto t = edm::make_waiting_task(tbb::task::allocate_root(),[this,iStreamIndex,h=iHolder](std::exception_ptr const*){
+         handleNextEventForStreamAsync(h,iStreamIndex, e);
+       }) );
+     }
+     //need a temporary Task so that the temporary WaitingTaskHolder assigned to h will go out of scope
+     // before the call to spawn_and_wait_for_all
+     auto t = edm::make_waiting_task(tbb::task::allocate_root(),[this,iStreamIndex,h=iHolder](std::exception_ptr const*){
        auto& e = principalCache_.eventPrincipal(iStreamIndex);
        e.setLumi(m_streamSchedules[iStreamIndex].activeLumiProcessingStatus()->lumiPrincipal_);
        handleNextEventForStreamAsync(h,iStreamIndex, e);
-       });
-    tbb::task::spawn(*t);
+     });
+     tbb::task::spawn(*t);
    }
    
 private:
@@ -588,7 +595,7 @@ private:
    }
    bool readNextEventForStream(unsigned int iStreamIndex) {
      auto lumiStatus = m_streamSchedules[iStreamIndex].activeLumiProcessingStatus();
-      if(lumiStatus->finishedProcessingEvents_.load()) {
+      if(lumiStatus->stopProcessingEvents_) {
          return false;
       }
       if(not lumiStatus->seenNextItemType_) {
@@ -597,13 +604,13 @@ private:
          // again since it would move to the next transition
          Transition itemType = nextTransitionType();
          if (Transition::IsEvent !=itemType) {
-           lumiStatus->finishedProcessingEvents_.store(true);
+           lumiStatus->stopProcessingEvents_ = true;
            
            if(Transition::IsFile !=itemType) {
               //If this is a lumi and we have not started processing any events, 
               // this might be just a merger of our current lumi
               if(Transition::IsLumi != itemType or lumiStatus->startedProcessingEvents_ == true) {
-                 lumiStatus->lumiEnding_.store(true);
+                 lumiStatus->lumiEnding_ =true;
               }
            }
            
@@ -712,7 +719,7 @@ struct LumisInRunProcessor {
                auto eventLoopWaitTask = edm::make_empty_waiting_task();
                eventLoopWaitTask->increment_ref_count();
       
-               iEP.readAndProcessEventsAsync(edm::WaitingTaskHolder{eventLoopWaitTask.get()});
+               iEP.continueLumiAsync(edm::WaitingTaskHolder{eventLoopWaitTask.get()});
       
                eventLoopWaitTask->wait_for_all();
                //multiple lumis could have been processed 
@@ -1028,7 +1035,7 @@ void test_config(const char* iDescription, std::vector<std::pair<Transition,Sync
 }
 
 void runTests(int nLumis) {
-   
+
   test_config( "Simple",
    {{Transition::IsFile,{0,0,0}}, 
     {Transition::IsRun,{1,0,0}}, 
@@ -1154,7 +1161,7 @@ void runTests(int nLumis) {
     {Transition::IsEvent,{1,2,2}},
     {Transition::IsEvent,{1,2,3}},
     {Transition::IsStop,{0,0,0}}}, 2, nLumis);
-  
+
   //Files with delayed merge of runs
   test_config( "Delayed run merge",
    {{Transition::IsFile,{0,0,0}}, 
