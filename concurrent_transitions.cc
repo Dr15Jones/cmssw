@@ -155,15 +155,19 @@ private:
 class EventProcessor;
 
 struct LumiProcessingStatus {
+   LumiProcessingStatus( EventProcessor* iEP, unsigned int iNStreams):
+   eventProcessor_(iEP), nStreamsStillProcessingLumi_{iNStreams} {}
+   LumiProcessingStatus() = delete;
+
    std::shared_ptr<LumiPrincipal> lumiPrincipal_;
    edm::LimitedTaskQueue::Resumer globalLumiQueueResumer_;
    EventProcessor* eventProcessor_ = nullptr;
    std::atomic<unsigned int> nStreamsStillProcessingLumi_{0}; //read/write as streams finish lumi so must be atomic
    bool stopProcessingEvents_{false}; //read/write in m_sourceQueue OR from main thread when no tasks running
    bool lumiEnding_{false}; //read/write in m_sourceQueue OR from main thread when no tasks running
-   bool seenNextItemType_{false};
+   bool continuingLumi_{false}; //read/write in m_sourceQueue OR from main thread when no tasks running
    bool startedProcessingEvents_{false}; //read/write in m_sourceQueue OR from main thread when no tasks running
-   bool startedNextLumi_{false};
+   bool startedNextLumi_{false}; //read/write in m_sourceQueue
 };
 void globalEndLumiAsync(edm::WaitingTaskHolder iTask, std::shared_ptr<LumiProcessingStatus> iLumiStatus);
 
@@ -425,10 +429,8 @@ public:
        std::cout <<"beginLumi "<< iSync.m_run<<" "<<iSync.m_lumi<<std::endl;
      }
       
-     auto status= std::make_shared<LumiProcessingStatus>() ;
-     status->eventProcessor_ = this;
-     status->seenNextItemType_ = false;
-     status->nStreamsStillProcessingLumi_ = m_nStreams;
+     auto status= std::make_shared<LumiProcessingStatus>(this, m_nStreams) ;
+
      auto lumiWork = [this,iHolder, iSync, status] (edm::LimitedTaskQueue::Resumer iResumer){
        status->globalLumiQueueResumer_ = std::move(iResumer);
        m_sourceQueue.push([this,iHolder,iSync,status]() {
@@ -438,8 +440,6 @@ public:
          lastReadLumiSync_ = iSync;
 
          //Want to start processing events within a stream once beginStream finishes
-         //we need to read from the source the next transition
-
          auto streamBeginLumiTask = edm::make_waiting_task(tbb::task::allocate_root(),
          [this,iHolder,status]( std::exception_ptr const* iPtr) {
            for(unsigned int i=0; i<m_nStreams;++i) {
@@ -521,17 +521,13 @@ public:
    Transition continueLumiAsync(edm::WaitingTaskHolder iHolder) {
      {
        std::lock_guard<std::mutex> g{s_logMutex};
-       std::cout <<"read and process events"<<std::endl;
+       std::cout <<"continue Lumi"<<std::endl;
      }
       
-     //To wait, the ref count has to b 1+#streams
-     auto eventLoopWaitTask = edm::make_empty_waiting_task();
-     eventLoopWaitTask->increment_ref_count();
-
      {
        //all streams are sharing the same status at the moment
        auto status = m_streamSchedules[0].activeLumiProcessingStatus();
-       status->seenNextItemType_ = true;
+       status->continuingLumi_ = true;
        status->startedProcessingEvents_ = true;
        status->stopProcessingEvents_ = false;
      }
@@ -560,7 +556,8 @@ private:
    void handleNextEventForStreamAsync(edm::WaitingTaskHolder iTask, unsigned int iStreamIndex, EventPrincipal& iEP) {
       m_sourceQueue.push([this,iTask,iStreamIndex,&iEP]() mutable {
         try {
-          if(readNextEventForStream(iStreamIndex) ) {
+          auto status = m_streamSchedules[iStreamIndex].activeLumiProcessingStatus();
+          if(readNextEventForStream(iStreamIndex,*status) ) {
             iEP.setSync(m_source.sync());
             auto recursionTask = edm::make_waiting_task(tbb::task::allocate_root(), 
                           [this,iTask,iStreamIndex, &iEP](std::exception_ptr const* iPtr) mutable {
@@ -576,7 +573,6 @@ private:
             processEventAsync( edm::WaitingTaskHolder(recursionTask), iStreamIndex,iEP);
           } else {
             //the stream will stop now
-            auto status = m_streamSchedules[iStreamIndex].activeLumiProcessingStatus();
             if(status->lumiEnding_) {
               if(lastTransitionType() == Transition::IsLumi and not status->startedNextLumi_) {
                 status->startedNextLumi_ = true;
@@ -593,34 +589,32 @@ private:
       });
       
    }
-   bool readNextEventForStream(unsigned int iStreamIndex) {
-     auto lumiStatus = m_streamSchedules[iStreamIndex].activeLumiProcessingStatus();
-      if(lumiStatus->stopProcessingEvents_) {
+   bool readNextEventForStream(unsigned int iStreamIndex, LumiProcessingStatus& lumiStatus) {
+      if(lumiStatus.stopProcessingEvents_) {
          return false;
       }
-      if(not lumiStatus->seenNextItemType_) {
-         //The state machine already called input_->nextItemType
-         // and found an event. We can't call input_->nextItemType
-         // again since it would move to the next transition
+      if(not lumiStatus.continuingLumi_) {
          Transition itemType = nextTransitionType();
          if (Transition::IsEvent !=itemType) {
-           lumiStatus->stopProcessingEvents_ = true;
+           lumiStatus.stopProcessingEvents_ = true;
            
            if(Transition::IsFile !=itemType) {
               //If this is a lumi and we have not started processing any events, 
               // this might be just a merger of our current lumi
-              if(Transition::IsLumi != itemType or lumiStatus->startedProcessingEvents_ == true) {
-                 lumiStatus->lumiEnding_ =true;
+              if(Transition::IsLumi != itemType or lumiStatus.startedProcessingEvents_ == true) {
+                 lumiStatus.lumiEnding_ =true;
               }
            }
-           
            //std::cerr<<"next item type "<<itemType<<"\n";
            return false;
          } else {
-           lumiStatus->startedProcessingEvents_ = true;
+           lumiStatus.startedProcessingEvents_ = true;
          }
       } else {
-         lumiStatus->seenNextItemType_=false;
+         //The state machine already called input_->nextItemType
+         // and found an event. We can't call input_->nextItemType
+         // again since it would move to the next transition
+         lumiStatus.continuingLumi_=false;
       }
       return true;
    }
