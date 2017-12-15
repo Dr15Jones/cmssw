@@ -495,25 +495,29 @@ public:
       m_globalSchedule.processOneEndLumiAsync(edm::WaitingTaskHolder(t),lp);
    }
    
-   void endLumi(Sync const& iSync) {
-      {
+   void endUnfinishedLumi() {
+
+     auto status = m_streamSchedules[0].activeLumiProcessingStatus();
+     //Existence of a status means the streams did not end the lumi
+     if( status ){
+       {
          std::lock_guard<std::mutex> g{s_logMutex};
-         std::cout <<"endLumi "<< iSync.m_run<<" "<<iSync.m_lumi<<std::endl;
-      }
-      
-      auto globalWaitTask = edm::make_empty_waiting_task();
-      globalWaitTask->increment_ref_count();
-      
-      { 
+         std::cout <<"endUnfinishedLumi "<< status->lumiPrincipal_->sync().m_run<<" "<<status->lumiPrincipal_->sync().m_lumi<<std::endl;
+       }
+       
+       status.reset();
+       auto globalWaitTask = edm::make_empty_waiting_task();
+       globalWaitTask->increment_ref_count();
+       {
+         //Need new scope so endGlobalTaskH is destroyed berfore wait_for_all
          edm::WaitingTaskHolder endGlobalTaskH{globalWaitTask.get()};
-         auto status = m_streamSchedules[0].activeLumiProcessingStatus();
-         if( status and not status->lumiEnding_){
-            for(unsigned int i=0; i<m_nStreams;++i) {
-               m_streamSchedules[i].processOneEndLumiAsync(endGlobalTaskH);
-            }
+
+         for(unsigned int i=0; i<m_nStreams;++i) {
+           m_streamSchedules[i].processOneEndLumiAsync(endGlobalTaskH);
          }
-      }
-      globalWaitTask->wait_for_all();
+       }
+       globalWaitTask->wait_for_all();
+     }
    }
    void writeLumi(Sync const&) {}
    void deleteLumiFromCache(Sync const&) {}
@@ -685,7 +689,7 @@ struct LumiResources {
    m_lumi(iLumi) {}
    
    ~LumiResources() noexcept {
-      m_run->m_ep.endLumi(lumiID());
+      m_run->m_ep.endUnfinishedLumi();
    }
    
    Sync lumiID() const { return {m_run->m_run, m_lumi, 0}; }
