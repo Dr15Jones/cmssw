@@ -162,8 +162,8 @@ struct LumiProcessingStatus {
    std::atomic<bool> finishedProcessingEvents_{false};
    std::atomic<bool> lumiEnding_{false};
    bool seenNextItemType_=false;
-   bool startedProcessingEvents_{false};
-	 bool startedNextLumi_{false};
+   bool startedProcessingEvents_{false}; //read/write in m_sourceQueue OR from main thread when no tasks running
+   bool startedNextLumi_{false};
 };
 void globalEndLumiAsync(edm::WaitingTaskHolder iTask, std::shared_ptr<LumiProcessingStatus> iLumiStatus);
 
@@ -177,7 +177,7 @@ class StreamSchedule {
      void processOneBeginLumiAsync(edm::WaitingTaskHolder iTask,  std::shared_ptr<LumiProcessingStatus> iLumi) {
         m_queue->push([this,iTask,iLumi] () {
            m_queue->pause();
-		   m_lumiStatus = std::move(iLumi);
+		       m_lumiStatus = std::move(iLumi);
            dummyWorkAsync(std::move(iTask),Phase::kBeginLumi,iLumi->lumiPrincipal_->sync());
            });
      }
@@ -192,15 +192,15 @@ class StreamSchedule {
               ptr = *iPtr;
            }
            //NOTE: what order do I want the spawns to be done?
-		   auto status = m_lumiStatus;
+           auto status = m_lumiStatus;
            m_queue->resume();
 		   
-		   //Are we the last one?
-		   auto count = --(status->nStreamsStillProcessingLumi_);
-		   if( 0 == count) {
-			   globalEndLumiAsync(iTask, std::move(status));
-		   }
-		   m_lumiStatus.reset();
+		       //Are we the last one?
+		       auto count = --(status->nStreamsStillProcessingLumi_);
+		       if( 0 == count) {
+			       globalEndLumiAsync(iTask, std::move(status));
+		       }
+		       m_lumiStatus.reset();
            iTask.doneWaiting(ptr);
         });
         dummyWorkAsync(edm::WaitingTaskHolder{t},Phase::kEndLumi,m_lumiStatus->lumiPrincipal_->sync());
@@ -458,7 +458,7 @@ public:
      } else {
        //need to move to next IOV
        m_iovQueue.push([lumiWork,this]() {
-         ++m_nextIOV;
+         ++m_nextIOV; //Needs to be updated in iovQueue to mimic updating IOVs once all lumis using old IOVs finished
          m_iovQueue.pause();
          m_lumiQueue.pushAndPause( std::move(lumiWork) );
        });
@@ -556,8 +556,7 @@ private:
           if(readNextEventForStream(iStreamIndex) ) {
             iEP.setSync(m_source.sync());
             auto recursionTask = edm::make_waiting_task(tbb::task::allocate_root(), 
-            [this,iTask,iStreamIndex,
-            &iEP](std::exception_ptr const* iPtr) mutable {
+                          [this,iTask,iStreamIndex, &iEP](std::exception_ptr const* iPtr) mutable {
               if(iPtr) {
                 iTask.doneWaiting(*iPtr);
                 //the stream will stop now
@@ -642,7 +641,7 @@ private:
    Sync lastReadLumiSync_ = {0,0,0};
    std::vector<StreamSchedule> m_streamSchedules;
    std::vector<Sync> m_iovs;
-   unsigned int m_nextIOV=0;
+   unsigned int m_nextIOV=0; //Only read/written from main thread or m_sourceQueue task
    int m_nStreams;
    //std::atomic<Transition> nextItemTypeFromProcessingEvents_;
    
