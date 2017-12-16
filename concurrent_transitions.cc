@@ -164,7 +164,7 @@ struct LumiProcessingStatus {
    EventProcessor* eventProcessor_ = nullptr;
    std::atomic<unsigned int> nStreamsStillProcessingLumi_{0}; //read/write as streams finish lumi so must be atomic
    bool stopProcessingEvents_{false}; //read/write in m_sourceQueue OR from main thread when no tasks running
-   bool lumiEnding_{false}; //read/write in m_sourceQueue OR from main thread when no tasks running
+   bool lumiEnding_{false}; //read/write in m_sourceQueue NOTE: This is a useful cache instead of recalculating each call
    bool continuingLumi_{false}; //read/write in m_sourceQueue OR from main thread when no tasks running
    bool startedProcessingEvents_{false}; //read/write in m_sourceQueue OR from main thread when no tasks running
    bool startedNextLumi_{false}; //read/write in m_sourceQueue
@@ -291,10 +291,10 @@ class GlobalSchedule {
            using namespace std::chrono_literals;
            iFunc();
            std::this_thread::sleep_for(10ms);
-					 {
-						 std::lock_guard<std::mutex> g{s_logMutex};
-           	std::cout <<"	    Global Done "<<std::endl;
-					}
+           {
+             std::lock_guard<std::mutex> g{s_logMutex};
+             std::cout <<"	    Global Done "<<std::endl;
+           }
            iTask.doneWaiting(std::exception_ptr{});
            }));
      }
@@ -506,17 +506,17 @@ public:
        }
        
        status.reset();
-       auto globalWaitTask = edm::make_empty_waiting_task();
-       globalWaitTask->increment_ref_count();
+       auto waitTask = edm::make_empty_waiting_task();
+       waitTask->increment_ref_count();
        {
-         //Need new scope so endGlobalTaskH is destroyed berfore wait_for_all
-         edm::WaitingTaskHolder endGlobalTaskH{globalWaitTask.get()};
+         //Need new scope so taskH is destroyed berfore wait_for_all
+         edm::WaitingTaskHolder taskH{waitTask.get()};
 
          for(unsigned int i=0; i<m_nStreams;++i) {
-           m_streamSchedules[i].processOneEndLumiAsync(endGlobalTaskH);
+           m_streamSchedules[i].processOneEndLumiAsync(taskH);
          }
        }
-       globalWaitTask->wait_for_all();
+       waitTask->wait_for_all();
      }
    }
    void writeLumi(Sync const&) {}
@@ -540,8 +540,7 @@ public:
      for(; iStreamIndex<m_nStreams-1; ++iStreamIndex) {
        tbb::task::enqueue( *edm::make_waiting_task(tbb::task::allocate_root(),[this,iStreamIndex,h=iHolder](std::exception_ptr const*){
          auto& e = principalCache_.eventPrincipal(iStreamIndex);
-
-         e.setLumi(m_streamSchedules[iStreamIndex].activeLumiProcessingStatus()->lumiPrincipal_);
+         //EventPrincipal was already setup during beginLumiAsync call
          handleNextEventForStreamAsync(h,iStreamIndex, e);
        }) );
      }
@@ -549,7 +548,6 @@ public:
      // before the call to spawn_and_wait_for_all
      auto t = edm::make_waiting_task(tbb::task::allocate_root(),[this,iStreamIndex,h=iHolder](std::exception_ptr const*){
        auto& e = principalCache_.eventPrincipal(iStreamIndex);
-       e.setLumi(m_streamSchedules[iStreamIndex].activeLumiProcessingStatus()->lumiPrincipal_);
        handleNextEventForStreamAsync(h,iStreamIndex, e);
      });
      tbb::task::spawn(*t);
