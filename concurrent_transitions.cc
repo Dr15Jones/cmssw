@@ -166,7 +166,6 @@ struct LumiProcessingStatus {
    bool stopProcessingEvents_{false}; //read/write in m_sourceQueue OR from main thread when no tasks running
    bool lumiEnding_{false}; //read/write in m_sourceQueue NOTE: This is a useful cache instead of recalculating each call
    bool continuingLumi_{false}; //read/write in m_sourceQueue OR from main thread when no tasks running
-   bool startedProcessingEvents_{false}; //read/write in m_sourceQueue OR from main thread when no tasks running
    bool startedNextLumi_{false}; //read/write in m_sourceQueue
 };
 void globalEndLumiAsync(edm::WaitingTaskHolder iTask, std::shared_ptr<LumiProcessingStatus> iLumiStatus);
@@ -532,7 +531,6 @@ public:
        //all streams are sharing the same status at the moment
        auto status = m_streamSchedules[0].activeLumiProcessingStatus();
        status->continuingLumi_ = true;
-       status->startedProcessingEvents_ = true;
        status->stopProcessingEvents_ = false;
      }
 
@@ -597,21 +595,23 @@ private:
       }
       if(not lumiStatus.continuingLumi_) {
          Transition itemType = nextTransitionType();
+         if (Transition::IsLumi == itemType) {
+           Sync s;
+           while(itemType == Transition::IsLumi and (lumiStatus.lumiPrincipal_->sync() == sync())) {
+             //this is a merge
+             readAndMergeLumi();
+             itemType=nextTransitionType(); 
+           }
+         }
          if (Transition::IsEvent !=itemType) {
            lumiStatus.stopProcessingEvents_ = true;
            
            if(Transition::IsFile !=itemType) {
-              //If this is a lumi and we have not started processing any events, 
-              // this might be just a merger of our current lumi
-              if(Transition::IsLumi != itemType or lumiStatus.startedProcessingEvents_ == true) {
-                 lumiStatus.lumiEnding_ =true;
-              }
+              lumiStatus.lumiEnding_ =true;
            }
            //std::cerr<<"next item type "<<itemType<<"\n";
            return false;
-         } else {
-           lumiStatus.startedProcessingEvents_ = true;
-         }
+         } 
       } else {
          //The state machine already called input_->nextItemType
          // and found an event. We can't call input_->nextItemType
