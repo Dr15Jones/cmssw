@@ -422,6 +422,16 @@ public:
       lumiP->setRun(std::move(runP));
    }
    
+   //Either starts a new lumi or contiues one already in progress
+   void processLumiAsync(edm::WaitingTaskHolder iHolder) {
+     auto status = m_streamSchedules[0].activeLumiProcessingStatus();
+     if(status) {
+       continueLumiAsync(iHolder);
+     } else {
+       beginLumiAsync(sync(), iHolder);
+     }
+   }
+   
    void beginLumiAsync(Sync const& iSync, edm::WaitingTaskHolder iHolder) {
      {
        std::lock_guard<std::mutex> g{s_logMutex};
@@ -590,35 +600,28 @@ private:
       
    }
    bool readNextEventForStream(unsigned int iStreamIndex, LumiProcessingStatus& lumiStatus) {
-      if(lumiStatus.stopProcessingEvents_) {
-         return false;
-      }
-      if(not lumiStatus.continuingLumi_) {
-         Transition itemType = nextTransitionType();
-         if (Transition::IsLumi == itemType) {
-           Sync s;
-           while(itemType == Transition::IsLumi and (lumiStatus.lumiPrincipal_->sync() == sync())) {
-             //this is a merge
-             readAndMergeLumi();
-             itemType=nextTransitionType(); 
-           }
-         }
-         if (Transition::IsEvent !=itemType) {
-           lumiStatus.stopProcessingEvents_ = true;
-           
-           if(Transition::IsFile !=itemType) {
-              lumiStatus.lumiEnding_ =true;
-           }
-           //std::cerr<<"next item type "<<itemType<<"\n";
-           return false;
-         } 
-      } else {
-         //The state machine already called input_->nextItemType
-         // and found an event. We can't call input_->nextItemType
-         // again since it would move to the next transition
-         lumiStatus.continuingLumi_=false;
-      }
-      return true;
+     if(lumiStatus.stopProcessingEvents_) {
+       return false;
+     }
+     Transition itemType = lumiStatus.continuingLumi_ ? Transition::IsLumi : nextTransitionType();
+     if (Transition::IsLumi == itemType) {
+       lumiStatus.continuingLumi_ = false;
+       while(itemType == Transition::IsLumi and (lumiStatus.lumiPrincipal_->sync() == sync())) {
+         //this is a merge
+         readAndMergeLumi();
+         itemType=nextTransitionType(); 
+       }
+     }
+     if (Transition::IsEvent !=itemType) {
+       lumiStatus.stopProcessingEvents_ = true;
+         
+       if(Transition::IsFile !=itemType) {
+         lumiStatus.lumiEnding_ =true;
+       }
+       //std::cerr<<"next item type "<<itemType<<"\n";
+       return false;
+     } 
+     return true;
    }
    
    void processEventAsync(edm::WaitingTaskHolder iHolder,
@@ -682,52 +685,20 @@ struct RunResources {
 };
 
 struct LumiResources {
-   LumiResources(std::shared_ptr<RunResources> run, int iLumi) noexcept :
-   m_run(std::move(run)),
-   m_lumi(iLumi) {}
+   LumiResources(std::shared_ptr<RunResources> run) noexcept :
+   m_run(std::move(run)) {}
    
    ~LumiResources() noexcept {
       m_run->m_ep.endUnfinishedLumi();
    }
    
-   Sync lumiID() const { return {m_run->m_run, m_lumi, 0}; }
-   void setLumiID(int iID) { m_lumi = iID; }
-   
    std::shared_ptr<RunResources> m_run;
-   int m_lumi;
 };
 
 
 struct LumisInRunProcessor {
    Transition processLumis(EventProcessor& iEP, std::shared_ptr<RunResources> iRun) {
-      bool finished = false;
-      auto nextTrans = Transition::IsLumi;
-      do {
-         switch(nextTrans) {
-            case Transition::IsLumi:
-            {
-               nextTrans = processLumi(iEP, iRun);
-               break;
-            }
-            case Transition::IsEvent:
-            {
-               //To wait, the ref count has to b 1+#streams
-               auto eventLoopWaitTask = edm::make_empty_waiting_task();
-               eventLoopWaitTask->increment_ref_count();
-      
-               iEP.continueLumiAsync(edm::WaitingTaskHolder{eventLoopWaitTask.get()});
-      
-               eventLoopWaitTask->wait_for_all();
-               //multiple lumis could have been processed 
-               m_currentLumi->setLumiID(iEP.lastReadLumiSync().m_lumi );
-               nextTrans = iEP.lastTransitionType();
-               break;
-            }
-            default:
-            finished =true;
-         }
-      }while(not finished);
-      return nextTrans;
+      return processLumi(iEP,std::move(iRun));
    }
    
    void normalEnd() {
@@ -735,24 +706,15 @@ struct LumisInRunProcessor {
    }
    
    Transition processLumi(EventProcessor& iEP, std::shared_ptr<RunResources> iRun) {
-      auto lumiID =iEP.sync();
-      if( (not m_currentLumi) or 
-          m_currentLumi->m_run.get() != iRun.get() or 
-          m_currentLumi->lumiID() != lumiID)
-      {
-         //switch to different lumi
-         m_currentLumi = std::make_shared<LumiResources>(std::move(iRun), lumiID.m_lumi );
-         auto lumiWaitTask = edm::make_empty_waiting_task();
-         lumiWaitTask->increment_ref_count();
+     if(not m_currentLumi or iRun.get() != m_currentLumi->m_run.get()) {
+       m_currentLumi = std::make_shared<LumiResources>(std::move(iRun));
+     }
+     auto lumiWaitTask = edm::make_empty_waiting_task();
+     lumiWaitTask->increment_ref_count();
          
-         iEP.beginLumiAsync(lumiID, edm::WaitingTaskHolder{lumiWaitTask.get()});
-         lumiWaitTask->wait_for_all();
-         //multiple lumis could have been processed 
-         m_currentLumi->setLumiID(iEP.lastReadLumiSync().m_lumi );
-         return iEP.lastTransitionType();
-      } 
-      iEP.readAndMergeLumi();      
-      return iEP.nextTransitionType(); 
+     iEP.processLumiAsync(edm::WaitingTaskHolder{lumiWaitTask.get()});
+     lumiWaitTask->wait_for_all();
+     return iEP.lastTransitionType();
    }
    
    std::shared_ptr<LumiResources> m_currentLumi;
@@ -1072,6 +1034,14 @@ void runTests(int nLumis) {
     {Transition::IsEvent,{1,2,3}},
     {Transition::IsEvent,{1,2,4}},
     {Transition::IsStop,{0,0,0}}}, 2, nLumis);
+  test_config( "Empty Lumi at end",
+   {{Transition::IsFile,{0,0,0}}, 
+    {Transition::IsRun,{1,0,0}}, 
+    {Transition::IsLumi,{1,1,0}}, 
+    {Transition::IsEvent,{1,1,3}},
+    {Transition::IsEvent,{1,1,4}},
+    {Transition::IsLumi,{1,2,0}}, 
+    {Transition::IsStop,{0,0,0}}}, 2, nLumis);
 
   //multiple different runs
   test_config( "Multiple different runs",
@@ -1095,6 +1065,18 @@ void runTests(int nLumis) {
     {Transition::IsEvent,{2,1,1}},
     {Transition::IsEvent,{2,1,2}},
     {Transition::IsStop,{0,0,0}}}, 2, nLumis);
+  test_config( "Empty run at end",
+    {{Transition::IsFile,{0,0,0}}, 
+    {Transition::IsRun,{2,0,0}}, 
+    {Transition::IsLumi,{1,1,0}}, 
+    {Transition::IsEvent,{1,1,1}},
+    {Transition::IsEvent,{1,1,2}},
+    {Transition::IsRun,{2,0,0}}, 
+    {Transition::IsStop,{0,0,0}}}, 2, nLumis);
+  test_config( "Empty run no lumi",
+   {{Transition::IsFile,{0,0,0}}, 
+    {Transition::IsRun,{1,0,0}}, 
+    {Transition::IsStop,{0,0,0}}}, 2, nLumis);
 
   //empty file
   test_config( "Empty file",
@@ -1104,6 +1086,18 @@ void runTests(int nLumis) {
     {Transition::IsLumi,{1,1,0}}, 
     {Transition::IsEvent,{1,1,1}},
     {Transition::IsEvent,{1,1,2}}}, 2, nLumis);
+
+  test_config( "Empty file at end",
+   {{Transition::IsFile,{0,0,0}},
+    {Transition::IsRun,{1,0,0}}, 
+    {Transition::IsLumi,{1,1,0}}, 
+    {Transition::IsEvent,{1,1,1}},
+    {Transition::IsEvent,{1,1,2}},
+    {Transition::IsFile,{0,0,0}}}, 2, nLumis);
+
+  test_config( "Empty file no runs",
+   {{Transition::IsFile,{0,0,0}}, 
+    {Transition::IsStop,{0,0,0}}}, 2, nLumis);
 
   //merging run across file boundary
   test_config( "Merge run across files",
