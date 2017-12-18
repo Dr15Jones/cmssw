@@ -423,7 +423,7 @@ public:
    }
    
    //Either starts a new lumi or contiues one already in progress
-   void processLumiAsync(edm::WaitingTaskHolder iHolder) {
+   void processLumisAsync(edm::WaitingTaskHolder iHolder) {
      auto status = m_streamSchedules[0].activeLumiProcessingStatus();
      if(status) {
        continueLumiAsync(iHolder);
@@ -446,7 +446,6 @@ public:
          readLuminosityBlock(*status);  //needs to be called from the m_sourceQueue
          
          status->lumiPrincipal_->setSync(iSync);
-         lastReadLumiSync_ = iSync;
 
          //Want to start processing events within a stream once beginStream finishes
          auto streamBeginLumiTask = edm::make_waiting_task(tbb::task::allocate_root(),
@@ -480,8 +479,6 @@ public:
        });
      }
    }
-	 
-	 Sync lastReadLumiSync() const { return lastReadLumiSync_;}
 	 
    void readAndMergeLumi() {
       std::lock_guard<std::mutex> g{s_logMutex};
@@ -644,14 +641,10 @@ private:
    Source m_source;
    Transition m_lastSourceTransition;
    GlobalSchedule m_globalSchedule;
-   Sync lastReadLumiSync_ = {0,0,0};
    std::vector<StreamSchedule> m_streamSchedules;
    std::vector<Sync> m_iovs;
    unsigned int m_nextIOV=0; //Only read/written from main thread or m_sourceQueue task
    int m_nStreams;
-   //std::atomic<Transition> nextItemTypeFromProcessingEvents_;
-   
-   //bool m_firstEventInBlock=true;
 };
 
 void globalEndLumiAsync(edm::WaitingTaskHolder iTask, std::shared_ptr<LumiProcessingStatus> iLumiStatus) {
@@ -684,40 +677,32 @@ struct RunResources {
    const int m_run;
 };
 
-struct LumiResources {
-   LumiResources(std::shared_ptr<RunResources> run) noexcept :
-   m_run(std::move(run)) {}
-   
-   ~LumiResources() noexcept {
-      m_run->m_ep.endUnfinishedLumi();
-   }
-   
-   std::shared_ptr<RunResources> m_run;
-};
-
-
 struct LumisInRunProcessor {
+  ~LumisInRunProcessor() noexcept {
+    normalEnd();
+  }
+
    Transition processLumis(EventProcessor& iEP, std::shared_ptr<RunResources> iRun) {
-      return processLumi(iEP,std::move(iRun));
-   }
-   
-   void normalEnd() {
-     m_currentLumi.reset();
-   }
-   
-   Transition processLumi(EventProcessor& iEP, std::shared_ptr<RunResources> iRun) {
-     if(not m_currentLumi or iRun.get() != m_currentLumi->m_run.get()) {
-       m_currentLumi = std::make_shared<LumiResources>(std::move(iRun));
-     }
+     m_run = std::move(iRun);
+     m_makeSureLumiEnds = true;
      auto lumiWaitTask = edm::make_empty_waiting_task();
      lumiWaitTask->increment_ref_count();
-         
-     iEP.processLumiAsync(edm::WaitingTaskHolder{lumiWaitTask.get()});
+
+     iEP.processLumisAsync(edm::WaitingTaskHolder{lumiWaitTask.get()});
      lumiWaitTask->wait_for_all();
      return iEP.lastTransitionType();
    }
-   
-   std::shared_ptr<LumiResources> m_currentLumi;
+
+   void normalEnd() {
+     if(m_makeSureLumiEnds) {
+       m_makeSureLumiEnds =false;
+       m_run->m_ep.endUnfinishedLumi();
+     }
+     m_run.reset();
+   }
+
+   std::shared_ptr<RunResources> m_run;
+   bool m_makeSureLumiEnds = false;
 };
 
 class RunsInFileProcessor {
