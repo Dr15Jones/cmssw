@@ -29,6 +29,8 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 
 #include <iostream>
+#include <memory>
+
 
 namespace edm {
   class StreamID;
@@ -141,7 +143,7 @@ std::unique_ptr<OscarMTMasterThread> OscarMTProducer::initializeGlobalCache(cons
   StaticRandomEngineSetUnset random(nullptr);
   edm::LogVerbatim("SimG4CoreApplication") << "OscarMTProducer::initializeGlobalCache";
 
-  return std::unique_ptr<OscarMTMasterThread>(new OscarMTMasterThread(iConfig));
+  return std::make_unique<OscarMTMasterThread>(iConfig);
 }
 
 std::shared_ptr<int> OscarMTProducer::globalBeginRun(const edm::Run& iRun,
@@ -156,7 +158,7 @@ std::shared_ptr<int> OscarMTProducer::globalBeginRun(const edm::Run& iRun,
   return std::shared_ptr<int>();
 }
 
-void OscarMTProducer::globalEndRun(const edm::Run& iRun, const edm::EventSetup& iSetup, const RunContext* iContext) {
+void OscarMTProducer::globalEndRun(const edm::Run& iRun, const edm::EventSetup&, const RunContext* iContext) {
   edm::LogVerbatim("SimG4CoreApplication") << "OscarMTProducer::globalEndRun";
   iContext->global()->endRun();
 }
@@ -166,9 +168,9 @@ void OscarMTProducer::globalEndJob(OscarMTMasterThread* masterThread) {
   masterThread->stopThread();
 }
 
-void OscarMTProducer::beginRun(const edm::Run&, const edm::EventSetup& es) {
+void OscarMTProducer::beginRun(const edm::Run&, const edm::EventSetup& iSetup) {
   edm::LogVerbatim("SimG4CoreApplication") << "OscarMTProducer::beginRun";
-  m_runManagerWorker->initializeG4(m_masterThread->runManagerMasterPtr(), es);
+  m_runManagerWorker->initializeG4(m_masterThread->runManagerMasterPtr(), iSetup);
   edm::LogVerbatim("SimG4CoreApplication") << "OscarMTProducer::beginRun done";
 }
 
@@ -180,7 +182,7 @@ void OscarMTProducer::endRun(const edm::Run&, const edm::EventSetup&) {
   edm::LogVerbatim("SimG4CoreApplication") << "OscarMTProducer::endRun done";
 }
 
-void OscarMTProducer::produce(edm::Event& e, const edm::EventSetup& es) {
+void OscarMTProducer::produce(edm::Event& e, const edm::EventSetup& iSetup) {
   StaticRandomEngineSetUnset random(e.streamID());
   edm::LogVerbatim("SimG4CoreApplication") << "Produce event " << e.id() << " stream " << e.streamID();
   LogDebug("SimG4CoreApplication") << "Before event rand= " << G4UniformRand();
@@ -190,7 +192,7 @@ void OscarMTProducer::produce(edm::Event& e, const edm::EventSetup& es) {
 
   std::unique_ptr<G4SimEvent> evt;
   try {
-    evt = m_runManagerWorker->produce(e, es, globalCache()->runManagerMaster());
+    evt = m_runManagerWorker->produce(e, iSetup, globalCache()->runManagerMaster());
   } catch (const SimG4Exception& simg4ex) {
     edm::LogWarning("SimG4CoreApplication") << "SimG4Exception caght! " << simg4ex.what();
 
@@ -231,7 +233,7 @@ void OscarMTProducer::produce(edm::Event& e, const edm::EventSetup& es) {
 
   auto& producers = m_runManagerWorker->producers();
   for (auto& prod : producers) {
-    prod.get()->produce(e, es);
+    prod.get()->produce(e, iSetup);
   }
   edm::LogVerbatim("SimG4CoreApplication") << "Event is produced " << e.id() << " stream " << e.streamID();
   LogDebug("SimG4CoreApplication") << "End of event rand= " << G4UniformRand();
