@@ -38,9 +38,6 @@
 #include "SimG4Core/MagneticField/interface/FieldBuilder.h"
 #include "SimG4Core/MagneticField/interface/CMSFieldManager.h"
 
-#include "MagneticField/Engine/interface/MagneticField.h"
-#include "MagneticField/Records/interface/IdealMagneticFieldRecord.h"
-
 #include "SimDataFormats/GeneratorProducts/interface/HepMCProduct.h"
 
 #include "SimG4Core/Physics/interface/PhysicsList.h"
@@ -165,6 +162,9 @@ RunManagerMTWorker::RunManagerMTWorker(const edm::ParameterSet& iConfig, edm::Co
       m_p(iConfig),
       m_simEvent(nullptr),
       m_sVerbose(nullptr) {
+  if (m_pUseMagneticField) {
+    m_magFieldToken = iC.esConsumes<edm::Transition::BeginRun>();
+  }
   std::vector<edm::ParameterSet> watchers = iConfig.getParameter<std::vector<edm::ParameterSet> >("Watchers");
   m_hasWatchers = !watchers.empty();
   initializeTLS();
@@ -246,7 +246,7 @@ void RunManagerMTWorker::initializeTLS() {
   }
 }
 
-void RunManagerMTWorker::initializeG4(RunManagerMT* runManagerMaster, const edm::EventSetup& es) {
+void RunManagerMTWorker::initializeG4(RunManagerMT* runManagerMaster, const edm::EventSetup& iSetup) {
   G4Timer timer;
   timer.Start();
 
@@ -299,10 +299,8 @@ void RunManagerMTWorker::initializeG4(RunManagerMT* runManagerMaster, const edm:
   if (m_pUseMagneticField) {
     const GlobalPoint g(0., 0., 0.);
 
-    edm::ESHandle<MagneticField> pMF;
-    es.get<IdealMagneticFieldRecord>().get(pMF);
-
-    sim::FieldBuilder fieldBuilder(pMF.product(), m_pField);
+    auto const& mf = iSetup.getData(m_magFieldToken);
+    sim::FieldBuilder fieldBuilder(&mf, m_pField);
     CMSFieldManager* fieldManager = new CMSFieldManager();
     tM->SetFieldManager(fieldManager);
     fieldBuilder.build(fieldManager, tM->GetPropagatorInField());
@@ -320,7 +318,7 @@ void RunManagerMTWorker::initializeG4(RunManagerMT* runManagerMaster, const edm:
   // attach sensitive detector
   AttachSD attach;
   auto sensDets =
-      attach.create(es, runManagerMaster->catalog(), m_p, m_tls->trackManager.get(), *(m_tls->registry.get()));
+      attach.create(iSetup, runManagerMaster->catalog(), m_p, m_tls->trackManager.get(), *(m_tls->registry.get()));
 
   m_tls->sensTkDets.swap(sensDets.first);
   m_tls->sensCaloDets.swap(sensDets.second);
@@ -355,7 +353,7 @@ void RunManagerMTWorker::initializeG4(RunManagerMT* runManagerMaster, const edm:
         << "RunManagerMTWorker: Geant4 kernel initialization failed in thread " << thisID;
   }
   //tell all interesting parties that we are beginning the job
-  BeginOfJob aBeginOfJob(&es);
+  BeginOfJob aBeginOfJob(&iSetup);
   m_tls->registry->beginOfJobSignal_(&aBeginOfJob);
 
   G4int sv = m_p.getUntrackedParameter<int>("SteppingVerbosity", 0);
@@ -471,7 +469,7 @@ void RunManagerMTWorker::terminateRun() {
 }
 
 std::unique_ptr<G4SimEvent> RunManagerMTWorker::produce(const edm::Event& inpevt,
-                                                        const edm::EventSetup& es,
+                                                        const edm::EventSetup& iSetup,
                                                         RunManagerMT& runManagerMaster) {
   // The initialization and begin/end run is a bit convoluted due to
   // - Geant4 deals per-thread
@@ -486,7 +484,7 @@ std::unique_ptr<G4SimEvent> RunManagerMTWorker::produce(const edm::Event& inpevt
     edm::LogVerbatim("SimG4CoreApplication")
         << "RunManagerMTWorker::produce(): stream " << inpevt.streamID() << " thread " << getThreadIndex()
         << " Geant4 initialisation for this thread";
-    initializeG4(&runManagerMaster, es);
+    initializeG4(&runManagerMaster, iSetup);
     m_tls->threadInitialized = true;
   }
   // Initialize run

@@ -2,10 +2,14 @@
 #define SimG4Core_Application_RunManagerMTWorker_H
 
 #include "FWCore/Utilities/interface/EDGetToken.h"
+#include "FWCore/Utilities/interface/ESGetToken.h"
 #include "DataFormats/Provenance/interface/RunID.h"
 
 #include "SimG4Core/Generators/interface/Generator.h"
 #include "SimDataFormats/Forward/interface/LHCTransportLinkContainer.h"
+
+#include "MagneticField/Engine/interface/MagneticField.h"
+#include "MagneticField/Records/interface/IdealMagneticFieldRecord.h"
 
 #include <memory>
 #include <tbb/concurrent_vector.h>
@@ -84,6 +88,8 @@ private:
   edm::EDGetTokenT<edm::HepMCProduct> m_InToken;
   edm::EDGetTokenT<edm::HepMCProduct> m_LHCToken;
   edm::EDGetTokenT<edm::LHCTransportLinkContainer> m_theLHCTlinkToken;
+
+  edm::ESGetToken<MagneticField, IdealMagneticFieldRecord> m_magFieldToken;
 
   bool m_nonBeam;
   bool m_pUseMagneticField;
