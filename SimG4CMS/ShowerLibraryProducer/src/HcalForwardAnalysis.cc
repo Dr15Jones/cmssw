@@ -50,7 +50,7 @@ HcalForwardAnalysis::~HcalForwardAnalysis() {}
 // member functions
 //
 
-void HcalForwardAnalysis::produce(edm::Event& iEvent, const edm::EventSetup&) {
+void HcalForwardAnalysis::produce(edm::Event& iEvent) {
   //std::auto_ptr<HFShowerPhotonCollection> product(new HFShowerPhotonCollection);
   //edm::LogVerbatim("HcalForwardLib") << "HcalForwardAnalysis: =====> Filling  event";
   //fillEvent(*product);

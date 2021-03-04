@@ -33,7 +33,7 @@ public:
   EcalSimHitsValidProducer(const edm::ParameterSet &);
   ~EcalSimHitsValidProducer() override;
 
-  void produce(edm::Event &, const edm::EventSetup &) override;
+  void produce(edm::Event &) override;
 
 private:
   EcalSimHitsValidProducer(const EcalSimHitsValidProducer &) = delete;                   // stop default

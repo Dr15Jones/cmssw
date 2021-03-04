@@ -41,7 +41,7 @@ public:
   SimG4HcalValidation(const edm::ParameterSet &p);
   ~SimG4HcalValidation() override;
 
-  void produce(edm::Event &, const edm::EventSetup &) override;
+  void produce(edm::Event &) override;
 
 private:
   SimG4HcalValidation(const SimG4HcalValidation &) = delete;  // stop default

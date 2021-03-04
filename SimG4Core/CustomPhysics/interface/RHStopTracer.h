@@ -27,7 +27,7 @@ public:
   void update(const BeginOfEvent *) override;
   void update(const BeginOfTrack *) override;
   void update(const EndOfTrack *) override;
-  void produce(edm::Event &, const edm::EventSetup &) override;
+  void produce(edm::Event &) override;
 
 private:
   struct StopPoint {

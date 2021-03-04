@@ -39,7 +39,7 @@ HGCPassive::HGCPassive(const edm::ParameterSet& p) : topPV_(nullptr), topLV_(nul
 
 HGCPassive::~HGCPassive() {}
 
-void HGCPassive::produce(edm::Event& e, const edm::EventSetup&) {
+void HGCPassive::produce(edm::Event& e) {
   for (unsigned int k = 0; k < LVNames_.size(); ++k) {
     std::unique_ptr<edm::PassiveHitContainer> hgcPH(new edm::PassiveHitContainer);
     endOfEvent(*hgcPH, k);

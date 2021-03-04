@@ -56,7 +56,7 @@ public:
   SimG4HGCalValidation(const edm::ParameterSet& p);
   ~SimG4HGCalValidation() override;
 
-  void produce(edm::Event&, const edm::EventSetup&) override;
+  void produce(edm::Event&) override;
 
 private:
   SimG4HGCalValidation(const SimG4HGCalValidation&);  // stop default
@@ -123,7 +123,7 @@ SimG4HGCalValidation::~SimG4HGCalValidation() {
     delete number;
 }
 
-void SimG4HGCalValidation::produce(edm::Event& e, const edm::EventSetup&) {
+void SimG4HGCalValidation::produce(edm::Event& e) {
   std::unique_ptr<PHGCalValidInfo> productLayer(new PHGCalValidInfo);
   layerAnalysis(*productLayer);
   e.put(std::move(productLayer), labelLayer_);

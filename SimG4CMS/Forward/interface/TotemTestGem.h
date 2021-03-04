@@ -42,7 +42,7 @@ public:
   TotemTestGem(const edm::ParameterSet &p);
   ~TotemTestGem() override;
 
-  void produce(edm::Event &, const edm::EventSetup &) override;
+  void produce(edm::Event &) override;
 
 protected:
   // observer classes

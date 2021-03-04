@@ -59,7 +59,7 @@ public:
   CaloSteppingAction(const edm::ParameterSet &p);
   ~CaloSteppingAction() override;
 
-  void produce(edm::Event &, const edm::EventSetup &) override;
+  void produce(edm::Event &) override;
 
 private:
   void fillHits(edm::PCaloHitContainer &cc, int type);

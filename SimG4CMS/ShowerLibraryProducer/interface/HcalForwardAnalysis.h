@@ -50,7 +50,7 @@ public:
   HcalForwardAnalysis(const edm::ParameterSet& p);
   ~HcalForwardAnalysis() override;
 
-  void produce(edm::Event&, const edm::EventSetup&) override;
+  void produce(edm::Event&) override;
 
 private:
   HcalForwardAnalysis(const HcalForwardAnalysis&) = delete;  // stop default

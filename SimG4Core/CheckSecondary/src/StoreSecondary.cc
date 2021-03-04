@@ -33,7 +33,7 @@ StoreSecondary::StoreSecondary(const edm::ParameterSet &p) {
 
 StoreSecondary::~StoreSecondary() { delete treatSecondary; }
 
-void StoreSecondary::produce(edm::Event &e, const edm::EventSetup &) {
+void StoreSecondary::produce(edm::Event &e) {
   std::unique_ptr<std::vector<math::XYZTLorentzVector>> secMom(new std::vector<math::XYZTLorentzVector>);
   *secMom = secondaries;
   e.put(std::move(secMom), "SecondaryMomenta");

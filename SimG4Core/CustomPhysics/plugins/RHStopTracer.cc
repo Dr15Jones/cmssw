@@ -102,7 +102,7 @@ void RHStopTracer::update(const EndOfTrack* fTrack) {
   }
 }
 
-void RHStopTracer::produce(edm::Event& fEvent, const edm::EventSetup&) {
+void RHStopTracer::produce(edm::Event& fEvent) {
   LogDebug("SimG4CoreCustomPhysics") << "RHStopTracer::produce->";
 
   std::unique_ptr<std::vector<std::string> > names(new std::vector<std::string>);

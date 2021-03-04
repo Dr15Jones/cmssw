@@ -85,7 +85,7 @@ CaloSteppingAction::~CaloSteppingAction() {
                            << "selected entries : " << count_;
 }
 
-void CaloSteppingAction::produce(edm::Event& e, const edm::EventSetup&) {
+void CaloSteppingAction::produce(edm::Event& e) {
   for (int k = 0; k < CaloSteppingAction::nSD_; ++k) {
     saveHits(k);
     auto product = std::make_unique<edm::PCaloHitContainer>();

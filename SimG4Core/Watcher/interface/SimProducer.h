@@ -31,7 +31,6 @@
 
 namespace edm {
   class Event;
-  class EventSetup;
 }  // namespace edm
 
 // forward declarations
@@ -63,15 +62,18 @@ namespace simproducer {
 
 class SimProducer : public SimWatcher {
 public:
-  SimProducer() {}
+  SimProducer() = default;
   // virtual ~SimProducer();
+
+  SimProducer(const SimProducer &) = delete;                   // stop default
+  const SimProducer &operator=(const SimProducer &) = delete;  // stop default
 
   // ---------- const member functions ---------------------
 
   // ---------- static member functions --------------------
 
   // ---------- member functions ---------------------------
-  virtual void produce(edm::Event &, const edm::EventSetup &) = 0;
+  virtual void produce(edm::Event &) = 0;
 
   void registerProducts(edm::ProducesCollector producesCollector) {
     std::for_each(m_info.begin(),
@@ -93,10 +95,6 @@ protected:
   }
 
 private:
-  SimProducer(const SimProducer &) = delete;  // stop default
-
-  const SimProducer &operator=(const SimProducer &) = delete;  // stop default
-
   // ---------- member data --------------------------------
   std::vector<std::shared_ptr<simproducer::ProductInfoBase>> m_info;
 };

@@ -30,7 +30,7 @@ public:
   SimG4FluxProducer(const edm::ParameterSet &p);
   ~SimG4FluxProducer() override;
 
-  void produce(edm::Event &, const edm::EventSetup &) override;
+  void produce(edm::Event &) override;
 
 private:
   SimG4FluxProducer(const SimG4FluxProducer &) = delete;  // stop default

@@ -30,7 +30,7 @@ SimG4FluxProducer::SimG4FluxProducer(const edm::ParameterSet& p) : count_(0), in
 
 SimG4FluxProducer::~SimG4FluxProducer() {}
 
-void SimG4FluxProducer::produce(edm::Event& e, const edm::EventSetup&) {
+void SimG4FluxProducer::produce(edm::Event& e) {
   for (unsigned int k = 0; k < LVNames_.size(); ++k) {
     std::unique_ptr<ParticleFlux> pflux(new ParticleFlux);
     endOfEvent(*pflux, k);

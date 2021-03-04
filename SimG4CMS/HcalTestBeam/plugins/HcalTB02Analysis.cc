@@ -61,7 +61,7 @@ public:
   HcalTB02Analysis(const edm::ParameterSet& p);
   ~HcalTB02Analysis() override;
 
-  void produce(edm::Event&, const edm::EventSetup&) override;
+  void produce(edm::Event&) override;
 
 private:
   HcalTB02Analysis(const HcalTB02Analysis&) = delete;  // stop default
@@ -122,7 +122,7 @@ HcalTB02Analysis::~HcalTB02Analysis() { finish(); }
 // member functions
 //
 
-void HcalTB02Analysis::produce(edm::Event& e, const edm::EventSetup&) {
+void HcalTB02Analysis::produce(edm::Event& e) {
   std::unique_ptr<HcalTB02HistoClass> product(new HcalTB02HistoClass);
   fillEvent(*product);
   e.put(std::move(product));

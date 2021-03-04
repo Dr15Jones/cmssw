@@ -59,7 +59,7 @@ EcalSimHitsValidProducer::EcalSimHitsValidProducer(const edm::ParameterSet &iPSe
 
 EcalSimHitsValidProducer::~EcalSimHitsValidProducer() {}
 
-void EcalSimHitsValidProducer::produce(edm::Event &e, const edm::EventSetup &) {
+void EcalSimHitsValidProducer::produce(edm::Event &e) {
   std::unique_ptr<PEcalValidInfo> product(new PEcalValidInfo);
   fillEventInfo(*product);
   e.put(std::move(product), label);

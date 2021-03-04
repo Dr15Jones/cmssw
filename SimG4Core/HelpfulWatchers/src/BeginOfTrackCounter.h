@@ -44,7 +44,7 @@ namespace simwatcher {
     // ---------- static member functions --------------------
 
     // ---------- member functions ---------------------------
-    void produce(edm::Event &, const edm::EventSetup &) override;
+    void produce(edm::Event &) override;
 
   private:
     BeginOfTrackCounter(const BeginOfTrackCounter &) = delete;  // stop default

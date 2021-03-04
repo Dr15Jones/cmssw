@@ -24,7 +24,7 @@ public:
   StoreSecondary(const edm::ParameterSet &p);
   ~StoreSecondary() override;
 
-  void produce(edm::Event &, const edm::EventSetup &) override;
+  void produce(edm::Event &) override;
 
 private:
   StoreSecondary(const StoreSecondary &) = delete;  // stop default

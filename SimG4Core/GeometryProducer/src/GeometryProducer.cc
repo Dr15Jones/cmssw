@@ -163,7 +163,7 @@ void GeometryProducer::produce(edm::Event &e, const edm::EventSetup &es) {
   }
 
   for (Producers::iterator itProd = m_producers.begin(); itProd != m_producers.end(); ++itProd) {
-    (*itProd)->produce(e, es);
+    (*itProd)->produce(e);
   }
 }
 

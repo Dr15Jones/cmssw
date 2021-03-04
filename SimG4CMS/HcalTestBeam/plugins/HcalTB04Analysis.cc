@@ -41,8 +41,6 @@
 #include "DataFormats/Math/interface/Point3D.h"
 
 #include "FWCore/Framework/interface/Event.h"
-#include "FWCore/Framework/interface/EventSetup.h"
-#include "FWCore/Framework/interface/ESHandle.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/PluginManager/interface/ModuleDef.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
@@ -78,7 +76,7 @@ public:
   HcalTB04Analysis(const edm::ParameterSet& p);
   ~HcalTB04Analysis() override;
 
-  void produce(edm::Event&, const edm::EventSetup&) override;
+  void produce(edm::Event&) override;
 
 private:
   HcalTB04Analysis(const HcalTB04Analysis&) = delete;  // stop default
@@ -207,7 +205,7 @@ HcalTB04Analysis::~HcalTB04Analysis() {
 // member functions
 //
 
-void HcalTB04Analysis::produce(edm::Event& e, const edm::EventSetup&) {
+void HcalTB04Analysis::produce(edm::Event& e) {
   std::unique_ptr<PHcalTB04Info> product(new PHcalTB04Info);
   fillEvent(*product);
   e.put(std::move(product));

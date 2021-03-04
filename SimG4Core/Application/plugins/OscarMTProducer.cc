@@ -31,7 +31,6 @@
 #include <iostream>
 #include <memory>
 
-
 namespace edm {
   class StreamID;
 }
@@ -130,8 +129,8 @@ OscarMTProducer::OscarMTProducer(edm::ParameterSet const& p, const OscarMTMaster
   //register any products
   auto& producers = m_runManagerWorker->producers();
 
-  for (Producers::iterator itProd = producers.begin(); itProd != producers.end(); ++itProd) {
-    (*itProd)->registerProducts(producesCollector());
+  for (auto& prod : producers) {
+    prod->registerProducts(producesCollector());
   }
   edm::LogVerbatim("SimG4CoreApplication") << "OscarMTProducer is constructed";
 }
@@ -233,7 +232,7 @@ void OscarMTProducer::produce(edm::Event& e, const edm::EventSetup& iSetup) {
 
   auto& producers = m_runManagerWorker->producers();
   for (auto& prod : producers) {
-    prod.get()->produce(e, iSetup);
+    prod.get()->produce(e);
   }
   edm::LogVerbatim("SimG4CoreApplication") << "Event is produced " << e.id() << " stream " << e.streamID();
   LogDebug("SimG4CoreApplication") << "End of event rand= " << G4UniformRand();

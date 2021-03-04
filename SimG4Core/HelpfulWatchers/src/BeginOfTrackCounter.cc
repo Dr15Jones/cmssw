@@ -38,7 +38,7 @@ BeginOfTrackCounter::BeginOfTrackCounter(const edm::ParameterSet &iPSet)
 // member functions
 //
 
-void BeginOfTrackCounter::produce(edm::Event &e, const edm::EventSetup &) {
+void BeginOfTrackCounter::produce(edm::Event &e) {
   std::unique_ptr<int> product(new int(m_count));
   e.put(std::move(product), m_label);
   m_count = 0;

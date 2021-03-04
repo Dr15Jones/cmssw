@@ -48,7 +48,7 @@ private:
   void update(const G4Step*) override;
   void update(const EndOfTrack*) override;
   void update(const EndOfJob*) override;
-  void produce(edm::Event&, const edm::EventSetup&) override;
+  void produce(edm::Event&) override;
 
   bool isSelected(const G4VTouchable* touch);
   bool isSelectedFast(const G4TouchableHistory* touch);

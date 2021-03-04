@@ -42,7 +42,7 @@ public:
   HGCPassive(const edm::ParameterSet &p);
   ~HGCPassive() override;
 
-  void produce(edm::Event &, const edm::EventSetup &) override;
+  void produce(edm::Event &) override;
 
 private:
   HGCPassive(const HGCPassive &) = delete;  // stop default

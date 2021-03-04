@@ -86,7 +86,7 @@ SimG4HcalValidation::~SimG4HcalValidation() {
   }
 }
 
-void SimG4HcalValidation::produce(edm::Event &e, const edm::EventSetup &) {
+void SimG4HcalValidation::produce(edm::Event &e) {
   std::unique_ptr<PHcalValidInfoLayer> productLayer(new PHcalValidInfoLayer);
   layerAnalysis(*productLayer);
   e.put(std::move(productLayer), labelLayer);
