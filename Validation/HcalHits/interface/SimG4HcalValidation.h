@@ -43,6 +43,8 @@ public:
 
   void produce(edm::Event &) override;
 
+  static void consumes(const edm::ParameterSet &, sim::CAConsumesCollector &);
+
 private:
   SimG4HcalValidation(const SimG4HcalValidation &) = delete;  // stop default
   const SimG4HcalValidation &operator=(const SimG4HcalValidation &) = delete;

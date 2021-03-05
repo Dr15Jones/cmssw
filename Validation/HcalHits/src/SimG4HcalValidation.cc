@@ -8,6 +8,7 @@
 #include "SimG4Core/Notification/interface/BeginOfJob.h"
 #include "SimG4Core/Notification/interface/BeginOfRun.h"
 #include "SimG4Core/Notification/interface/EndOfEvent.h"
+#include "SimG4Core/Notification/interface/CAConsumesCollector.h"
 
 // to retreive hits
 #include "DataFormats/HcalDetId/interface/HcalSubdetector.h"
@@ -86,6 +87,10 @@ SimG4HcalValidation::~SimG4HcalValidation() {
   }
 }
 
+void SimG4HcalValidation::consumes(const edm::ParameterSet &, sim::CAConsumesCollector &iCC) {
+  iCC.consumes<HcalDDDSimConstants, HcalSimNumberingRecord>();
+}
+
 void SimG4HcalValidation::produce(edm::Event &e) {
   std::unique_ptr<PHcalValidInfoLayer> productLayer(new PHcalValidInfoLayer);
   layerAnalysis(*productLayer);
@@ -139,9 +144,7 @@ void SimG4HcalValidation::init() {
 
 void SimG4HcalValidation::update(const BeginOfJob *job) {
   // Numbering From DDD
-  edm::ESHandle<HcalDDDSimConstants> hdc;
-  (*job)()->get<HcalSimNumberingRecord>().get(hdc);
-  const HcalDDDSimConstants *hcons = hdc.product();
+  const HcalDDDSimConstants *hcons = &job->get<HcalDDDSimConstants, HcalSimNumberingRecord>();
   edm::LogVerbatim("ValidHcal") << "HcalTestAnalysis:: Initialise "
                                 << "HcalNumberingFromDDD";
   numberingFromDDD = new HcalNumberingFromDDD(hcons);
