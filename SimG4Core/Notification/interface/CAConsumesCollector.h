@@ -38,7 +38,7 @@ namespace sim {
     // ---------- member functions ---------------------
     template <typename DATA, typename REC>
     void consume(std::string_view iLabel = std::string_view()) {
-      access_->insertRetriever<REC, DATA>(iLabel, collector_->esConsumes<DATA, REC>(edm::ESInputTag("", iLabel)));
+      access_->insertRetriever<REC, DATA>(iLabel, collector_.esConsumes<DATA, REC>(edm::ESInputTag("", iLabel)));
     }
 
   private:
