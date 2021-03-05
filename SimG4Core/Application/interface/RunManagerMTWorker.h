@@ -45,7 +45,9 @@ class SimProducer;
 
 class RunManagerMTWorker {
 public:
-  explicit RunManagerMTWorker(const edm::ParameterSet& iConfig, edm::ConsumesCollector&& i);
+  explicit RunManagerMTWorker(const edm::ParameterSet& iConfig,
+                              edm::ConsumesCollector&& i,
+                              RunManagerMT* runManagerMaster);
   ~RunManagerMTWorker();
 
   void endRun();

@@ -173,7 +173,7 @@ RunManagerMTWorker::RunManagerMTWorker(const edm::ParameterSet& iConfig,
   initializeTLS();
 
   sim::CAConsumesCollector caCollector(iC, conditionsAccess_);
-  attachSD::consumes(runManagerMaster->catalog(), m_p, ca);
+  attachSD::consumes(runManagerMaster->catalog(), m_p, caCollector);
 
   for (auto& watcher : watchers) {
     std::unique_ptr<SimWatcherMakerBase> maker(
