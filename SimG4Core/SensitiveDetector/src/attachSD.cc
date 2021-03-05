@@ -38,3 +38,13 @@ std::pair<std::vector<SensitiveTkDetector*>, std::vector<SensitiveCaloDetector*>
   }
   return detList;
 }
+
+void attachSD::consumes(const SensitiveDetectorCatalog& clg, edm::ParameterSet const& p, sim::CAConsumesCollector& cc) {
+  for (auto& rname : clg.readoutNames()) {
+    std::string_view className = clg.className({rname.data(), rname.size()});
+    std::unique_ptr<SensitiveDetectorMakerBase> temp{
+        SensitiveDetectorPluginFactory::get()->create({className.data(), className.size()})};
+
+    temp->consumes({rname.data(), rname.size()}, p, cc);
+  }
+}

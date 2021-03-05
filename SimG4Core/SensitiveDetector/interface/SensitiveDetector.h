@@ -22,6 +22,10 @@ namespace edm {
   class EventSetup;
 }
 
+namespace sim {
+  class CAConsumesCollector;
+}
+
 class SensitiveDetector : public G4VSensitiveDetector {
 public:
   explicit SensitiveDetector(const std::string& iname,
@@ -42,6 +46,8 @@ public:
   inline const std::vector<std::string>& getNames() const { return m_namesOfSD; }
 
   inline bool isCaloSD() const { return m_isCalo; }
+
+  static void consumes(const std::string& iname, edm::ParameterSet const& p, sim::CAConsumesCollector&) {}
 
 protected:
   // generic geometry methods, all coordinates in mm

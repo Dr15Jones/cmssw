@@ -68,8 +68,9 @@ OscarMTProducer::OscarMTProducer(edm::ParameterSet const& p, const OscarMTMaster
   // Random number generation not allowed here
   StaticRandomEngineSetUnset random(nullptr);
 
-  m_runManagerWorker = std::make_unique<RunManagerMTWorker>(p, consumesCollector());
   m_masterThread = ms;
+  m_runManagerWorker =
+      std::make_unique<RunManagerMTWorker>(p, consumesCollector(), m_masterThread->runManagerMasterPtr());
 
   produces<edm::SimTrackContainer>().setBranchAlias("SimTracks");
   produces<edm::SimVertexContainer>().setBranchAlias("SimVertices");

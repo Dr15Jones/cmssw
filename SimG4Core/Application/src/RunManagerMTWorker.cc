@@ -143,7 +143,9 @@ struct RunManagerMTWorker::TLSData {
 // some reason, it is better to leak than cause a crash.
 thread_local RunManagerMTWorker::TLSData* RunManagerMTWorker::m_tls{nullptr};
 
-RunManagerMTWorker::RunManagerMTWorker(const edm::ParameterSet& iConfig, edm::ConsumesCollector&& iC)
+RunManagerMTWorker::RunManagerMTWorker(const edm::ParameterSet& iConfig,
+                                       edm::ConsumesCollector&& iC,
+                                       RunManagerMT* runManagerMaster)
     : m_generator(iConfig.getParameter<edm::ParameterSet>("Generator")),
       m_InToken(iC.consumes<edm::HepMCProduct>(
           iConfig.getParameter<edm::ParameterSet>("Generator").getParameter<edm::InputTag>("HepMCProductLabel"))),
@@ -171,6 +173,8 @@ RunManagerMTWorker::RunManagerMTWorker(const edm::ParameterSet& iConfig, edm::Co
   initializeTLS();
 
   sim::CAConsumesCollector caCollector(iC, conditionsAccess_);
+  attachSD::consumes(runManagerMaster->catalog(), m_p, ca);
+
   for (auto& watcher : watchers) {
     std::unique_ptr<SimWatcherMakerBase> maker(
         SimWatcherFactory::get()->create(watcher.getParameter<std::string>("type")));
@@ -331,7 +335,7 @@ void RunManagerMTWorker::initializeG4(RunManagerMT* runManagerMaster, const edm:
   // attach sensitive detector
   conditionsAccess_.set(iSetup);
   auto sensDets =
-    attachSD::create(iSetup, runManagerMaster->catalog(), m_p, m_tls->trackManager.get(), *(m_tls->registry.get()));
+      attachSD::create(iSetup, runManagerMaster->catalog(), m_p, m_tls->trackManager.get(), *(m_tls->registry.get()));
 
   m_tls->sensTkDets.swap(sensDets.first);
   m_tls->sensCaloDets.swap(sensDets.second);

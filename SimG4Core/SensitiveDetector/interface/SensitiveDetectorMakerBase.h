@@ -24,10 +24,16 @@ namespace edm {
   class ParameterSet;
 }  // namespace edm
 
+namespace sim {
+  class CAConsumesCollector;
+}
+
 class SensitiveDetectorMakerBase {
 public:
-  explicit SensitiveDetectorMakerBase(){};
-  virtual ~SensitiveDetectorMakerBase(){};
+  explicit SensitiveDetectorMakerBase() = default;
+  virtual ~SensitiveDetectorMakerBase() = default;
+  SensitiveDetectorMakerBase(const SensitiveDetectorMakerBase&) = delete;
+  const SensitiveDetectorMakerBase& operator=(const SensitiveDetectorMakerBase&) = delete;
 
   // ---------- const member functions ---------------------
   virtual SensitiveDetector* make(const std::string& iname,
@@ -37,9 +43,7 @@ public:
                                   const SimTrackManager* man,
                                   SimActivityRegistry& reg) const = 0;
 
-private:
-  SensitiveDetectorMakerBase(const SensitiveDetectorMakerBase&) = delete;
-  const SensitiveDetectorMakerBase& operator=(const SensitiveDetectorMakerBase&) = delete;
+  virtual void consumes(const std::string& iname, const edm::ParameterSet& p, sim::CAConsumesCollector&) const = 0;
 };
 
 #endif

@@ -8,6 +8,10 @@ namespace edm {
   class ParameterSet;
 }  // namespace edm
 
+namespace sim {
+  class CAConsumesCollector;
+}
+
 class SensitiveDetectorCatalog;
 class SensitiveTkDetector;
 class SensitiveCaloDetector;
@@ -22,6 +26,8 @@ namespace attachSD {
       edm::ParameterSet const &,
       const SimTrackManager *,
       SimActivityRegistry &reg);
-};
+
+  void consumes(const SensitiveDetectorCatalog &clg, edm::ParameterSet const &, sim::CAConsumesCollector &);
+};  // namespace attachSD
 
 #endif

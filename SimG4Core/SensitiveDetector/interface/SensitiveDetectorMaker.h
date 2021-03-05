@@ -38,11 +38,15 @@ public:
                           const SensitiveDetectorCatalog& clg,
                           const edm::ParameterSet& p,
                           const SimTrackManager* man,
-                          SimActivityRegistry& reg) const override {
+                          SimActivityRegistry& reg) const final {
     T* sd = new T(iname, es, clg, p, man);
     SimActivityRegistryEnroller::enroll(reg, sd);
     return static_cast<SensitiveDetector*>(sd);
   };
+
+  void consumes(const std::string& iname, const edm::ParameterSet& p, sim::CAConsumesCollector& iCC) const final {
+    T::consumes(iname, p, iCC);
+  }
 
 private:
   SensitiveDetectorMaker(const SensitiveDetectorMaker&) = delete;
