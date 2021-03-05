@@ -12,9 +12,9 @@ public:
   BeginOfJob(const edm::EventSetup* tJob, const sim::ConditionsAccess* iCA) : es_(tJob), ca_(iCA) {}
   const edm::EventSetup* operator()() const { return es_; }
 
-  template <typename REC, typename DATA>
+  template <typename DATA, typename REC>
   DATA const& get(std::string_view iLabel = std::string_view()) const {
-    return ca_->get<REC, DATA>(iLabel);
+    return ca_->get<DATA, REC>(iLabel);
   }
 
 private:

@@ -44,7 +44,7 @@ namespace sim {
       virtual void const* retrieve(edm::EventSetup const&) const = 0;
     };
 
-    template <typename REC, typename DATA>
+    template <typename DATA, typename REC>
     struct Retriever : public RetrieverBase {
       Retriever(edm::ESGetToken<DATA, REC> iToken) : token_(iToken) {}
 
@@ -58,9 +58,9 @@ namespace sim {
     const ConditionsAccess& operator=(const ConditionsAccess&) = delete;  // stop default
 
     // ---------- const member functions ---------------------
-    template <typename REC, typename DATA>
+    template <typename DATA, typename REC>
     DATA const& get(std::string_view iLabel = std::string_view()) const {
-      auto itFound = retrievers_.find(makeKey<REC, DATA>(iLabel));
+      auto itFound = retrievers_.find(makeKey<DATA, REC>(iLabel));
       if (itFound == retrievers_.end()) {
         throw cms::Exception("UnregisteredDataRequest")
             << "A sim plugin requested data that was not prefetched based on consumes request.";
@@ -68,9 +68,9 @@ namespace sim {
       return *static_cast<DATA const*>(itFound->second->retrieve(*eventSetup_));
     }
 
-    template <typename REC, typename DATA>
+    template <typename DATA, typename REC>
     bool hasRetriever(std::string_view iLabel) const {
-      auto key = makeKey<REC, DATA>(iLabel);
+      auto key = makeKey<DATA, REC>(iLabel);
       return retrievers_.end() != retrievers_.find(key);
     }
 
@@ -79,19 +79,19 @@ namespace sim {
     // ---------- member functions ---------------------------
     void set(edm::EventSetup const& iSetup) { eventSetup_ = &iSetup; }
 
-    template <typename REC, typename DATA>
+    template <typename DATA, typename REC>
     void insertRetriever(std::string_view iLabel, edm::ESGetToken<DATA, REC> iToken) {
-      if (not hasRetriever<REC, DATA>(iLabel)) {
+      if (not hasRetriever<DATA, REC>(iLabel)) {
         auto it = labels_.emplace(iLabel);
         std::string_view storedLabel = *it.first;
-        retrievers_.emplace(makeKey<REC, DATA>(storedLabel), std::make_unique<Retriever<REC, DATA>>(iToken));
+        retrievers_.emplace(makeKey<DATA, REC>(storedLabel), std::make_unique<Retriever<DATA, REC>>(iToken));
       }
     }
 
   private:
     // ---------- member data --------------------------------
     using Key = std::tuple<std::type_index, std::type_index, std::string_view>;
-    template <typename REC, typename DATA>
+    template <typename DATA, typename REC>
     Key makeKey(std::string_view iLabel) const {
       return Key(std::type_index(typeid(REC)), std::type_index(typeid(DATA)), iLabel);
     }

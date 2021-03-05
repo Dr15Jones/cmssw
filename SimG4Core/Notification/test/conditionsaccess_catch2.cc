@@ -37,57 +37,57 @@ TEST_CASE("Test sim::ConditionsAccess", "[ConditionsAccess]") {
   SECTION("Unlabeled data") {
     sim::ConditionsAccess ca;
 
-    REQUIRE(not ca.hasRetriever<DummyRec1, DummyData1>(""));
-    REQUIRE(not ca.hasRetriever<DummyRec2, DummyData1>(""));
-    ca.insertRetriever<DummyRec1, DummyData1>("", edm::ESGetToken<DummyData1, DummyRec1>());
+    REQUIRE(not ca.hasRetriever<DummyData1, DummyRec1>(""));
+    REQUIRE(not ca.hasRetriever<DummyData1, DummyRec2>(""));
+    ca.insertRetriever<DummyData1, DummyRec1>("", edm::ESGetToken<DummyData1, DummyRec1>());
 
-    REQUIRE(ca.hasRetriever<DummyRec1, DummyData1>(""));
-    REQUIRE(not ca.hasRetriever<DummyRec2, DummyData1>(""));
+    REQUIRE(ca.hasRetriever<DummyData1, DummyRec1>(""));
+    REQUIRE(not ca.hasRetriever<DummyData1, DummyRec2>(""));
   }
 
   SECTION("Labeled data") {
     sim::ConditionsAccess ca;
 
-    REQUIRE(not ca.hasRetriever<DummyRec1, DummyData1>("foo"));
-    REQUIRE(not ca.hasRetriever<DummyRec1, DummyData1>(""));
-    ca.insertRetriever<DummyRec1, DummyData1>("foo", edm::ESGetToken<DummyData1, DummyRec1>());
+    REQUIRE(not ca.hasRetriever<DummyData1, DummyRec1>("foo"));
+    REQUIRE(not ca.hasRetriever<DummyData1, DummyRec1>(""));
+    ca.insertRetriever<DummyData1, DummyRec1>("foo", edm::ESGetToken<DummyData1, DummyRec1>());
 
-    REQUIRE(ca.hasRetriever<DummyRec1, DummyData1>("foo"));
-    REQUIRE(not ca.hasRetriever<DummyRec1, DummyData1>(""));
-    REQUIRE(not ca.hasRetriever<DummyRec2, DummyData1>(""));
+    REQUIRE(ca.hasRetriever<DummyData1, DummyRec1>("foo"));
+    REQUIRE(not ca.hasRetriever<DummyData1, DummyRec1>(""));
+    REQUIRE(not ca.hasRetriever<DummyData1, DummyRec2>(""));
   }
 
   SECTION("Labeled and unlabeled data") {
     sim::ConditionsAccess ca;
 
-    REQUIRE(not ca.hasRetriever<DummyRec1, DummyData1>("foo"));
-    REQUIRE(not ca.hasRetriever<DummyRec1, DummyData1>(""));
-    ca.insertRetriever<DummyRec1, DummyData1>("foo", edm::ESGetToken<DummyData1, DummyRec1>());
+    REQUIRE(not ca.hasRetriever<DummyData1, DummyRec1>("foo"));
+    REQUIRE(not ca.hasRetriever<DummyData1, DummyRec1>(""));
+    ca.insertRetriever<DummyData1, DummyRec1>("foo", edm::ESGetToken<DummyData1, DummyRec1>());
 
-    REQUIRE(ca.hasRetriever<DummyRec1, DummyData1>("foo"));
-    REQUIRE(not ca.hasRetriever<DummyRec1, DummyData1>(""));
-    REQUIRE(not ca.hasRetriever<DummyRec2, DummyData1>(""));
+    REQUIRE(ca.hasRetriever<DummyData1, DummyRec1>("foo"));
+    REQUIRE(not ca.hasRetriever<DummyData1, DummyRec1>(""));
+    REQUIRE(not ca.hasRetriever<DummyData1, DummyRec2>(""));
 
-    ca.insertRetriever<DummyRec1, DummyData1>("", edm::ESGetToken<DummyData1, DummyRec1>());
+    ca.insertRetriever<DummyData1, DummyRec1>("", edm::ESGetToken<DummyData1, DummyRec1>());
 
-    REQUIRE(ca.hasRetriever<DummyRec1, DummyData1>("foo"));
-    REQUIRE(ca.hasRetriever<DummyRec1, DummyData1>(""));
-    REQUIRE(not ca.hasRetriever<DummyRec2, DummyData1>(""));
+    REQUIRE(ca.hasRetriever<DummyData1, DummyRec1>("foo"));
+    REQUIRE(ca.hasRetriever<DummyData1, DummyRec1>(""));
+    REQUIRE(not ca.hasRetriever<DummyData1, DummyRec2>(""));
   }
 
   SECTION("Same data type different records") {
     sim::ConditionsAccess ca;
 
-    REQUIRE(not ca.hasRetriever<DummyRec1, DummyData1>(""));
-    REQUIRE(not ca.hasRetriever<DummyRec2, DummyData1>(""));
-    ca.insertRetriever<DummyRec1, DummyData1>("", edm::ESGetToken<DummyData1, DummyRec1>());
+    REQUIRE(not ca.hasRetriever<DummyData1, DummyRec1>(""));
+    REQUIRE(not ca.hasRetriever<DummyData1, DummyRec2>(""));
+    ca.insertRetriever<DummyData1, DummyRec1>("", edm::ESGetToken<DummyData1, DummyRec1>());
 
-    REQUIRE(ca.hasRetriever<DummyRec1, DummyData1>(""));
-    REQUIRE(not ca.hasRetriever<DummyRec2, DummyData1>(""));
+    REQUIRE(ca.hasRetriever<DummyData1, DummyRec1>(""));
+    REQUIRE(not ca.hasRetriever<DummyData1, DummyRec2>(""));
 
-    ca.insertRetriever<DummyRec2, DummyData1>("", edm::ESGetToken<DummyData1, DummyRec2>());
+    ca.insertRetriever<DummyData1, DummyRec2>("", edm::ESGetToken<DummyData1, DummyRec2>());
 
-    REQUIRE(ca.hasRetriever<DummyRec1, DummyData1>(""));
-    REQUIRE(ca.hasRetriever<DummyRec2, DummyData1>(""));
+    REQUIRE(ca.hasRetriever<DummyData1, DummyRec1>(""));
+    REQUIRE(ca.hasRetriever<DummyData1, DummyRec2>(""));
   }
 }
