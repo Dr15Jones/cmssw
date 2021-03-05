@@ -10,7 +10,7 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
 #include "SimG4Core/Notification/interface/SimActivityRegistry.h"
-#include "SimG4Core/SensitiveDetector/interface/AttachSD.h"
+#include "SimG4Core/SensitiveDetector/interface/attachSD.h"
 #include "SimG4Core/SensitiveDetector/interface/SensitiveCaloDetector.h"
 #include "SimG4Core/SensitiveDetector/interface/SensitiveDetector.h"
 #include "SimG4Core/SensitiveDetector/interface/SensitiveTkDetector.h"
@@ -57,7 +57,6 @@ private:
   std::vector<std::shared_ptr<SimProducer>> m_producers;
   std::unique_ptr<sim::FieldBuilder> m_fieldBuilder;
   std::unique_ptr<SimTrackManager> m_trackManager;
-  AttachSD *m_attach;
   std::vector<SensitiveTkDetector *> m_sensTkDets;
   std::vector<SensitiveCaloDetector *> m_sensCaloDets;
   edm::ParameterSet m_p;

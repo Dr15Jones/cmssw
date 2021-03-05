@@ -2,22 +2,18 @@
 #include "SimG4Core/SensitiveDetector/interface/SensitiveDetector.h"
 #include "SimG4Core/SensitiveDetector/interface/SensitiveTkDetector.h"
 #include "SimG4Core/SensitiveDetector/interface/SensitiveCaloDetector.h"
-#include "SimG4Core/SensitiveDetector/interface/AttachSD.h"
+#include "SimG4Core/SensitiveDetector/interface/attachSD.h"
 
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include <string>
 #include <sstream>
 
-AttachSD::AttachSD() {}
-
-AttachSD::~AttachSD() {}
-
-std::pair<std::vector<SensitiveTkDetector*>, std::vector<SensitiveCaloDetector*> > AttachSD::create(
+std::pair<std::vector<SensitiveTkDetector*>, std::vector<SensitiveCaloDetector*> > attachSD::create(
     const edm::EventSetup& es,
     const SensitiveDetectorCatalog& clg,
     edm::ParameterSet const& p,
     const SimTrackManager* man,
-    SimActivityRegistry& reg) const {
+    SimActivityRegistry& reg) {
   std::pair<std::vector<SensitiveTkDetector*>, std::vector<SensitiveCaloDetector*> > detList;
   const std::vector<std::string_view>& rouNames = clg.readoutNames();
   edm::LogVerbatim("SimG4CoreSensitiveDetector") << " AttachSD: Initialising " << rouNames.size() << " SDs";

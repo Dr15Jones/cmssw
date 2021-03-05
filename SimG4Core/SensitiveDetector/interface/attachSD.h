@@ -14,17 +14,14 @@ class SensitiveCaloDetector;
 class SimActivityRegistry;
 class SimTrackManager;
 
-class AttachSD {
-public:
-  AttachSD();
-  ~AttachSD();
+namespace attachSD {
 
   std::pair<std::vector<SensitiveTkDetector *>, std::vector<SensitiveCaloDetector *> > create(
       const edm::EventSetup &,
       const SensitiveDetectorCatalog &,
       edm::ParameterSet const &,
       const SimTrackManager *,
-      SimActivityRegistry &reg) const;
+      SimActivityRegistry &reg);
 };
 
 #endif

@@ -43,7 +43,7 @@
 
 #include "SimG4Core/Physics/interface/PhysicsList.h"
 
-#include "SimG4Core/SensitiveDetector/interface/AttachSD.h"
+#include "SimG4Core/SensitiveDetector/interface/attachSD.h"
 #include "SimG4Core/SensitiveDetector/interface/SensitiveTkDetector.h"
 #include "SimG4Core/SensitiveDetector/interface/SensitiveCaloDetector.h"
 
@@ -330,9 +330,8 @@ void RunManagerMTWorker::initializeG4(RunManagerMT* runManagerMaster, const edm:
 
   // attach sensitive detector
   conditionsAccess_.set(iSetup);
-  AttachSD attach;
   auto sensDets =
-      attach.create(iSetup, runManagerMaster->catalog(), m_p, m_tls->trackManager.get(), *(m_tls->registry.get()));
+    attachSD::create(iSetup, runManagerMaster->catalog(), m_p, m_tls->trackManager.get(), *(m_tls->registry.get()));
 
   m_tls->sensTkDets.swap(sensDets.first);
   m_tls->sensCaloDets.swap(sensDets.second);
