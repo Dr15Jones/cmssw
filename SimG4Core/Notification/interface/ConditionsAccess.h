@@ -65,7 +65,7 @@ namespace sim {
         throw cms::Exception("UnregisteredDataRequest")
             << "A sim plugin requested data that was not prefetched based on consumes request.";
       }
-      return *static_cast<DATA const*>(itFound->retrieve(*eventSetup_));
+      return *static_cast<DATA const*>(itFound->second->retrieve(*eventSetup_));
     }
 
     template <typename REC, typename DATA>
