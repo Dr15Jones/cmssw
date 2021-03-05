@@ -6,6 +6,7 @@
 #include "DataFormats/Provenance/interface/RunID.h"
 
 #include "SimG4Core/Generators/interface/Generator.h"
+#include "SimG4Core/Notification/interface/ConditionsAccess.h"
 #include "SimDataFormats/Forward/interface/LHCTransportLinkContainer.h"
 
 #include "MagneticField/Engine/interface/MagneticField.h"
@@ -84,6 +85,7 @@ private:
 
   static void resetTLS();
 
+  sim::ConditionsAccess conditionsAccess_;
   Generator m_generator;
   edm::EDGetTokenT<edm::HepMCProduct> m_InToken;
   edm::EDGetTokenT<edm::HepMCProduct> m_LHCToken;

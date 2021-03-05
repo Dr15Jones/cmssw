@@ -27,6 +27,7 @@
 #include "SimG4Core/Notification/interface/SimG4Exception.h"
 #include "SimG4Core/Notification/interface/BeginOfJob.h"
 #include "SimG4Core/Notification/interface/CMSSteppingVerbose.h"
+#include "SimG4Core/Notification/interface/CAConsumesCollector.h"
 #include "SimG4Core/Watcher/interface/SimWatcherFactory.h"
 
 #include "FWCore/Framework/interface/EventSetup.h"
@@ -168,6 +169,18 @@ RunManagerMTWorker::RunManagerMTWorker(const edm::ParameterSet& iConfig, edm::Co
   std::vector<edm::ParameterSet> watchers = iConfig.getParameter<std::vector<edm::ParameterSet> >("Watchers");
   m_hasWatchers = !watchers.empty();
   initializeTLS();
+
+  sim::CAConsumesCollector caCollector(iC, conditionsAccess_);
+  for (auto& watcher : watchers) {
+    std::unique_ptr<SimWatcherMakerBase> maker(
+        SimWatcherFactory::get()->create(watcher.getParameter<std::string>("type")));
+    if (maker == nullptr) {
+      throw edm::Exception(edm::errors::Configuration)
+          << "Unable to find the requested Watcher <" << watcher.getParameter<std::string>("type");
+    }
+    maker->consumes(watcher, caCollector);
+  }
+
   int thisID = getThreadIndex();
   if (m_LHCTransport) {
     m_LHCToken = iC.consumes<edm::HepMCProduct>(edm::InputTag("LHCTransport"));
@@ -316,6 +329,7 @@ void RunManagerMTWorker::initializeG4(RunManagerMT* runManagerMaster, const edm:
   }
 
   // attach sensitive detector
+  conditionsAccess_.set(iSetup);
   AttachSD attach;
   auto sensDets =
       attach.create(iSetup, runManagerMaster->catalog(), m_p, m_tls->trackManager.get(), *(m_tls->registry.get()));
@@ -353,7 +367,7 @@ void RunManagerMTWorker::initializeG4(RunManagerMT* runManagerMaster, const edm:
         << "RunManagerMTWorker: Geant4 kernel initialization failed in thread " << thisID;
   }
   //tell all interesting parties that we are beginning the job
-  BeginOfJob aBeginOfJob(&iSetup);
+  BeginOfJob aBeginOfJob(&iSetup, &conditionsAccess_);
   m_tls->registry->beginOfJobSignal_(&aBeginOfJob);
 
   G4int sv = m_p.getUntrackedParameter<int>("SteppingVerbosity", 0);
