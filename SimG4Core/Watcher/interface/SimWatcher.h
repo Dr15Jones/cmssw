@@ -29,23 +29,30 @@ called by the dynamic loading code.
 // user include files
 
 // forward declarations
+namespace edm {
+  class ParameterSet;
+}
+
+namespace sim {
+  class CAConsumesCollector;
+}
 
 class SimWatcher {
 public:
   SimWatcher() {}
   virtual ~SimWatcher() {}
 
+  SimWatcher(const SimWatcher &) = delete;                   // stop default
+  const SimWatcher &operator=(const SimWatcher &) = delete;  // stop default
+
   // ---------- const member functions ---------------------
 
   // ---------- static member functions --------------------
+  static void consumes(const edm::ParameterSet &, sim::CAConsumesCollector &) {}
 
   // ---------- member functions ---------------------------
 
 private:
-  SimWatcher(const SimWatcher &) = delete;  // stop default
-
-  const SimWatcher &operator=(const SimWatcher &) = delete;  // stop default
-
   // ---------- member data --------------------------------
 };
 

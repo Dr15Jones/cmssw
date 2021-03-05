@@ -30,6 +30,9 @@ class SimActivityRegistry;
 namespace edm {
   class ParameterSet;
 }
+namespace sim {
+  class CAConsumesCollector;
+}
 class SimWatcher;
 class SimProducer;
 class SimWatcherMakerBase {
@@ -42,6 +45,8 @@ public:
                     SimActivityRegistry &,
                     std::shared_ptr<SimWatcher> &,
                     std::shared_ptr<SimProducer> &) const = 0;
+
+  virtual void consumes(const edm::ParameterSet &, sim::CAConsumesCollector &) const = 0;
 };
 
 #endif

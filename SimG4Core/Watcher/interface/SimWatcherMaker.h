@@ -37,7 +37,7 @@ public:
   void make(const edm::ParameterSet &p,
             SimActivityRegistry &reg,
             std::shared_ptr<SimWatcher> &oWatcher,
-            std::shared_ptr<SimProducer> &oProd) const override {
+            std::shared_ptr<SimProducer> &oProd) const final {
     auto returnValue = std::make_shared<T>(p);
     SimActivityRegistryEnroller::enroll(reg, returnValue.get());
     oWatcher = returnValue;
@@ -45,6 +45,8 @@ public:
     // If this is also a SimProducer, set the value
     oProd = this->getSimProducer(returnValue.get(), returnValue);
   }
+
+  void consumes(const edm::ParameterSet &iPSet, sim::CAConsumesCollector &iCC) const final { T::consumes(iPSet, iCC); }
 
 private:
   std::shared_ptr<SimProducer> getSimProducer(SimProducer *, std::shared_ptr<T> &iProd) const {
