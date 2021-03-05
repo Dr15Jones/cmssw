@@ -21,6 +21,7 @@
 // system include files
 #include <tuple>
 #include <map>
+#include <set>
 #include <string>
 #include <string_view>
 #include <typeindex>
