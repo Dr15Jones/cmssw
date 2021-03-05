@@ -1,5 +1,9 @@
-<use name="boost"/>
-<use name="cppunit"/>
 <use name="SimG4Core/Notification"/>
 <bin name="testSimG4CoreNotifications" file="simactivityregistry_t.cppunit.cpp">
+<use name="boost"/>
+<use name="cppunit"/>
+</bin>
+<bin name="testSimG4CoreNotificationCatch2" file="conditionsaccess_catch2.cc">
+  <use name="FWCore/Framework"/>
+  <use name="catch2"/>
 </bin>
