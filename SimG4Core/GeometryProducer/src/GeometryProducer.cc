@@ -78,9 +78,7 @@ GeometryProducer::GeometryProducer(edm::ParameterSet const &p)
   produces<int>();
 }
 
-GeometryProducer::~GeometryProducer() {
-  delete m_kernel;
-}
+GeometryProducer::~GeometryProducer() { delete m_kernel; }
 
 void GeometryProducer::updateMagneticField(edm::EventSetup const &es) {
   if (m_pUseMagneticField) {
@@ -148,7 +146,7 @@ void GeometryProducer::produce(edm::Event &e, const edm::EventSetup &es) {
     m_trackManager = std::make_unique<SimTrackManager>();
     {
       std::pair<std::vector<SensitiveTkDetector *>, std::vector<SensitiveCaloDetector *>> sensDets =
-        attachSD::create(es, catalog, m_p, m_trackManager.get(), m_registry);
+          attachSD::create(es, catalog, m_p, m_trackManager.get(), m_registry);
 
       m_sensTkDets.swap(sensDets.first);
       m_sensCaloDets.swap(sensDets.second);
