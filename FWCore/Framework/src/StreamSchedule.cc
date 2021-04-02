@@ -609,7 +609,7 @@ namespace edm {
       auto pathErrorHolder = std::make_unique<std::atomic<std::exception_ptr*>>(nullptr);
       auto pathErrorPtr = pathErrorHolder.get();
       auto allPathsDone = make_waiting_task(
-          [iTask, this, serviceToken, pathError = std::move(pathErrorHolder)](std::exception_ptr const* iPtr) mutable {
+          [iTask, this, &serviceToken, pathError = std::move(pathErrorHolder)](std::exception_ptr const* iPtr) mutable {
             ServiceRegistry::Operate operate(serviceToken);
 
             std::exception_ptr ptr;
@@ -627,7 +627,7 @@ namespace edm {
       // run under that condition.
       WaitingTaskHolder allPathsHolder(*iTask.group(), allPathsDone);
 
-      auto pathsDone = make_waiting_task([allPathsHolder, pathErrorPtr, transitionInfo = info, this, serviceToken](
+      auto pathsDone = make_waiting_task([allPathsHolder, pathErrorPtr, transitionInfo = info, this, &serviceToken](
                                              std::exception_ptr const* iPtr) mutable {
         ServiceRegistry::Operate operate(serviceToken);
 

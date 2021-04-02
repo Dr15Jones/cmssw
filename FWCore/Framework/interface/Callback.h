@@ -84,7 +84,7 @@ namespace edm {
           if UNLIKELY (producer_->hasMayConsumes()) {
             //after prefetching need to do the mayGet
             auto mayGetTask = edm::make_waiting_task(
-                [this, iRecord, iEventSetupImpl, token, group](std::exception_ptr const* iExcept) {
+                [this, iRecord, iEventSetupImpl, &token, group](std::exception_ptr const* iExcept) {
                   if (iExcept) {
                     runProducerAsync(group, iExcept, iRecord, iEventSetupImpl, token);
                     return;
@@ -176,11 +176,11 @@ namespace edm {
           return;
         }
         iRecord->activityRegistry()->postESModulePrefetchingSignal_.emit(iRecord->key(), callingContext_);
-        producer_->queue().push(*iGroup, [this, iRecord, iEventSetupImpl, token]() {
+        producer_->queue().push(*iGroup, [this, iRecord, iEventSetupImpl, &token]() {
           callingContext_.setState(ESModuleCallingContext::State::kRunning);
           std::exception_ptr exceptPtr;
           try {
-            convertException::wrap([this, iRecord, iEventSetupImpl, token] {
+            convertException::wrap([this, iRecord, iEventSetupImpl, &token] {
               auto proxies = getTokenIndices();
               if (postMayGetProxies_) {
                 proxies = &((*postMayGetProxies_).front());

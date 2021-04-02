@@ -478,7 +478,7 @@ namespace edm {
                                   bool skipCurrentProcess,
                                   SharedResourcesAcquirer* sra,
                                   ModuleCallingContext const* mcc,
-                                  ServiceToken token,
+                                  ServiceToken const& token,
                                   tbb::task_group*) const;
 
     bool dataValidFromResolver(unsigned int iProcessingIndex,

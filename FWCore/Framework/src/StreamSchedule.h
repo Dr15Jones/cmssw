@@ -386,8 +386,8 @@ namespace edm {
     T::setStreamContext(streamContext_, principal);
 
     auto id = principal.id();
-    auto doneTask =
-        make_waiting_task([this, iHolder, id, cleaningUpAfterException, token](std::exception_ptr const* iPtr) mutable {
+    auto doneTask = make_waiting_task(
+        [this, iHolder, id, cleaningUpAfterException, &token](std::exception_ptr const* iPtr) mutable {
           std::exception_ptr excpt;
           if (iPtr) {
             excpt = *iPtr;
@@ -421,7 +421,7 @@ namespace edm {
         });
 
     auto task = make_functor_task(
-        [this, h = WaitingTaskHolder(*iHolder.group(), doneTask), info = transitionInfo, token]() mutable {
+        [this, h = WaitingTaskHolder(*iHolder.group(), doneTask), info = transitionInfo, &token]() mutable {
           ServiceRegistry::Operate op(token);
           // Caught exception is propagated via WaitingTaskHolder
           CMS_SA_ALLOW try {

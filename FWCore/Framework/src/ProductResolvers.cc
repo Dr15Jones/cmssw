@@ -263,7 +263,7 @@ namespace edm {
     m_waitingTasks.add(waitTask);
 
     if (prefetchRequested) {
-      auto workToDo = [this, mcc, &principal, token]() {
+      auto workToDo = [this, mcc, &principal, &token]() {
         //need to make sure Service system is activated on the reading thread
         ServiceRegistry::Operate operate(token);
         // Caught exception is propagated via WaitingTaskList
@@ -941,7 +941,7 @@ namespace edm {
                                  SharedResourcesAcquirer* iSRA,
                                  ModuleCallingContext const* iMCC,
                                  bool iSkipCurrentProcess,
-                                 ServiceToken iToken,
+                                 ServiceToken const& iToken,
                                  tbb::task_group* iGroup)
           : resolver_(iResolver),
             principal_(iPrincipal),
@@ -970,7 +970,7 @@ namespace edm {
       SharedResourcesAcquirer* sra_;
       ModuleCallingContext const* mcc_;
       tbb::task_group* group_;
-      ServiceToken serviceToken_;
+      ServiceToken const& serviceToken_;
       unsigned int index_;
       bool skipCurrentProcess_;
     };
@@ -1005,7 +1005,7 @@ namespace edm {
                                                           bool skipCurrentProcess,
                                                           SharedResourcesAcquirer* sra,
                                                           ModuleCallingContext const* mcc,
-                                                          ServiceToken token,
+                                                          ServiceToken const& token,
                                                           tbb::task_group* group) const {
     std::vector<unsigned int> const& lookupProcessOrder = principal.lookupProcessOrder();
     auto index = iProcessingIndex;

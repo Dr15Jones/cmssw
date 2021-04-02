@@ -176,7 +176,7 @@ namespace edm {
       }
 
       auto doneTask = make_waiting_task(
-          [this, iHolder, cleaningUpAfterException, globalContext, token](std::exception_ptr const* iPtr) mutable {
+          [this, iHolder, cleaningUpAfterException, globalContext, &token](std::exception_ptr const* iPtr) mutable {
             std::exception_ptr excpt;
             if (iPtr) {
               excpt = *iPtr;

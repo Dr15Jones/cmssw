@@ -358,10 +358,10 @@ namespace edm {
       ++lastModuleIndex;
     }
     for (; lastModuleIndex >= firstModuleIndex; --lastModuleIndex) {
-      auto nextTask = make_waiting_task([this, lastModuleIndex, info = iInfo, iID, iContext, token = iToken, &iGroup](
-                                            std::exception_ptr const* iException) {
-        this->workerFinished(iException, lastModuleIndex, info, token, iID, iContext, iGroup);
-      });
+      auto nextTask = make_waiting_task(
+          [this, lastModuleIndex, info = iInfo, iID, iContext, &iToken, &iGroup](std::exception_ptr const* iException) {
+            this->workerFinished(iException, lastModuleIndex, info, iToken, iID, iContext, iGroup);
+          });
       workers_[lastModuleIndex].runWorkerAsync<OccurrenceTraits<EventPrincipal, BranchActionStreamBegin>>(
           WaitingTaskHolder(iGroup, nextTask), iInfo, iToken, iID, iContext);
     }

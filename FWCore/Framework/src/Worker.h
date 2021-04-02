@@ -422,12 +422,13 @@ namespace edm {
 
         if (not excptr) {
           if (auto queue = m_worker->serializeRunModule()) {
+            auto const& serviceToken = m_serviceToken;
             auto f = [worker = m_worker,
                       info = m_transitionInfo,
                       streamID = m_streamID,
                       parentContext = m_parentContext,
                       sContext = m_context,
-                      serviceToken = m_serviceToken]() {
+                      &serviceToken]() {
               //Need to make the services available
               ServiceRegistry::Operate operateRunModule(serviceToken);
 
@@ -461,7 +462,7 @@ namespace edm {
       StreamID m_streamID;
       ParentContext const m_parentContext;
       typename T::Context const* m_context;
-      ServiceToken m_serviceToken;
+      ServiceToken const& m_serviceToken;
       tbb::task_group* m_group;
     };
 
@@ -515,11 +516,12 @@ namespace edm {
 
         if (not excptr) {
           if (auto queue = m_worker->serializeRunModule()) {
+            auto const& serviceToken = m_serviceToken;
             queue.push(*m_holder.group(),
                        [worker = m_worker,
                         info = m_eventTransitionInfo,
                         parentContext = m_parentContext,
-                        serviceToken = m_serviceToken,
+                        &serviceToken,
                         holder = m_holder]() {
                          //Need to make the services available
                          ServiceRegistry::Operate operateRunAcquire(serviceToken);
@@ -539,7 +541,7 @@ namespace edm {
       EventTransitionInfo m_eventTransitionInfo;
       ParentContext const m_parentContext;
       WaitingTaskWithArenaHolder m_holder;
-      ServiceToken m_serviceToken;
+      ServiceToken const& m_serviceToken;
     };
 
     // This class does nothing unless there is an exception originating
@@ -973,7 +975,7 @@ namespace edm {
         auto* group = task.group();
         auto ownRunTask = std::make_shared<DestroyTask>(runTask);
         auto selectionTask = make_waiting_task(
-            [ownRunTask, parentContext, info = transitionInfo, token, group, this](std::exception_ptr const*) mutable {
+            [ownRunTask, parentContext, info = transitionInfo, &token, group, this](std::exception_ptr const*) mutable {
               ServiceRegistry::Operate guard(token);
               prefetchAsync<T>(
                   WaitingTaskHolder(*group, ownRunTask->release()), token, parentContext, info, T::transition_);
@@ -1038,7 +1040,7 @@ namespace edm {
 
     waitingTasks_.add(task);
     if (workStarted) {
-      auto toDo = [this, info = transitionInfo, streamID, parentContext, context, serviceToken]() {
+      auto toDo = [this, info = transitionInfo, streamID, parentContext, context, &serviceToken]() {
         std::exception_ptr exceptionPtr;
         // Caught exception is propagated via WaitingTaskList
         CMS_SA_ALLOW try {
