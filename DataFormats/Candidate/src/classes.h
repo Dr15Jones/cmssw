@@ -2,6 +2,7 @@
 #include "DataFormats/Candidate/interface/CandidateFwd.h"
 #include "DataFormats/Candidate/interface/LeafCandidate.h"
 #include "Rtypes.h"
+#include "DataFormats/Candidate/src/PolarStorage.h"
 #include "Math/Cartesian3D.h"
 #include "Math/Polar3D.h"
 #include "Math/CylindricalEta3D.h"
