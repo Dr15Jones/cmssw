@@ -16,6 +16,7 @@
 #include "DataFormats/GeometryVector/interface/GlobalVector.h"
 #include "DataFormats/Math/interface/LorentzVector.h"
 #include "Rtypes.h"
+#include "Math/PxPyPzM4D.h"
 
 namespace reco {
 
@@ -32,7 +33,7 @@ namespace reco {
     /// point in the space
     typedef math::XYZVector Vector;
     /// default constructor
-    ParticleState() : vertex_(0, 0, 0), qx3_(0), pdgId_(0), status_(0) {}
+    ParticleState() : vertex_(0, 0, 0), pX_(0), pY_(0), pZ_(0), mass_(0), qx3_(0), pdgId_(0), status_(0) {}
 
     /// constructor from values
     ParticleState(Charge q,
@@ -44,6 +45,10 @@ namespace reco {
         : vertex_(vertex),
           p4Polar_(p4.pt(), p4.eta(), p4.phi(), p4.mass()),
           p4Cartesian_(p4Polar_),
+          pX_(p4Cartesian_.px()),
+          pY_(p4Cartesian_.py()),
+          pZ_(p4Cartesian_.pz()),
+          mass_(p4.mass()),
           qx3_(integerCharge ? q * 3 : q),
           pdgId_(pdgId),
           status_(status) {}
@@ -58,6 +63,10 @@ namespace reco {
         : vertex_(vertex),
           p4Polar_(p4),
           p4Cartesian_(p4),
+          pX_(p4Cartesian_.px()),
+          pY_(p4Cartesian_.py()),
+          pZ_(p4Cartesian_.pz()),
+          mass_(p4Polar_.mass()),
           qx3_(integerCharge ? q * 3 : q),
           pdgId_(pdgId),
           status_(status) {}
@@ -72,6 +81,10 @@ namespace reco {
         : vertex_(vertex),
           p4Polar_(p4),
           p4Cartesian_(p4),
+          pX_(p4Cartesian_.px()),
+          pY_(p4Cartesian_.py()),
+          pZ_(p4Cartesian_.pz()),
+          mass_(p4Polar_.mass()),
           qx3_(integerCharge ? q * 3 : q),
           pdgId_(pdgId),
           status_(status) {}
@@ -87,12 +100,20 @@ namespace reco {
         : vertex_(vertex),
           p4Polar_(p3.perp(), p3.eta(), p3.phi(), imass),
           p4Cartesian_(p3.x(), p3.y(), p3.z(), iEnergy),
+          pX_(p3.x()),
+          pY_(p3.y()),
+          pZ_(p3.z()),
+          mass_(imass),
           qx3_(integerCharge ? q * 3 : q),
           pdgId_(pdgId),
           status_(status) {}
 
     /// set internal cache
     inline void setCartesian() { p4Cartesian_ = p4Polar_; }
+    inline void setFromInput() {
+      ROOT::Math::LorentzVector<ROOT::Math::PxPyPzM4D<double> > p(pX_, pY_, pZ_, mass_);
+      setP4(PolarLorentzVector(p));
+    }
 
     /// electric charge
     int charge() const { return qx3_ / 3; }
@@ -154,13 +175,19 @@ namespace reco {
     void setP4(const PolarLorentzVector& p4) {
       p4Polar_ = p4;
       p4Cartesian_ = p4;
+      pX_ = p4Cartesian_.x();
+      pY_ = p4Cartesian_.y();
+      pZ_ = p4Cartesian_.z();
+      mass_ = p4Polar_.mass();
     }
     /// set particle mass
     void setMass(double m) {
       p4Polar_.SetM(m);
+      mass_ = p4Polar_.mass();
       setCartesian();
     }
     void setPz(double pz) {
+      pZ_ = pz;
       p4Cartesian_.SetPz(pz);
       p4Polar_ = p4Cartesian_;
     }
@@ -192,8 +219,8 @@ namespace reco {
     bool massConstraint() const { return status_ & massConstraintTag; }
 
   private:
-    static const unsigned int longLivedTag = 65536;
-    static const unsigned int massConstraintTag = 131072;
+    static constexpr unsigned int longLivedTag = 65536;
+    static constexpr unsigned int massConstraintTag = 131072;
 
   private:
     /// vertex position
@@ -203,6 +230,11 @@ namespace reco {
     PolarLorentzVector p4Polar_;
     /// internal cache for p4
     LorentzVector p4Cartesian_;
+
+    Double32_t pX_;  //[0,0,9]
+    Double32_t pY_;  //[0,0,9]
+    Double32_t pZ_;  //[0,0,9]
+    Double32_t mass_;
 
     /// electric charge
     Charge qx3_;

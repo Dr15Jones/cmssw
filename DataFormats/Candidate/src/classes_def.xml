@@ -1,14 +1,20 @@
 <lcgdict>
 <selection>
-  <class name="reco::ParticleState" ClassVersion="10">
+  <class name="reco::ParticleState" ClassVersion="11">
     <version ClassVersion="10" checksum="1573518497"/>
+    <version ClassVersion="11" checksum="2961736446"/>
    <field name="vertex_" iotype="ROOT::Math::PositionVector3D<ROOT::Math::Cartesian3D<Double32_t>,ROOT::Math::DefaultCoordinateSystemTag>" />
-   <field name="p4Polar_" iotype="ROOT::Math::LorentzVector<ROOT::Math::PtEtaPhiM4D<Double32_t> >" />
+   <field name="p4Polar_" transient="true" />
    <field name="p4Cartesian_" transient="true" />
   </class>
   <!--The 'int pdgId_' is a workaround for ROOT bug which affects iorules for split classes-->
-  <ioread sourceClass = "reco::ParticleState" version="[1-]" targetClass="reco::ParticleState" source="ROOT::Math::LorentzVector<ROOT::Math::PtEtaPhiM4D<double> > p4Polar_;int pdgId_" target="p4Cartesian_">
-   <![CDATA[newObj->setCartesian();]]>
+
+  <ioread sourceClass = "reco::ParticleState" version="[1-10]" targetClass="reco::ParticleState" source="ROOT::Math::LorentzVector<ROOT::Math::PtEtaPhiM4D<double> > p4Polar_;int pdgId_" target="p4Cartesian_,pX_,pY_,pZ_,mass_">
+   <![CDATA[newObj->setP4(onfile.p4Polar_);]]>
+  </ioread>
+
+  <ioread sourceClass = "reco::ParticleState" version="[11-]" targetClass="reco::ParticleState" source="Double32_t pX_;Double32_t pY_; Double32_t pZ_; Double32_t mass_;int pdgId_" target="p4Cartesian_, p4Polar_">
+   <![CDATA[newObj->setFromInput();]]>
   </ioread>
 
   <class name="reco::Particle" ClassVersion="12">
