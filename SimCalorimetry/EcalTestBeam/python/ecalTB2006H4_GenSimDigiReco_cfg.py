@@ -297,6 +297,6 @@ process.options = cms.untracked.PSet(
 
 #if not hasattr(process,"options") :
 process.options = cms.untracked.PSet()
-process.options.SkipEvent = cms.untracked.vstring('EventCorruption')
+process.options.TryToContinue = cms.untracked.vstring('EventCorruption')
 
 

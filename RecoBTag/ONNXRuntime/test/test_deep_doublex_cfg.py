@@ -10,7 +10,7 @@ process.MessageLogger.cerr.FwkReport.reportEvery = 1
 
 ## Options and Output Report
 process.options = cms.untracked.PSet( wantSummary = cms.untracked.bool(True),
-SkipEvent = cms.untracked.vstring('ProductNotFound'))
+TryToContinue = cms.untracked.vstring('ProductNotFound'))
 
 ## Source
 process.source = cms.Source("PoolSource",

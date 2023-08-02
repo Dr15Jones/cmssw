@@ -45,7 +45,7 @@ process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:run2_data', '')
 # Source data
 # skip bad events
 process.options = cms.untracked.PSet(
-    SkipEvent = cms.untracked.vstring('ProductNotFound'),
+    TryToConinue = cms.untracked.vstring('ProductNotFound'),
 )
 process.maxEvents = cms.untracked.PSet(
     input = cms.untracked.int32(-1)

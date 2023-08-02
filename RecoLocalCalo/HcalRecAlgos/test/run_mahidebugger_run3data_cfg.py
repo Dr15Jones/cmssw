@@ -12,7 +12,7 @@ process.MessageLogger.cerr.threshold = ''
 process.MessageLogger.cerr.FwkReport.reportEvery = 100
 process.options = cms.untracked.PSet(
     wantSummary = cms.untracked.bool(True),
-    SkipEvent = cms.untracked.vstring('ProductNotFound')
+    TryToContinue = cms.untracked.vstring('ProductNotFound')
 )
 
 

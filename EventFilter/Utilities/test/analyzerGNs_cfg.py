@@ -7,7 +7,7 @@ process.maxEvents = cms.untracked.PSet(
 )
 
 process.options = cms.untracked.PSet(
-    SkipEvent = cms.untracked.vstring('ProductNotFound')
+    TryToContinue = cms.untracked.vstring('ProductNotFound')
     )
 process.source = cms.Source("FRDStreamSource",
     fileNames = cms.untracked.vstring(

@@ -34,7 +34,7 @@ process.source = cms.Source(
 )
 
 process.options = cms.untracked.PSet(
-    SkipEvent = cms.untracked.vstring('ProductNotFound')
+    TryToContinue = cms.untracked.vstring('ProductNotFound')
 )
 
 

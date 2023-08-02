@@ -200,5 +200,5 @@ process.schedule = cms.Schedule(process.raw2digi_step,
 
 process.options   = cms.untracked.PSet(
 	                    wantSummary = cms.untracked.bool(True),
-			                        SkipEvent = cms.untracked.vstring('ProductNotFound')
+			                        TryToContinue = cms.untracked.vstring('ProductNotFound')
 			    )

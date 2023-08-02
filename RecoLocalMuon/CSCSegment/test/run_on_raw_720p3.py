@@ -21,7 +21,7 @@ process.GlobalTag.globaltag = 'auto:phase1_2022_realistic'
 
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(1000) )
 
-process.options   = cms.untracked.PSet( SkipEvent = cms.untracked.vstring('ProductNotFound') )
+process.options   = cms.untracked.PSet( TryToContinue = cms.untracked.vstring('ProductNotFound') )
 process.options   = cms.untracked.PSet( wantSummary = cms.untracked.bool(True) )
 process.source    = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(

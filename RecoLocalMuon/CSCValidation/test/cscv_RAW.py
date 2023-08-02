@@ -18,7 +18,7 @@ process.GlobalTag.globaltag = 'auto:phase1_2022_realistic'
 
 
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(100) )
-process.options = cms.untracked.PSet( SkipEvent = cms.untracked.vstring('ProductNotFound') )
+process.options = cms.untracked.PSet( TryToContinue = cms.untracked.vstring('ProductNotFound') )
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(
                   '/store/relval/CMSSW_7_0_0_pre3/SingleMu/RAW/PRE_P62_V8_RelVal_mu2011B-v1/00000/127160CD-7215-E311-91F3-003048D15E14.root'

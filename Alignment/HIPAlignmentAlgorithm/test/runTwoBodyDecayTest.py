@@ -70,7 +70,7 @@ process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(15500))
 #process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
 process.source.skipEvents=cms.untracked.uint32(0*-1/1)
 process.options = cms.untracked.PSet(
-  SkipEvent = cms.untracked.vstring( "ProductNotFound" )
+  TryToContinue = cms.untracked.vstring( "ProductNotFound" )
 )
 
 strflag="ZMuMu"
@@ -203,7 +203,7 @@ process.Analyzer = cms.EDAnalyzer(
 )
 
 process.options = cms.untracked.PSet(
-   SkipEvent = cms.untracked.vstring( "ProductNotFound" )
+   TryToContinue = cms.untracked.vstring( "ProductNotFound" )
 )
 process.TFileService = cms.Service('TFileService',
    fileName=cms.string("analyzed_{0}.root".format(TAG))

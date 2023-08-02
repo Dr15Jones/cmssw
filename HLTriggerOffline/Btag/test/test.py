@@ -125,7 +125,7 @@ process.DQMStore.verbose=0
 process.options = cms.untracked.PSet(
 	wantSummary	= cms.untracked.bool( True ),
 	fileMode	= cms.untracked.string('FULLMERGE'),
-	SkipEvent	= cms.untracked.vstring('ProductNotFound')
+	TryToContinue	= cms.untracked.vstring('ProductNotFound')
 )
 
 #maxEvents

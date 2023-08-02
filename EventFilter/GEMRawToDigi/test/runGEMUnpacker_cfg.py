@@ -133,7 +133,7 @@ if (options.json):
     process.source.lumisToProcess = LumiList.LumiList(filename = options.json).getVLuminosityBlockRange()
 
 process.options = cms.untracked.PSet(
-    SkipEvent = cms.untracked.vstring('ProductNotFound')
+    TryToContinue = cms.untracked.vstring('ProductNotFound')
 )
 
 # enable debug message logging for our modules

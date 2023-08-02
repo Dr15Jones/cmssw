@@ -15,7 +15,7 @@ from Configuration.AlCa.GlobalTag import GlobalTag
 process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:run2_data', '')
 
 process.options = cms.untracked.PSet(
-     SkipEvent= cms.untracked.vstring("ProductNotFound"), # make this exception fatal
+     TryToContinue= cms.untracked.vstring("ProductNotFound"), # make this exception fatal
   )
 process.maxEvents=cms.untracked.PSet(input=cms.untracked.int32(10000)) 
 

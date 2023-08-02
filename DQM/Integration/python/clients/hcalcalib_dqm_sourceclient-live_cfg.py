@@ -244,7 +244,7 @@ process.options = cms.untracked.PSet(
 			"TooManyProducts",
 			"TooFewProducts"
 		),
-		SkipEvent = cms.untracked.vstring(
+		TryToContinue = cms.untracked.vstring(
 			'ProductNotFound'
 		)
 )

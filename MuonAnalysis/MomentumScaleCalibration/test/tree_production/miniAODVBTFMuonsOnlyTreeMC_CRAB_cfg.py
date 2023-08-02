@@ -4,7 +4,7 @@ import FWCore.ParameterSet.VarParsing as VarParsing
 
 process = cms.Process("TREE")
 process.options = cms.untracked.PSet(wantSummary=cms.untracked.bool(True))
-process.options = cms.untracked.PSet(SkipEvent = cms.untracked.vstring('ProductNotFound'))
+process.options = cms.untracked.PSet(TryToContinue = cms.untracked.vstring('ProductNotFound'))
 
 ### command-line options
 options = VarParsing.VarParsing()

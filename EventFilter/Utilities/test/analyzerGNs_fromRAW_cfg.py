@@ -16,7 +16,7 @@ process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32( 10 ),
                                         output = cms.untracked.int32( 10 )
                                         )
 
-process.options = cms.untracked.PSet( SkipEvent = cms.untracked.vstring( 'ProductNotFound' ) )
+process.options = cms.untracked.PSet( TryToContinue = cms.untracked.vstring( 'ProductNotFound' ) )
 
 process.source = cms.Source( "PoolSource",
                              #fileNames = cms.untracked.vstring( "/store/data/Run2016B/SingleMuon/RAW/v2/000/274/146/00000/040AA6B5-5C24-E611-BF6D-02163E013712.root" )

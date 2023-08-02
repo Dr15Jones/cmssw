@@ -17,7 +17,7 @@ process.MessageLogger.cerr.FwkReport.reportEvery = 100
 process.load("DQMServices.Core.DQM_cfg")
 process.DQM.collectorHost = ''
 
-process.options = cms.untracked.PSet( SkipEvent = cms.untracked.vstring('ProductNotFound') )
+process.options = cms.untracked.PSet( TryToContinue = cms.untracked.vstring('ProductNotFound') )
 
 #######################################################################
 # TWO-file approach, as both RAW  (for HCAL re-reco)    and

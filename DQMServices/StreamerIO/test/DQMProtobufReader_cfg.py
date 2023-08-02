@@ -40,6 +40,6 @@ process.configurationMetadata = cms.untracked.PSet(
 process.analyzer= cms.EDAnalyzer("DQMStoreAnalyzer");
 process.p = cms.Path(process.analyzer)
 
-process.options = cms.untracked.PSet( SkipEvent = cms.untracked.vstring('ProductNotFound') )
+process.options = cms.untracked.PSet( TryToContinue = cms.untracked.vstring('ProductNotFound') )
 process.endjob_step = cms.EndPath(process.endOfProcess)
 process.schedule = cms.Schedule(process.p,process.endjob_step)

@@ -44,7 +44,7 @@ def customiseHcalCalib(process):
     #process.hcalDigiSortedTableTask.add(process.hcalCalibDigis)
     #process.hcalDigiSortedTableSeq.add(process.hcalCalibDigis)
 
-    #process.options.SkipEvent.append('ProductNotFound')
+    #process.options.TryToContinue.append('ProductNotFound')
 
     #process.hcalDigiSortedTable.tagQIE11 = cms.untracked.InputTag("hcalCalibDigis")
     #process.hcalDigiSortedTable.tagQIE10 = cms.untracked.InputTag("hcalCalibDigis")

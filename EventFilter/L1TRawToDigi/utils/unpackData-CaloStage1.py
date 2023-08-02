@@ -86,7 +86,7 @@ process.maxEvents = cms.untracked.PSet(
 
 
 process.options = cms.untracked.PSet(
-    SkipEvent = cms.untracked.vstring('ProductNotFound')
+    TryToContineu = cms.untracked.vstring('ProductNotFound')
 )
 
 

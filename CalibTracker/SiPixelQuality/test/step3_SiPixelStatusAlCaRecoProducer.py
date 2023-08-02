@@ -10,7 +10,7 @@ process.MessageLogger.cerr.FwkReport.reportEvery = 10000
 process.MessageLogger.HLTrigReport=dict()
 process.MessageLogger.L1GtTrigReport=dict()
 process.options = cms.untracked.PSet(
-    SkipEvent = cms.untracked.vstring('ProductNotFound'),
+    TryToContinue = cms.untracked.vstring('ProductNotFound'),
     wantSummary = cms.untracked.bool(True)
 )
 

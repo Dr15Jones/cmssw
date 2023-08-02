@@ -50,7 +50,7 @@ process.source = cms.Source("PoolSource",
     secondaryFileNames = cms.untracked.vstring()
                             )
 process.options = cms.untracked.PSet(
-#        SkipEvent = cms.untracked.vstring('ProductNotFound')
+#        TryToContinue = cms.untracked.vstring('ProductNotFound')
 )
 
 

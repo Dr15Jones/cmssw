@@ -46,7 +46,7 @@ process.MessageLogger = cms.Service("MessageLogger",
 
 #process.MessageLogger.cerr.FwkReport.reportEvery = cms.untracked.int32(50)
 process.options = cms.untracked.PSet(wantSummary=cms.untracked.bool(False),
-                                         # SkipEvent = cms.untracked.vstring('ProductNotFound') 
+                                         # TryToContinue = cms.untracked.vstring('ProductNotFound') 
                                      )
 
 process.source = cms.Source('PoolSource',

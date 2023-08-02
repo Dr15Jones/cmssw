@@ -4,7 +4,7 @@ import FWCore.ParameterSet.Config as cms
 process = cms.Process("L1NTUPLE")
 
 process.options = cms.untracked.PSet(
-    SkipEvent = cms.untracked.vstring('ProductNotFound')
+    TryToContinue = cms.untracked.vstring('ProductNotFound')
 )
 
 # import of standard configurations

@@ -19,7 +19,7 @@ process.load('Configuration.StandardSequences.EndOfProcess_cff')
 process.GlobalTag.globaltag = '123X_dataRun3_Prompt_v12'
 
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32( 5000 ) )  ## UP TO 5K EVENTS
-process.options = cms.untracked.PSet( SkipEvent = cms.untracked.vstring('ProductNotFound') )
+process.options = cms.untracked.PSet( TryToContinue = cms.untracked.vstring('ProductNotFound') )
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(
 ##     "root://eoscms.cern.ch://eos/cms/tier0/store/data/Run2022B/SingleMuon/RAW/v1/000/355/208/00000/3004d340-6e3d-4223-9eb2-7d50a65bfe57.root"

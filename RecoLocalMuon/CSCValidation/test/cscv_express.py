@@ -19,7 +19,7 @@ process.load('Configuration.StandardSequences.EndOfProcess_cff')
 process.GlobalTag.globaltag = '123X_dataRun3_Express_v10'
 
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32( 5000 ) )  ## PROCESS 5K EVENTS
-process.options = cms.untracked.PSet( SkipEvent = cms.untracked.vstring('ProductNotFound') )
+process.options = cms.untracked.PSet( TryToContinue = cms.untracked.vstring('ProductNotFound') )
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(
         "/store/express/Run2022B/ExpressPhysics/FEVT/Express-v1/000/355/135/00000/0135acb6-75de-4798-9b1f-7fca60fa4029.root"

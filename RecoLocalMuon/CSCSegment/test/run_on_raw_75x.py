@@ -24,7 +24,7 @@ process.load("Configuration.StandardSequences.EndOfProcess_cff")
 
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(100) )
 
-process.options   = cms.untracked.PSet( SkipEvent = cms.untracked.vstring("ProductNotFound") )
+process.options   = cms.untracked.PSet( TryToContinue = cms.untracked.vstring("ProductNotFound") )
 process.options   = cms.untracked.PSet( wantSummary = cms.untracked.bool(True) )
 process.source    = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(

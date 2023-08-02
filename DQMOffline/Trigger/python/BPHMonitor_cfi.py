@@ -15,7 +15,7 @@ hltBPHmonitoring = _bphMonitoring.clone(
     displaced = 0,
 
 #hltBPHmonitoring.options = cms.untracked.PSet(
-#    SkipEvent = cms.untracked.vstring('ProductNotFound')
+#    TryToContinue = cms.untracked.vstring('ProductNotFound')
 #)
 
     histoPSet = dict(

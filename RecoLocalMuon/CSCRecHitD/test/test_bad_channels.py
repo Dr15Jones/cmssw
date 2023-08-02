@@ -40,7 +40,7 @@ process.source = cms.Source("EmptySource",
  firstRun = cms.untracked.uint32(100001)
 )
 
-process.options   = cms.untracked.PSet( SkipEvent = cms.untracked.vstring("ProductNotFound") )
+process.options   = cms.untracked.PSet( TryToContinue = cms.untracked.vstring("ProductNotFound") )
 process.options   = cms.untracked.PSet( wantSummary = cms.untracked.bool(True) )
 
 process.analyze = cms.EDAnalyzer("CSCRecoBadChannelsAnalyzer",

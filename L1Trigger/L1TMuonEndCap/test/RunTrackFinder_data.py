@@ -44,7 +44,7 @@ process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(100000) )
 process.options = cms.untracked.PSet(wantSummary = cms.untracked.bool(False))
 
 process.options = cms.untracked.PSet(
-    # SkipEvent = cms.untracked.vstring('ProductNotFound')
+    # TryToContinue = cms.untracked.vstring('ProductNotFound')
 )
 
 ## Global Tags

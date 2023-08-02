@@ -178,7 +178,7 @@ process.source = cms.Source("PoolSource",
 # )
 
 process.options = cms.untracked.PSet(
-  # SkipEvent = cms.untracked.vstring('ProductNotFound')
+  # TryToContinue = cms.untracked.vstring('ProductNotFound')
 )
 
 # Insert this in path to see what products the event contains

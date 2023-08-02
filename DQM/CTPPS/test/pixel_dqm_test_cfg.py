@@ -49,7 +49,7 @@ process.load("DQM.CTPPS.ctppsDQM_cff")
 
 process.options = cms.untracked.PSet(
 #    Rethrow = cms.untracked.vstring('ProductNotFound',
-    SkipEvent = cms.untracked.vstring('ProductNotFound',
+    TryToContinue = cms.untracked.vstring('ProductNotFound',
         'TooManyProducts',
         'TooFewProducts')
 )

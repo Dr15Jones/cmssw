@@ -27,7 +27,7 @@ process.GlobalTag.globaltag = 'auto:phase1_2022_realistic'
 
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(100) )
 
-process.options   = cms.untracked.PSet( SkipEvent = cms.untracked.vstring("ProductNotFound") )
+process.options   = cms.untracked.PSet( TryToContinue = cms.untracked.vstring("ProductNotFound") )
 process.options   = cms.untracked.PSet( wantSummary = cms.untracked.bool(True) )
 
 ## ttbar+pu is 200 events per file so need 5 for 1000 events

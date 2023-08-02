@@ -36,7 +36,7 @@ process.GlobalTag.globaltag = GLOBAL_TAG
 process.load('FWCore.MessageService.MessageLogger_cfi')
 process.load("SimGeneral.HepPDTESSource.pythiapdt_cfi")
 ##process.options = cms.untracked.PSet(wantSummary = cms.untracked.bool(True),
-##                                     SkipEvent = cms.untracked.vstring('ProductNotFound')
+##                                     TryToContinue = cms.untracked.vstring('ProductNotFound')
 ##                                     )
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000
 
