@@ -22,8 +22,17 @@
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
 #include "DataFormats/TrackReco/interface/Track.h"
 
-namespace reco {
+//#if defined(__CLING__)
+//#define CMS_HIDE_INLINE_NAMESPACE
+//#endif
+//#if defined(CMS_HIDE_INLINE_NAMESPACE)
+//#define CMS_INLINE_NAMESPACE namespace
+//#else
+//#define CMS_INLINE_NAMESPACE inline namespace
+//#endif
 
+namespace reco {
+  inline namespace v2 {
   class Muon : public RecoCandidate {
   public:
     Muon();
@@ -434,7 +443,7 @@ namespace reco {
       return 0;
     }
   };
-
+  }
 }  // namespace reco
 
 #endif

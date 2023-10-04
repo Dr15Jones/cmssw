@@ -5,8 +5,19 @@
 #include "DataFormats/Common/interface/RefProd.h"
 #include "DataFormats/Common/interface/RefVector.h"
 
+//#if defined(__CLING__)
+//#define CMS_HIDE_INLINE_NAMESPACE
+//#endif
+//#if defined(CMS_HIDE_INLINE_NAMESPACE)
+//#define CMS_INLINE_NAMESPACE namespace
+//#else
+//#define CMS_INLINE_NAMESPACE inline namespace
+//#endif
+
 namespace reco {
+  inline namespace v2 {
   class Muon;
+  }
   /// collection of Muon objects
   typedef std::vector<Muon> MuonCollection;
   /// presistent reference to a Muon

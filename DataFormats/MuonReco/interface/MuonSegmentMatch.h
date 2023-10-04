@@ -8,7 +8,17 @@
 #include "DataFormats/GEMRecHit/interface/GEMSegmentCollection.h"
 #include "DataFormats/GEMRecHit/interface/ME0SegmentCollection.h"
 
+//#if defined(__CLING__)
+//#define CMS_HIDE_INLINE_NAMESPACE
+//#endif
+//#if defined(CMS_HIDE_INLINE_NAMESPACE)
+//#define CMS_INLINE_NAMESPACE namespace
+//#else
+//#define CMS_INLINE_NAMESPACE inline namespace
+//#endif
+
 namespace reco {
+  inline namespace v2 {
   class MuonSegmentMatch {
   public:
     /// segment mask flags
@@ -56,6 +66,7 @@ namespace reco {
     bool hasZed() const { return hasZed_; }
     bool hasPhi() const { return hasPhi_; }
   };
+  }
 }  // namespace reco
 
 #endif

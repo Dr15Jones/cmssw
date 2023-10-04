@@ -15,9 +15,9 @@
 #include "FWCore/Utilities/interface/InputTag.h"
 #include "DQMServices/Core/interface/DQMEDAnalyzer.h"
 #include "DQMServices/Core/interface/DQMStore.h"
+#include "DataFormats/MuonReco/interface/MuonFwd.h"
 
 namespace reco {
-  class Muon;
   class Jet;
   class MET;
   class Vertex;

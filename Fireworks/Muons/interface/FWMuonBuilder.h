@@ -7,11 +7,8 @@
 //
 //
 #include "Fireworks/Core/interface/FWEvePtr.h"
-
+#include "DataFormats/MuonReco/interface/MuonFwd.h"
 // forward declarations
-namespace reco {
-  class Muon;
-}
 
 class FWEventItem;
 class TEveElementList;

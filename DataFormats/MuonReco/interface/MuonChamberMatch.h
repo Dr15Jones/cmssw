@@ -7,14 +7,24 @@
 #include "DataFormats/MuonReco/interface/MuonGEMHitMatch.h"
 #include <vector>
 
+//#if defined(__CLING__)
+//#define CMS_HIDE_INLINE_NAMESPACE
+//#endif
+//#if defined(CMS_HIDE_INLINE_NAMESPACE)
+//#define CMS_INLINE_NAMESPACE namespace
+//#else
+//#define CMS_INLINE_NAMESPACE inline namespace
+//#endif
+
 namespace reco {
+  inline namespace v2 {
   class MuonChamberMatch {
   public:
-    std::vector<reco::MuonSegmentMatch> segmentMatches;  // segments matching propagated track trajectory
-    std::vector<reco::MuonSegmentMatch> gemMatches;      // segments matching propagated track trajectory
+    std::vector<reco::v2::MuonSegmentMatch> segmentMatches;  // segments matching propagated track trajectory
+    std::vector<reco::v2::MuonSegmentMatch> gemMatches;      // segments matching propagated track trajectory
     std::vector<reco::MuonGEMHitMatch> gemHitMatches;    // segments matching propagated track trajectory
-    std::vector<reco::MuonSegmentMatch> me0Matches;      // segments matching propagated track trajectory
-    std::vector<reco::MuonSegmentMatch> truthMatches;    // SimHit projection matching propagated track trajectory
+    std::vector<reco::v2::MuonSegmentMatch> me0Matches;      // segments matching propagated track trajectory
+    std::vector<reco::v2::MuonSegmentMatch> truthMatches;    // SimHit projection matching propagated track trajectory
     std::vector<reco::MuonRPCHitMatch> rpcMatches;       // rpc hits matching propagated track trajectory
     float edgeX;    // distance to closest edge in X (negative - inside, positive - outside)
     float edgeY;    // distance to closest edge in Y (negative - inside, positive - outside)
@@ -39,6 +49,7 @@ namespace reco {
       return getDistancePair(edgeX, edgeY, xErr, yErr).second;
     }  // propagation uncertainty in above distance
   };
+  }
 }  // namespace reco
 
 #endif
