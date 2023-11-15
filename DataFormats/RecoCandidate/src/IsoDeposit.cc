@@ -18,12 +18,14 @@ IsoDeposit::IsoDeposit(double eta, double phi) : theDirection(Direction(eta, phi
 
 void IsoDeposit::addDeposit(double dr, double value) {
   Distance relDir = {float(dr), 0.f};
-  theDeposits.insert(std::make_pair(relDir, value));
+  theDeposits.insert(std::lower_bound(theDeposits.begin(), theDeposits.end(), relDir, Compare()),
+                     std::make_pair(relDir, value));
 }
 
 void IsoDeposit::addDeposit(const Direction& depDir, double deposit) {
   Distance relDir = depDir - theDirection;
-  theDeposits.insert(std::make_pair(relDir, deposit));
+  theDeposits.insert(std::lower_bound(theDeposits.begin(), theDeposits.end(), relDir, Compare()),
+                     std::make_pair(relDir, deposit));
 }
 
 double IsoDeposit::depositWithin(double coneSize, const Vetos& vetos, bool skipDepositVeto) const {
@@ -49,7 +51,7 @@ std::pair<double, int> IsoDeposit::depositAndCountWithin(double coneSize,
 
   Distance maxDistance = {float(coneSize), 999.f};
   typedef DepositsMultimap::const_iterator IM;
-  IM imLoc = theDeposits.upper_bound(maxDistance);
+  IM imLoc = std::upper_bound(theDeposits.begin(), theDeposits.end(), maxDistance, Compare());
   for (IM im = theDeposits.begin(); im != imLoc; ++im) {
     bool vetoed = false;
     for (IV iv = allVetos.begin(); iv < ivEnd; ++iv) {
@@ -107,7 +109,7 @@ std::pair<double, int> IsoDeposit::depositAndCountWithin(double coneSize,
 
   Distance maxDistance = {float(coneSize), 999.f};
   typedef DepositsMultimap::const_iterator IM;
-  IM imLoc = theDeposits.upper_bound(maxDistance);
+  IM imLoc = std::upper_bound(theDeposits.begin(), theDeposits.end(), maxDistance, Compare());
   for (IM im = theDeposits.begin(); im != imLoc; ++im) {
     bool vetoed = false;
     Direction dirDep = theDirection + im->first;
@@ -156,7 +158,7 @@ double IsoDeposit::nearestDR(double coneSize, const AbsVetos& vetos, bool skipDe
 
   Distance maxDistance = {float(coneSize), 999.f};
   typedef DepositsMultimap::const_iterator IM;
-  IM imLoc = theDeposits.upper_bound(maxDistance);
+  IM imLoc = std::upper_bound(theDeposits.begin(), theDeposits.end(), maxDistance, Compare());
   for (IM im = theDeposits.begin(); im != imLoc; ++im) {
     bool vetoed = false;
     Direction dirDep = theDirection + im->first;
