@@ -25,7 +25,6 @@
 #include <vector>
 #include <algorithm>
 #include <typeinfo>
-#include <atomic>
 
 namespace reco {
   namespace isodeposit {
@@ -70,10 +69,10 @@ namespace reco {
 
     //! Constructor
     IsoDeposit(double eta = 0, double phi = 0);
-    IsoDeposit(const Direction& candDirection);
+    explicit IsoDeposit(const Direction& candDirection);
 
     //! Destructor
-    virtual ~IsoDeposit(){};
+    ~IsoDeposit(){};
 
     //! Get direction of isolation cone
     const Direction& direction() const { return theDirection; }
@@ -171,8 +170,8 @@ namespace reco {
           : parent_(parent), it_(it), cache_(), cacheReady_(false) {}
       const reco::IsoDeposit* parent_;
       IsoDeposit::DepositsMultimap::const_iterator it_;
-      CMS_THREAD_SAFE mutable Direction cache_;
-      mutable std::atomic<bool> cacheReady_;
+      CMS_SA_ALLOW mutable Direction cache_;
+      CMS_SA_ALLOW mutable bool cacheReady_;
     };
     const_iterator begin() const { return const_iterator(this, theDeposits.begin()); }
     const_iterator end() const { return const_iterator(this, theDeposits.end()); }
