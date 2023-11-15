@@ -20,10 +20,10 @@
 #include "DataFormats/Math/interface/Vector3D.h"
 #include "FWCore/Utilities/interface/Exception.h"
 #include "FWCore/Utilities/interface/thread_safety_macros.h"
-#include <map>
 #include <cmath>
 #include <string>
 #include <vector>
+#include <algorithm>
 #include <typeinfo>
 #include <atomic>
 
@@ -52,8 +52,12 @@ namespace reco {
     typedef isodeposit::AbsVeto AbsVeto;
     typedef isodeposit::AbsVetos AbsVetos;
     typedef Direction::Distance Distance;
-    typedef std::multimap<Distance, float> DepositsMultimap;
+    typedef std::vector<std::pair<Distance, float>> DepositsMultimap;
     typedef DepositsMultimap::const_iterator DepIterator;
+    struct Compare {
+      bool operator()(std::pair<Distance, float> const& p, Distance const& d) const { return p.first < d; }
+      bool operator()(Distance const& d, std::pair<Distance, float> const& p) const { return d < p.first; }
+    };
 
     // old style vetos
     struct Veto {
@@ -163,10 +167,10 @@ namespace reco {
           cache_ = parent_->direction() + it_->first;
         cacheReady_ = true;
       }
-      const_iterator(const IsoDeposit* parent, std::multimap<Distance, float>::const_iterator it)
+      const_iterator(const IsoDeposit* parent, IsoDeposit::DepositsMultimap::const_iterator it)
           : parent_(parent), it_(it), cache_(), cacheReady_(false) {}
       const reco::IsoDeposit* parent_;
-      std::multimap<Distance, float>::const_iterator it_;
+      IsoDeposit::DepositsMultimap::const_iterator it_;
       CMS_THREAD_SAFE mutable Direction cache_;
       mutable std::atomic<bool> cacheReady_;
     };
@@ -314,7 +318,7 @@ double reco::IsoDeposit::algoWithin(double coneSize, const AbsVetos& vetos, bool
 
   Distance maxDistance = {float(coneSize), 999.f};
   typedef DepositsMultimap::const_iterator IM;
-  IM imLoc = theDeposits.upper_bound(maxDistance);
+  IM imLoc = std::upper_bound(theDeposits.begin(), theDeposits.end(), maxDistance, Compare());
   for (IM im = theDeposits.begin(); im != imLoc; ++im) {
     bool vetoed = false;
     Direction dirDep = theDirection + im->first;
