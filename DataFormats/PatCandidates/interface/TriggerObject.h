@@ -53,7 +53,7 @@ namespace pat {
     /// Reference to trigger object,
     /// meant for 'l1extra' particles to access their additional functionalities,
     /// empty otherwise
-    reco::CandidateBaseRef refToOrig_;
+    reco::CandidatePtr refToOrig_;
 
   public:
     /// Constructors and Destructor
@@ -117,37 +117,39 @@ namespace pat {
     /// Special methods for 'l1extra' particles
 
     /// General getters
-    const reco::CandidateBaseRef& origObjRef() const { return refToOrig_; };
     const reco::Candidate* origObjCand() const { return refToOrig_.get(); };
     /// Getters specific to the 'l1extra' particle type for
     /// - EM
-    const l1extra::L1EmParticleRef origL1EmRef() const;
     const L1GctEmCand* origL1GctEmCand() const {
-      return origL1EmRef().isNonnull() ? origL1EmRef()->gctEmCand() : nullptr;
+      auto* cand = dynamic_cast<const l1extra::L1EmParticle*>(origObjCand());
+      return cand ? cand->gctEmCand() : nullptr;
     };
     /// - EtMiss
-    const l1extra::L1EtMissParticleRef origL1EtMissRef() const;
     const L1GctEtMiss* origL1GctEtMiss() const {
-      return origL1EtMissRef().isNonnull() ? origL1EtMissRef()->gctEtMiss() : nullptr;
+      auto* cand = dynamic_cast<const l1extra::L1EtMissParticle*>(origObjCand());
+      return cand ? cand->gctEtMiss() : nullptr;
     };
     const L1GctEtTotal* origL1GctEtTotal() const {
-      return origL1EtMissRef().isNonnull() ? origL1EtMissRef()->gctEtTotal() : nullptr;
+      auto* cand = dynamic_cast<const l1extra::L1EtMissParticle*>(origObjCand());
+      return cand ? cand->gctEtTotal() : nullptr;
     };
     const L1GctHtMiss* origL1GctHtMiss() const {
-      return origL1EtMissRef().isNonnull() ? origL1EtMissRef()->gctHtMiss() : nullptr;
+      auto* cand = dynamic_cast<const l1extra::L1EtMissParticle*>(origObjCand());
+      return cand ? cand->gctHtMiss() : nullptr;
     };
     const L1GctEtHad* origL1GctEtHad() const {
-      return origL1EtMissRef().isNonnull() ? origL1EtMissRef()->gctEtHad() : nullptr;
+      auto* cand = dynamic_cast<const l1extra::L1EtMissParticle*>(origObjCand());
+      return cand ? cand->gctEtHad() : nullptr;
     };
     /// - Jet
-    const l1extra::L1JetParticleRef origL1JetRef() const;
     const L1GctJetCand* origL1GctJetCand() const {
-      return origL1JetRef().isNonnull() ? origL1JetRef()->gctJetCand() : nullptr;
+      auto* cand = dynamic_cast<const l1extra::L1JetParticle*>(origObjCand());
+      return cand ? cand->gctJetCand() : nullptr;
     };
     /// - Muon
-    const l1extra::L1MuonParticleRef origL1MuonRef() const;
     const L1MuGMTExtendedCand* origL1GmtMuonCand() const {
-      return origL1MuonRef().isNonnull() ? &(origL1MuonRef()->gmtMuonCand()) : nullptr;
+      auto* cand = dynamic_cast<const l1extra::L1MuonParticle*>(origObjCand());
+      return cand ? &(cand->gmtMuonCand()) : nullptr;
     };
 
     /// Special methods for the cut string parser
