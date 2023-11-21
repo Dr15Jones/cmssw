@@ -6,8 +6,6 @@
 Ref: A function template for conversion from RefToBase to Ptr
 
 ----------------------------------------------------------------------*/
-/*
-    ----------------------------------------------------------------------*/
 
 #include "DataFormats/Common/interface/RefToBase.h"
 #include "DataFormats/Common/interface/Ptr.h"
@@ -43,7 +41,6 @@ namespace edm {
       // by construction would be persistent
       return Ptr<T>();
     } else {
-      //Another thread could change this value so get only once
       EDProductGetter const* getter = ref.productGetter();
       if (getter) {
         return Ptr<T>(ref.id(), ref.key(), getter);
