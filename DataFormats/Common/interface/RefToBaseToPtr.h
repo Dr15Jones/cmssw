@@ -29,7 +29,7 @@ namespace edm {
   }
 
   /*
-   * Do not use this ouside an ioread rule in classes_def.xml
+   * Do not use this outside an ioread rule in classes_def.xml
    */
   template <typename T>
   Ptr<T> refToBaseToPtr_ioread(RefToBase<T> const& ref) {
