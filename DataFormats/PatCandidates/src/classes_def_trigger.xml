@@ -8,7 +8,7 @@
    <version ClassVersion="10" checksum="2299474032"/>
   </class>
   <ioread sourceClass="pat::TriggerObject" version="[-12]" source="reco::CandidateBaseRef refToOrig_" targetClass="pat::TriggerObject" target="refToOrig_">
-    <![CDATA[ refToOrig_ = edm::refToBaseToPtr(onfile.refToOrig_); ]]>
+    <![CDATA[ refToOrig_ = edm::refToBaseToPtr_ioread(onfile.refToOrig_); ]]>
    </ioread>
   <class name="std::vector&lt;pat::TriggerObject&gt;" />
   <class name="std::vector&lt;pat::TriggerObject&gt;::const_iterator" />
