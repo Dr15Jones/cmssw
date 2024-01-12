@@ -3,15 +3,18 @@
 
 using namespace reco;
 
-CompositeCandidate::CompositeCandidate(const Candidate& c, const std::string& name) : LeafCandidate(c), name_(name) {
+CompositeCandidate::CompositeCandidate(const Candidate& c, const std::string& name) : LeafCandidate(c) /*, name_(name)*/ {
+  /*
   size_t n = c.numberOfDaughters();
   for (size_t i = 0; i != n; ++i) {
     addDaughter(*c.daughter(i));
   }
+  */
 }
 
 CompositeCandidate::CompositeCandidate(const Candidate& c, const std::string& name, role_collection const& roles)
-    : LeafCandidate(c), name_(name), roles_(roles) {
+  : LeafCandidate(c) /*, name_(name), roles_(roles)*/ {
+  /*
   size_t n = c.numberOfDaughters();
   size_t r = roles_.size();
   bool sameSize = (n == r);
@@ -21,6 +24,7 @@ CompositeCandidate::CompositeCandidate(const Candidate& c, const std::string& na
     else
       addDaughter(*c.daughter(i));
   }
+  */
 }
 
 CompositeCandidate::~CompositeCandidate() {}
@@ -28,17 +32,19 @@ CompositeCandidate::~CompositeCandidate() {}
 CompositeCandidate* CompositeCandidate::clone() const { return new CompositeCandidate(*this); }
 
 const Candidate* CompositeCandidate::daughter(size_type i) const {
-  return (i < numberOfDaughters()) ? &dau[i] : nullptr;  // i >= 0, since i is unsigned
+  return nullptr;
+  //  return (i < numberOfDaughters()) ? &dau[i] : nullptr;  // i >= 0, since i is unsigned
 }
 
 Candidate* CompositeCandidate::daughter(size_type i) {
-  Candidate* d = (i < numberOfDaughters()) ? &dau[i] : nullptr;  // i >= 0, since i is unsigned
-  return d;
+  return nullptr;
+  //Candidate* d = (i < numberOfDaughters()) ? &dau[i] : nullptr;  // i >= 0, since i is unsigned
+  //return d;
 }
 
 const Candidate* CompositeCandidate::mother(size_type i) const { return nullptr; }
 
-size_t CompositeCandidate::numberOfDaughters() const { return dau.size(); }
+size_t CompositeCandidate::numberOfDaughters() const { return 0; /*dau.size();*/ }
 
 size_t CompositeCandidate::numberOfMothers() const { return 0; }
 
@@ -47,6 +53,7 @@ bool CompositeCandidate::overlap(const Candidate& c2) const {
 }
 
 void CompositeCandidate::applyRoles() {
+  /*
   if (roles_.empty())
     return;
 
@@ -67,9 +74,12 @@ void CompositeCandidate::applyRoles() {
       c1->setName(role);
     }
   }
+  */
 }
 
 Candidate* CompositeCandidate::daughter(const std::string& s) {
+  return nullptr;
+  /*
   int ret = -1;
   int i = 0, N = roles_.size();
   bool found = false;
@@ -85,9 +95,12 @@ Candidate* CompositeCandidate::daughter(const std::string& s) {
   }
 
   return daughter(ret);
+  */
 }
 
 const Candidate* CompositeCandidate::daughter(const std::string& s) const {
+  return nullptr;
+  /*
   int ret = -1;
   int i = 0, N = roles_.size();
   bool found = false;
@@ -103,9 +116,11 @@ const Candidate* CompositeCandidate::daughter(const std::string& s) const {
   }
 
   return daughter(ret);
+  */
 }
 
 void CompositeCandidate::addDaughter(const Candidate& cand, const std::string& s) {
+  /*
   Candidate* c = cand.clone();
   if (!s.empty()) {
     role_collection::iterator begin = roles_.begin(), end = roles_.end();
@@ -121,9 +136,11 @@ void CompositeCandidate::addDaughter(const Candidate& cand, const std::string& s
     }
   }
   dau.push_back(c);
+  */
 }
 
 void CompositeCandidate::addDaughter(std::unique_ptr<Candidate> cand, const std::string& s) {
+  /*
   if (!s.empty()) {
     role_collection::iterator begin = roles_.begin(), end = roles_.end();
     bool isFound = (find(begin, end, s) != end);
@@ -138,4 +155,10 @@ void CompositeCandidate::addDaughter(std::unique_ptr<Candidate> cand, const std:
     }
   }
   dau.push_back(std::move(cand));
+  */
+}
+
+CompositeCandidate::role_collection const& CompositeCandidate::roles() const {
+  const static role_collection s;
+  return s;
 }

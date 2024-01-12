@@ -304,12 +304,14 @@
    <version ClassVersion="11" checksum="2960540813"/>
    <version ClassVersion="10" checksum="1421351288"/>
   </class>
-  <class name="pat::CompositeCandidate"  ClassVersion="12">
+  <class name="pat::CompositeCandidate"  ClassVersion="13">
+   <version ClassVersion="13" checksum="1092859857"/>
    <version ClassVersion="12" checksum="2489375362"/>
    <version ClassVersion="11" checksum="3492108938"/>
    <version ClassVersion="10" checksum="417284221"/>
   </class>
-  <class name="pat::PFParticle"  ClassVersion="16">
+  <class name="pat::PFParticle"  ClassVersion="17">
+   <version ClassVersion="17" checksum="677072585"/>
    <version ClassVersion="16" checksum="4057492004"/>
    <version ClassVersion="15" checksum="1485536104"/>
    <version ClassVersion="14" checksum="2795911745"/>
