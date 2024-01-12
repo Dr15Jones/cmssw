@@ -24,7 +24,7 @@ namespace reco {
     typedef CandidateCollection daughters;
     typedef std::vector<std::string> role_collection;
     /// default constructor
-    CompositeCandidate(std::string name = "") : LeafCandidate(), name_(name) {}
+    CompositeCandidate(std::string name = "") : LeafCandidate() /*, name_(name)*/ {}
     /// constructor from values
     template <typename P4>
     CompositeCandidate(Charge q,
@@ -34,7 +34,7 @@ namespace reco {
                        int status = 0,
                        bool integerCharge = true,
                        std::string name = "")
-        : LeafCandidate(q, p4, vtx, pdgId, status, integerCharge), name_(name) {}
+      : LeafCandidate(q, p4, vtx, pdgId, status, integerCharge)/*, name_(name)*/ {}
     /// constructor from values
     explicit CompositeCandidate(const Candidate& p, const std::string& name = "");
     /// constructor from values
@@ -42,15 +42,15 @@ namespace reco {
     /// destructor
     ~CompositeCandidate() override;
     /// get the name of the candidate
-    std::string name() const { return name_; }
+    std::string name() const { return std::string();/*name_;*/ }
     /// set the name of the candidate
-    void setName(std::string name) { name_ = name; }
+    void setName(std::string name) { /*name_ = name;*/ }
     /// get the roles
-    role_collection const& roles() const { return roles_; }
+    role_collection const& roles() const; /*{ return roles_; }*/
     /// set the roles
     void setRoles(const role_collection& roles) {
-      roles_.clear();
-      roles_ = roles;
+      /*roles_.clear();
+        roles_ = roles; */
     }
     /// returns a clone of the candidate
     CompositeCandidate* clone() const override;
@@ -68,9 +68,9 @@ namespace reco {
     /// add a clone of the passed candidate as daughter
     void addDaughter(std::unique_ptr<Candidate>, const std::string& s = "");
     /// clear daughters
-    void clearDaughters() { dau.clear(); }
+    void clearDaughters() { /*dau.clear();*/ }
     // clear roles
-    void clearRoles() { roles_.clear(); }
+    void clearRoles() { /*roles_.clear();*/ }
     // Apply the roles to the objects
     void applyRoles();
     /// number of mothers (zero or one in most of but not all the cases)
@@ -80,13 +80,13 @@ namespace reco {
 
   private:
     /// collection of daughters
-    daughters dau;
+    //daughters dau;
     /// check overlap with another daughter
     bool overlap(const Candidate&) const override;
     /// candidate name
-    std::string name_;
+    //std::string name_;
     /// candidate roles
-    role_collection roles_;
+    //role_collection roles_;
   };
 
 }  // namespace reco

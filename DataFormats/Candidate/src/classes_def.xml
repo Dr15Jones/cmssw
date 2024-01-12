@@ -43,7 +43,8 @@
     ]]>
   </ioread>
 
-  <class name="reco::CompositeCandidate" ClassVersion="12">
+  <class name="reco::CompositeCandidate" ClassVersion="13">
+    <version ClassVersion="13" checksum="2752494592"/>
    <version ClassVersion="12" checksum="1318508193"/>
    <version ClassVersion="11" checksum="1985736233"/>
    <version ClassVersion="10" checksum="2953566340"/>
@@ -70,7 +71,8 @@
     ]]>
   </ioread>  
 
-  <class name="reco::VertexCompositeCandidate" ClassVersion="13">
+  <class name="reco::VertexCompositeCandidate" ClassVersion="14">
+   <version ClassVersion="14" checksum="3694823674"/>
    <version ClassVersion="13" checksum="1561694123"/>
    <version ClassVersion="12" checksum="1204062111"/>
    <version ClassVersion="11" checksum="2801258535"/>
@@ -101,7 +103,8 @@
    <version ClassVersion="11" checksum="124560908"/>
    <version ClassVersion="10" checksum="2575892329"/>
   </class>
-  <class name="reco::NamedCompositeCandidate" ClassVersion="12">
+  <class name="reco::NamedCompositeCandidate" ClassVersion="13">
+   <version ClassVersion="13" checksum="3251840200"/>
    <version ClassVersion="12" checksum="1682589651"/>
    <version ClassVersion="11" checksum="1100712875"/>
    <version ClassVersion="10" checksum="604924170"/>
