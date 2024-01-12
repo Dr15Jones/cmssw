@@ -550,7 +550,7 @@ namespace reco {
 
     const edm::EDProductGetter* getter_;  //transient
     unsigned short storedRefsBitPattern_;
-    std::vector<unsigned long long> refsInfo_;
+    std::vector<uint64_t> refsInfo_;
     std::vector<const void*> refsCollectionCache_;
 
     /// timing information (valid if timeError_ >= 0)
