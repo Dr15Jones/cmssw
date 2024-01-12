@@ -344,7 +344,8 @@ isolationTauChargedHadronCandidates_.reset();
 <!-- </ioread> -->
 
 
-  <class name="reco::PFTauDecayMode" ClassVersion="13">
+  <class name="reco::PFTauDecayMode" ClassVersion="14">
+   <version ClassVersion="14" checksum="1040466571"/>
    <version ClassVersion="13" checksum="3507751092"/>
    <version ClassVersion="12" checksum="2043565930"/>
    <version ClassVersion="11" checksum="3414615810"/>
