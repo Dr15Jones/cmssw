@@ -477,7 +477,6 @@ namespace pat {
 
     /// User data object
     std::vector<std::string> userDataLabels_;
-    pat::UserDataCollection userDataObjects_;
     // User float values
     std::vector<std::string> userFloatLabels_;
     std::vector<float> userFloats_;
@@ -842,10 +841,6 @@ namespace pat {
 
   template <class ObjectType>
   const pat::UserData *PATObject<ObjectType>::userDataObject_(const std::string &key) const {
-    auto it = std::lower_bound(userDataLabels_.cbegin(), userDataLabels_.cend(), key);
-    if (it != userDataLabels_.cend() && *it == key) {
-      return &userDataObjects_[std::distance(userDataLabels_.cbegin(), it)];
-    }
     return nullptr;
   }
 
@@ -853,18 +848,6 @@ namespace pat {
   void PATObject<ObjectType>::addUserDataObject_(const std::string &label,
                                                  std::unique_ptr<pat::UserData> data,
                                                  bool overwrite) {
-    auto it = std::lower_bound(userDataLabels_.begin(), userDataLabels_.end(), label);
-    const auto dist = std::distance(userDataLabels_.begin(), it);
-    if (it == userDataLabels_.end() || *it != label) {
-      userDataLabels_.insert(it, label);
-      userDataObjects_.insert(userDataObjects_.begin() + dist, std::move(data));
-    } else if (overwrite) {
-      userDataObjects_.set(dist, std::move(data));
-    } else {
-      //create a range by adding behind the first entry
-      userDataLabels_.insert(it + 1, label);
-      userDataObjects_.insert(userDataObjects_.begin() + dist + 1, std::move(data));
-    }
   }
 
   template <class ObjectType>
