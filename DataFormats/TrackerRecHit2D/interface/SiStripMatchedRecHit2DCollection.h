@@ -8,6 +8,12 @@
 #include "DataFormats/Common/interface/OwnVector.h"
 #include <vector>
 
+namespace edm::detail {
+  template<>
+    struct RangeMapContainer<edm::OwnVector<SiStripMatchedRecHit2D>> {
+    using type = edm::OwnVector<SiStripMatchedRecHit2D>;
+  };
+}
 typedef edm::RangeMap<DetId, edm::OwnVector<SiStripMatchedRecHit2D> > SiStripMatchedRecHit2DCollectionOld;
 
 #include "DataFormats/Common/interface/DetSetVectorNew.h"

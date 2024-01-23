@@ -9,6 +9,9 @@
 #include "DataFormats/MuonDetId/interface/RPCDetId.h"
 #include "DataFormats/RPCRecHit/interface/RPCRecHit.h"
 
+#include "DataFormats/DTRecHit/interface/DTRecHitCollection.h"
+#include "DataFormats/RPCRecHit/interface/RPCRecHitCollection.h"
+
 typedef MuonDetCleaner<CSCDetId, CSCRecHit2D> CSCRecHitColCleaner;
 typedef MuonDetCleaner<DTLayerId, DTRecHit1DPair> DTRecHitColCleaner;
 typedef MuonDetCleaner<RPCDetId, RPCRecHit> RPCRecHitColCleaner;

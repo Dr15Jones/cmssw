@@ -5,6 +5,8 @@
 #include "DataFormats/DetId/interface/DetId.h"
 
 #include "DataFormats/Common/interface/DetSetVectorNew.h"
+#include "DataFormats/Common/interface/OwnVector.h"
+
 typedef edmNew::DetSetVector<SiPixelRecHit> SiPixelRecHitCollection;
 typedef SiPixelRecHitCollection SiPixelRecHitCollectionNew;
 

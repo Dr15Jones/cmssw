@@ -17,6 +17,11 @@
   <class name="edm::OwnVector<DTRecHit1DPair,edm::ClonePolicy<DTRecHit1DPair> >"/>
   <class name="edm::ClonePolicy<DTRecHit1DPair>" /> <!-- Root6 -->
   <class name="edm::RangeMap <DTLayerId,edm::OwnVector<DTRecHit1DPair,edm::ClonePolicy<DTRecHit1DPair> >,edm::ClonePolicy<DTRecHit1DPair> >"/> 
+  <ioread sourceClass="edm::RangeMap<DTLayerId, edm::OwnVector<DTRecHit1DPair, edm::ClonePolicy<DTRecHit1DPair> >, edm::ClonePolicy<DTRecHit1DPair> >" targetClass="edm::RangeMap<DTLayerId, edm::OwnVector<DTRecHit1DPair, edm::ClonePolicy<DTRecHit1DPair> >, edm::ClonePolicy<DTRecHit1DPair> >" version="[1-10]" source="edm::OwnVector<DTRecHit1DPair> collection_" target="collection_">
+  <![CDATA[
+          collection_ = edm::detail::io_transform(onfile.collection_);
+]]>
+  </ioread>
   <class name="edm::Wrapper<edm::RangeMap <DTLayerId, edm::OwnVector<DTRecHit1DPair,edm::ClonePolicy<DTRecHit1DPair> >,edm::ClonePolicy<DTRecHit1DPair> > >"/>
   <class name="std::vector<DTRecHit1D>"/>
   <class name="std::vector<DTRecHit1DPair>"/>
@@ -52,6 +57,7 @@
    <version ClassVersion="10" checksum="2324947244"/>
   </class>
   <class name="std::vector<DTRecSegment4D*>"/>
+  <class name="std::vector<DTRecSegment4D>"/>
   <class name="std::map<DTChamberId,std::pair<unsigned int,unsigned int> >"/>
   <class name="std::pair<DTChamberId,std::pair<unsigned int,unsigned int> >"/>
   <class name="std::map<DTChamberId,std::pair<unsigned long,unsigned long> >"/>
@@ -59,6 +65,11 @@
   <class name="edm::OwnVector<DTRecSegment4D,edm::ClonePolicy<DTRecSegment4D> >"/>
   <class name="edm::ClonePolicy<DTRecSegment4D>" /> <!-- Root6 -->
   <class name="edm::RangeMap <DTChamberId, edm::OwnVector<DTRecSegment4D,edm::ClonePolicy<DTRecSegment4D> >,edm::ClonePolicy<DTRecSegment4D> >"/>
+  <ioread sourceClass="edm::RangeMap<DTChamberId, edm::OwnVector<DTRecSegment4D, edm::ClonePolicy<DTRecSegment4D> >, edm::ClonePolicy<DTRecSegment4D> >" targetClass="edm::RangeMap<DTChamberId, edm::OwnVector<DTRecSegment4D, edm::ClonePolicy<DTRecSegment4D> >, edm::ClonePolicy<DTRecSegment4D> >" version="[1-10]" source="edm::OwnVector<DTRecSegment4D> collection_" target="collection_">
+  <![CDATA[
+          collection_ = edm::detail::io_transform(onfile.collection_);
+]]>
+  </ioread>
   <class name="edm::Wrapper<edm::RangeMap <DTChamberId, edm::OwnVector<DTRecSegment4D,edm::ClonePolicy<DTRecSegment4D> >,edm::ClonePolicy<DTRecSegment4D> > >"/>
   <class name="DTRecSegment4DRef"/>
 </selection>

@@ -8,6 +8,12 @@
 #include "DataFormats/Common/interface/ClonePolicy.h"
 #include "DataFormats/Common/interface/OwnVector.h"
 
+namespace edm::detail {
+  template<>
+    struct RangeMapContainer<edm::OwnVector<SiStripRecHit1D>> {
+    using type = edm::OwnVector<SiStripRecHit1D>;
+  };
+}
 typedef edm::RangeMap<DetId, edm::OwnVector<SiStripRecHit1D> > SiStripRecHit1DCollectionOld;
 
 // new collection(for some far indetermined future)

@@ -13,6 +13,13 @@
 #include <DataFormats/Common/interface/ClonePolicy.h>
 #include <DataFormats/Common/interface/OwnVector.h>
 
+namespace edm::detail {
+  template<>
+    struct RangeMapContainer<edm::OwnVector<CSCRecHit2D>> {
+    using type = std::vector<CSCRecHit2D>;
+  };
+}
+
 typedef edm::RangeMap<CSCDetId, edm::OwnVector<CSCRecHit2D> > CSCRecHit2DCollection;
 
 #endif

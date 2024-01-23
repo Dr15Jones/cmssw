@@ -31,4 +31,11 @@
 #include "DataFormats/TrackerRecHit2D/interface/VectorHit.h"
 #include <vector>
 
+namespace edm::detail {
+  template<>
+  struct RangeMapContainer<edm::OwnVector<SiPixelRecHit>> {
+    using type = edm::OwnVector<SiPixelRecHit>;
+  };
+}
+
 #endif  // SISTRIPRECHIT_CLASSES_H

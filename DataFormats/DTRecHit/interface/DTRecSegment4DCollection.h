@@ -18,6 +18,13 @@
 #include "DataFormats/DTRecHit/interface/DTRecSegment4D.h"
 #include "DataFormats/MuonDetId/interface/DTChamberId.h"
 
+namespace edm::detail {
+  template<>
+  struct RangeMapContainer<edm::OwnVector<DTRecSegment4D>> {
+    using type = std::vector<DTRecSegment4D>;
+  };
+}
+
 typedef edm::RangeMap<DTChamberId, edm::OwnVector<DTRecSegment4D> > DTRecSegment4DCollection;
 
 #include "DataFormats/Common/interface/Ref.h"

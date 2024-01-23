@@ -14,6 +14,13 @@
 #include "DataFormats/Common/interface/OwnVector.h"
 #include <functional>
 
+namespace edm::detail {
+  template<>
+    struct RangeMapContainer<edm::OwnVector<RPCRecHit>> {
+    using type = std::vector<RPCRecHit>;
+  };
+}
+
 typedef edm::RangeMap<RPCDetId, edm::OwnVector<RPCRecHit, edm::ClonePolicy<RPCRecHit> >, edm::ClonePolicy<RPCRecHit> >
     RPCRecHitCollection;
 
