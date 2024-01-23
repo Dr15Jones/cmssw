@@ -297,12 +297,9 @@ void MuonMesh::pruneMesh() {
 bool MuonMesh::isDuplicateOf(const CSCSegmentRef& lhs, const CSCSegmentRef& rhs)
     const  // this isDuplicateOf() deals with duplicate segments in ME1/a
 {
-  bool result(false);
 
   if (!lhs->isME11a_duplicate())
-    return result;
-
-  std::vector<CSCSegment> lhs_duplicates = lhs->duplicateSegments();
+    return false;
 
   if (fabs(lhs->localPosition().x() - rhs->localPosition().x()) < 1E-3 &&
       fabs(lhs->localPosition().y() - rhs->localPosition().y()) < 1E-3 &&
@@ -314,35 +311,34 @@ bool MuonMesh::isDuplicateOf(const CSCSegmentRef& lhs, const CSCSegmentRef& rhs)
       fabs(lhs->localPositionError().yy() - rhs->localPositionError().yy()) < 1E-3 &&
       fabs(lhs->localDirectionError().xx() - rhs->localDirectionError().xx()) < 1E-3 &&
       fabs(lhs->localDirectionError().yy() - rhs->localDirectionError().yy()) < 1E-3)
-    result = true;
+    return true;
 
-  for (std::vector<CSCSegment>::const_iterator segIter1 = lhs_duplicates.begin(); segIter1 != lhs_duplicates.end();
-       ++segIter1) {  // loop over lhs duplicates
+  for (auto const& seg1 : lhs->duplicateSegments()) {
 
-    if (fabs(segIter1->localPosition().x() - rhs->localPosition().x()) < 1E-3 &&
-        fabs(segIter1->localPosition().y() - rhs->localPosition().y()) < 1E-3 &&
-        fabs(segIter1->localDirection().x() / segIter1->localDirection().z() -
+    if (fabs(seg1.localPosition().x() - rhs->localPosition().x()) < 1E-3 &&
+        fabs(seg1.localPosition().y() - rhs->localPosition().y()) < 1E-3 &&
+        fabs(seg1.localDirection().x() / seg1.localDirection().z() -
              rhs->localDirection().x() / rhs->localDirection().z()) < 1E-3 &&
-        fabs(segIter1->localDirection().y() / segIter1->localDirection().z() -
+        fabs(seg1.localDirection().y() / seg1.localDirection().z() -
              rhs->localDirection().y() / rhs->localDirection().z()) < 1E-3 &&
-        fabs(segIter1->localPositionError().xx() - rhs->localPositionError().xx()) < 1E-3 &&
-        fabs(segIter1->localPositionError().yy() - rhs->localPositionError().yy()) < 1E-3 &&
-        fabs(segIter1->localDirectionError().xx() - rhs->localDirectionError().xx()) < 1E-3 &&
-        fabs(segIter1->localDirectionError().yy() - rhs->localDirectionError().yy()) < 1E-3)
-      result = true;
+        fabs(seg1.localPositionError().xx() - rhs->localPositionError().xx()) < 1E-3 &&
+        fabs(seg1.localPositionError().yy() - rhs->localPositionError().yy()) < 1E-3 &&
+        fabs(seg1.localDirectionError().xx() - rhs->localDirectionError().xx()) < 1E-3 &&
+        fabs(seg1.localDirectionError().yy() - rhs->localDirectionError().yy()) < 1E-3)
+      return true;
     /*
-    if(fabs(segIter1->localPosition().x()        - rhs->localPosition().x()      ) < 2*sqrt(segIter1->localPositionError().xx()) &&
-       fabs(segIter1->localPosition().y()        - rhs->localPosition().y()      ) < 2*sqrt(segIter1->localPositionError().yy()) &&
-       fabs(segIter1->localDirection().x()/segIter1->localDirection().z()    - rhs->localDirection().x()/rhs->localDirection().z()   ) 
-       < 2*std::sqrt(std::max(segIter1->localDirectionError().yy(),rhs->localDirectionError().xx())) &&
-       fabs(segIter1->localDirection().y()/segIter1->localDirection().z()    - rhs->localDirection().y()/rhs->localDirection().z()   ) 
-       < 2*std::sqrt(std::max(segIter1->localDirectionError().yy(),rhs->localDirectionError().yy())))
+    if(fabs(seg1.localPosition().x()        - rhs->localPosition().x()      ) < 2*sqrt(seg1.localPositionError().xx()) &&
+       fabs(seg1.localPosition().y()        - rhs->localPosition().y()      ) < 2*sqrt(seg1.localPositionError().yy()) &&
+       fabs(seg1.localDirection().x()/seg1.localDirection().z()    - rhs->localDirection().x()/rhs->localDirection().z()   ) 
+       < 2*std::sqrt(std::max(seg1.localDirectionError().yy(),rhs->localDirectionError().xx())) &&
+       fabs(seg1.localDirection().y()/seg1.localDirection().z()    - rhs->localDirection().y()/rhs->localDirection().z()   ) 
+       < 2*std::sqrt(std::max(seg1.localDirectionError().yy(),rhs->localDirectionError().yy())))
       result = true;
     */
 
   }  // loop over duplicates
 
-  return result;
+  return false;
 }
 
 bool MuonMesh::isDuplicateOf(const std::pair<CSCDetId, CSCSegmentRef>& rhs,

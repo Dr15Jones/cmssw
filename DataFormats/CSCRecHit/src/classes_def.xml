@@ -20,10 +20,16 @@
 
   <class name="std::vector<CSCSegment>"/>
   <class name="std::vector<CSCSegment*>"/>
-  <class name="CSCSegment" ClassVersion="11">
+  <class name="CSCSegment" ClassVersion="12">
+   <version ClassVersion="12" checksum="1062772782"/>
    <version ClassVersion="11" checksum="160361831"/>
    <version ClassVersion="10" checksum="3002485899"/>
   </class>
+  <ioread sourceClass="CSCSegment" targetClass="CSCSegment" version="[1-11]" source="std::vector<CSCSegment> theDuplicateSegments" target="theDuplicateSegments">
+  <![CDATA[
+      std::copy(onfile.theDuplicateSegments.begin(),onfile.theDuplicateSegments.end(), std::back_inserter(theDuplicateSegments));
+]]>
+</ioread>
   <class name="edm::OwnVector<CSCSegment,edm::ClonePolicy<CSCSegment> >"/>
   <class name="edm::RangeMap<CSCDetId,edm::OwnVector<CSCSegment,edm::ClonePolicy<CSCSegment> >,edm::ClonePolicy<CSCSegment> >"/>
   <class name="edm::ClonePolicy<CSCSegment>"/> <!-- Root6 -->
