@@ -24,6 +24,13 @@
 
 /* ====================================================================== */
 
+namespace edm::detail {
+  template<>
+    struct RangeMapContainer<edm::OwnVector<DTSLRecSegment2D>> {
+    using type = edm::OwnVector<DTSLRecSegment2D>;
+  };
+}
+
 typedef edm::RangeMap<DTSuperLayerId, edm::OwnVector<DTSLRecSegment2D> > DTRecSegment2DCollection;
 
 #endif  // DTRecHit_DTRecSegment2DCollection_h

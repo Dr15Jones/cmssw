@@ -14,6 +14,12 @@
 #include "DataFormats/Common/interface/OwnVector.h"
 #include <functional>
 
+namespace edm::detail {
+  template<>
+    struct RangeMapContainer<edm::OwnVector<GEMRecHit>> {
+    using type = std::vector<GEMRecHit>;
+  };
+}
 typedef edm::RangeMap<GEMDetId, edm::OwnVector<GEMRecHit, edm::ClonePolicy<GEMRecHit> >, edm::ClonePolicy<GEMRecHit> >
     GEMRecHitCollection;
 

@@ -26,6 +26,12 @@
 #include <functional>
 
 /* ====================================================================== */
+namespace edm::detail {
+  template<>
+    struct RangeMapContainer<edm::OwnVector<DTSLRecCluster>> {
+    using type = edm::OwnVector<DTSLRecCluster>;
+  };
+}
 
 /* Class DTRecClusterCollection Interface */
 typedef edm::RangeMap<DTSuperLayerId, edm::OwnVector<DTSLRecCluster> > DTRecClusterCollection;

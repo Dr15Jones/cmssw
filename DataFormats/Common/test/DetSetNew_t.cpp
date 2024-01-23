@@ -11,6 +11,13 @@
 #include <algorithm>
 #include <vector>
 
+namespace edm::detail {
+  template<typename V>
+  struct RangeMapContainer<edm::OwnVector<V>> {
+    using type = typename edm::OwnVector<V>;
+  };
+}
+
 struct B {
   virtual ~B() {}
   virtual B *clone() const = 0;

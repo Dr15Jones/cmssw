@@ -32,6 +32,11 @@
 </ioread>
   <class name="edm::OwnVector<CSCSegment,edm::ClonePolicy<CSCSegment> >"/>
   <class name="edm::RangeMap<CSCDetId,edm::OwnVector<CSCSegment,edm::ClonePolicy<CSCSegment> >,edm::ClonePolicy<CSCSegment> >"/>
+  <ioread sourceClass="edm::RangeMap<CSCDetId, edm::OwnVector<CSCSegment, edm::ClonePolicy<CSCSegment> >, edm::ClonePolicy<CSCSegment> >" targetClass="edm::RangeMap<CSCDetId, edm::OwnVector<CSCSegment, edm::ClonePolicy<CSCSegment> >, edm::ClonePolicy<CSCSegment> >" version="[1-10]" source="edm::OwnVector<CSCSegment> collection_" target="collection_">
+  <![CDATA[
+          collection_ = edm::detail::io_transform(onfile.collection_);
+]]>
+  </ioread>
   <class name="edm::ClonePolicy<CSCSegment>"/> <!-- Root6 -->
   <class name="edm::Wrapper<edm::RangeMap<CSCDetId,edm::OwnVector<CSCSegment,edm::ClonePolicy<CSCSegment> >,edm::ClonePolicy<CSCSegment> > >"/>
   <class name="CSCSegmentRef"/>

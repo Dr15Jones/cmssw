@@ -20,6 +20,9 @@
 #include "DataFormats/Common/interface/RangeMap.h"
 #include "DataFormats/Common/interface/OwnVector.h"
 
+#include "DataFormats/DTRecHit/interface/DTRecHitCollection.h"
+#include "DataFormats/RPCRecHit/interface/RPCRecHitCollection.h"
+
 typedef CollectionMerger<edmNew::DetSetVector<SiPixelCluster>, SiPixelCluster> PixelColMerger;
 typedef CollectionMerger<edmNew::DetSetVector<SiStripCluster>, SiStripCluster> StripColMerger;
 

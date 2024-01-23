@@ -28,19 +28,34 @@
 
 namespace edm {
 
-  template <typename ID, typename C, typename P = typename clonehelper::CloneTrait<C>::type>
+  namespace detail {
+    template<typename C> struct RangeMapContainer;
+
+    template<typename V>
+    struct RangeMapContainer<std::vector<V>> {
+      using type = std::vector<V>;
+    };
+
+    template<typename V>
+    std::vector<V> io_transform(edm::OwnVector<V> const& iOwn) {
+      return std::vector<V>(iOwn.begin(), iOwn.end());
+    }
+  }
+  
+  template <typename ID, typename C, typename P = typename clonehelper::CloneTrait<typename detail::RangeMapContainer<C>::type>::type>
   class RangeMap {
   public:
     /// contained object type
-    typedef typename C::value_type value_type;
+    using Container = typename detail::RangeMapContainer<C>::type;
+    typedef typename Container::value_type value_type;
     /// collection size type
-    typedef typename C::size_type size_type;
+    typedef typename Container::size_type size_type;
     /// reference type
-    typedef typename C::reference reference;
+    typedef typename Container::reference reference;
     /// pointer type
-    typedef typename C::pointer pointer;
+    typedef typename Container::pointer pointer;
     /// constant access iterator type
-    typedef typename C::const_iterator const_iterator;
+    typedef typename Container::const_iterator const_iterator;
     /// index range
     //use unsigned int rather than C::size_type in order to avoid porting problems
     typedef std::pair<unsigned int, unsigned int> pairType;
@@ -123,9 +138,9 @@ namespace edm {
     /// return number of contained object
     size_t size() const { return collection_.size(); }
     /// first collection iterator
-    typename C::const_iterator begin() const { return collection_.begin(); }
+    typename Container::const_iterator begin() const { return collection_.begin(); }
     /// last collection iterator
-    typename C::const_iterator end() const { return collection_.end(); }
+    typename Container::const_iterator end() const { return collection_.end(); }
     /// identifier iterator
     struct id_iterator {
       typedef ID value_type;
@@ -164,7 +179,7 @@ namespace edm {
     /// perfor post insert action
     void post_insert() {
       // sorts the container via ID
-      C tmp;
+      Container tmp;
       for (typename mapType::iterator it = map_.begin(), itEnd = map_.end(); it != itEnd; it++) {
         range r = get((*it).first);
         //do cast to acknowledge that we may be going from a larger type to a smaller type but we are OK
@@ -195,11 +210,11 @@ namespace edm {
     void swap(RangeMap<ID, C, P>& other);
 
     //Used by ROOT storage
-    CMS_CLASS_VERSION(10)
+    CMS_CLASS_VERSION(11)
 
   private:
     /// stored collection
-    C collection_;
+    Container collection_;
     /// identifier map
     mapType map_;
   };
