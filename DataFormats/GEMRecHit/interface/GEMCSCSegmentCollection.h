@@ -17,6 +17,12 @@
 #include "DataFormats/Common/interface/ClonePolicy.h"
 #include "DataFormats/Common/interface/OwnVector.h"
 
+namespace edm::detail {
+  template<>
+    struct RangeMapContainer<edm::OwnVector<GEMCSCSegment>> {
+    using type = edm::OwnVector<GEMCSCSegment>;
+  };
+}
 typedef edm::RangeMap<CSCDetId, edm::OwnVector<GEMCSCSegment> > GEMCSCSegmentCollection;
 
 #include "DataFormats/Common/interface/Ref.h"

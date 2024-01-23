@@ -16,6 +16,13 @@
 #include "DataFormats/Common/interface/OwnVector.h"
 #include <functional>
 
+namespace edm::detail {
+  template<>
+    struct RangeMapContainer<edm::OwnVector<ME0RecHit>> {
+    using type = std::vector<ME0RecHit>;
+  };
+}
+
 typedef edm::RangeMap<ME0DetId, edm::OwnVector<ME0RecHit, edm::ClonePolicy<ME0RecHit> >, edm::ClonePolicy<ME0RecHit> >
     ME0RecHitCollection;
 

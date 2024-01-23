@@ -16,6 +16,12 @@
 #include "DataFormats/Common/interface/ClonePolicy.h"
 #include "DataFormats/Common/interface/OwnVector.h"
 
+namespace edm::detail {
+  template<>
+    struct RangeMapContainer<edm::OwnVector<ME0Segment>> {
+    using type = std::vector<ME0Segment>;
+  };
+}
 typedef edm::RangeMap<ME0DetId, edm::OwnVector<ME0Segment> > ME0SegmentCollection;
 
 #include "DataFormats/Common/interface/Ref.h"

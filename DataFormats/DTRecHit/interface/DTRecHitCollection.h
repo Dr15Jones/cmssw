@@ -13,6 +13,14 @@
 #include "DataFormats/Common/interface/ClonePolicy.h"
 #include "DataFormats/Common/interface/OwnVector.h"
 #include <functional>
+#include <vector>
+
+namespace edm::detail {
+  template<>
+  struct RangeMapContainer<edm::OwnVector<DTRecHit1DPair>> {
+    using type = std::vector<DTRecHit1DPair>;
+    };
+}
 
 typedef edm::RangeMap<DTLayerId, edm::OwnVector<DTRecHit1DPair> > DTRecHitCollection;
 
