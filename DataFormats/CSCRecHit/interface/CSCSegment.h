@@ -18,10 +18,47 @@
 
 class CSCDetId;
 
+class CSCSegment;
+
+namespace cscsegment {
+  class MatchedSegment {
+  public:
+
+    MatchedSegment(LocalPoint const& iOrigin,
+                   LocalError const& iOriginError,
+                   LocalVector const& iDirection,
+                   LocalError const& iDirectionError) :
+    theOrigin(iOrigin),
+      theLocalDirection(iDirection),
+      theOriginError(iOriginError),
+      theDirectionError(iDirectionError) {}
+
+    MatchedSegment() = default;
+    MatchedSegment(const MatchedSegment&) = default;
+    MatchedSegment(MatchedSegment&&) = default;
+    MatchedSegment& operator=(const MatchedSegment&) = default;
+    MatchedSegment& operator=(MatchedSegment&&) = default;
+
+    MatchedSegment( const CSCSegment&);
+    
+    LocalPoint const& localPosition() const { return theOrigin; }
+    LocalError const& localPositionError() const { return theOriginError; }
+    
+    LocalVector const& localDirection() const { return theLocalDirection; }
+    LocalError localDirectionError() const { return theDirectionError; }
+
+  private:
+  LocalPoint theOrigin;             // in chamber frame - the GeomDet local coordinate system
+  LocalVector theLocalDirection;    // in chamber frame - the GeomDet local coordinate system
+  LocalError theOriginError;
+  LocalError theDirectionError;
+  };
+}
+
 class CSCSegment final : public RecSegment {
 public:
   /// Default constructor
-  CSCSegment() : theChi2(0.), aME11a_duplicate(false) {}
+  CSCSegment() : theChi2(0.) {}
 
   /// Constructor
   CSCSegment(const std::vector<const CSCRecHit2D*>& proto_segment,
@@ -73,7 +110,7 @@ public:
 
   bool isME11a_duplicate() const { return (!theDuplicateSegments.empty() ? true : false); }
   // a copy of the duplicated segments (ME1/1a only)
-  const std::vector<CSCSegment>& duplicateSegments() const { return theDuplicateSegments; }
+  const std::vector<cscsegment::MatchedSegment>& duplicateSegments() const { return theDuplicateSegments; }
 
   bool testSharesAllInSpecificRecHits(const std::vector<CSCRecHit2D>& specificRecHits_1,
                                       const std::vector<CSCRecHit2D>& specificRecHits_2,
@@ -95,9 +132,14 @@ private:
   LocalVector theLocalDirection;    // in chamber frame - the GeomDet local coordinate system
   AlgebraicSymMatrix theCovMatrix;  // the covariance matrix
   double theChi2;
-  bool aME11a_duplicate;
-  std::vector<CSCSegment> theDuplicateSegments;  // ME1/1a only
+  std::vector<cscsegment::MatchedSegment> theDuplicateSegments;  // ME1/1a only
 };
+
+inline cscsegment::MatchedSegment::MatchedSegment( const CSCSegment& iSeg):
+  theOrigin(iSeg.localPosition()),
+  theLocalDirection(iSeg.localDirection()),
+  theOriginError(iSeg.localPositionError()),
+  theDirectionError(iSeg.localDirectionError()) {}
 
 std::ostream& operator<<(std::ostream& os, const CSCSegment& seg);
 

@@ -21,8 +21,7 @@ CSCSegment::CSCSegment(const std::vector<const CSCRecHit2D*>& proto_segment,
       theOrigin(origin),
       theLocalDirection(direction),
       theCovMatrix(errors),
-      theChi2(chi2),
-      aME11a_duplicate(false) {
+      theChi2(chi2) {
   for (unsigned int i = 0; i < proto_segment.size(); ++i)
     theCSCRecHits.push_back(*proto_segment[i]);
 }
@@ -84,8 +83,6 @@ void CSCSegment::setDuplicateSegments(std::vector<CSCSegment*>& duplicates) {
   theDuplicateSegments.clear();
   for (unsigned int i = 0; i < duplicates.size(); ++i) {
     theDuplicateSegments.push_back(*duplicates[i]);
-    //avoid copying duplicates of duplicates of duplicates...
-    theDuplicateSegments.back().theDuplicateSegments.resize(0);
   }
 }
 
