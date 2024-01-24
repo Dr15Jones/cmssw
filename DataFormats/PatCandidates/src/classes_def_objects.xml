@@ -256,7 +256,8 @@
              newObj->setPflowIsolationVariables(pfIsoVar);]]>
   </ioread>
 
-  <class name="pat::Jet"  ClassVersion="18">
+  <class name="pat::Jet"  ClassVersion="19">
+    <version ClassVersion="19" checksum="39535955"/>
    <version ClassVersion="18" checksum="2338023891"/>
    <version ClassVersion="17" checksum="739868501"/>
    <field name="daughtersTemp_" transient="true"/>

@@ -366,8 +366,6 @@ const reco::BaseTagInfo* Jet::tagInfo(const std::string& label) const {
     if (tagInfoLabels_[i] == label) {
       if (!tagInfosFwdPtr_.empty())
         return tagInfosFwdPtr_[i].get();
-      else if (!tagInfos_.empty())
-        return &tagInfos_[i];
       return nullptr;
     }
   }

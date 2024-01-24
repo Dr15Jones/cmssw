@@ -631,8 +631,7 @@ namespace pat {
 
     std::vector<std::pair<std::string, float> > pairDiscriVector_;
     std::vector<std::string> tagInfoLabels_;
-    edm::OwnVector<reco::BaseTagInfo> tagInfos_;  // Compatibility embedding
-    TagInfoFwdPtrCollection tagInfosFwdPtr_;      // Refactorized embedding
+    TagInfoFwdPtrCollection tagInfosFwdPtr_;  // Refactorized embedding
 
     // ---- track related members ----
 
@@ -659,14 +658,6 @@ namespace pat {
       for (size_t i = 0, n = tagInfosFwdPtr_.size(); i < n; ++i) {
         TagInfoFwdPtrCollection::value_type const& val = tagInfosFwdPtr_[i];
         reco::BaseTagInfo const* baseTagInfo = val.get();
-        if (typeid(*baseTagInfo) == typeid(T)) {
-          return static_cast<const T*>(baseTagInfo);
-        }
-      }
-      // Then check compatibility version
-      for (size_t i = 0, n = tagInfos_.size(); i < n; ++i) {
-        edm::OwnVector<reco::BaseTagInfo>::value_type const& val = tagInfos_[i];
-        reco::BaseTagInfo const* baseTagInfo = &val;
         if (typeid(*baseTagInfo) == typeid(T)) {
           return static_cast<const T*>(baseTagInfo);
         }
