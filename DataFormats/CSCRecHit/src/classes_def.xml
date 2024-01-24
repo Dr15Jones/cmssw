@@ -30,6 +30,9 @@
       std::copy(onfile.theDuplicateSegments.begin(),onfile.theDuplicateSegments.end(), std::back_inserter(theDuplicateSegments));
 ]]>
 </ioread>
+<class name="cscsegment::MatchedSegment" ClassVersion="3">
+  <version ClassVersion="3" checksum="2585983949"/>
+</class>
   <class name="edm::OwnVector<CSCSegment,edm::ClonePolicy<CSCSegment> >"/>
   <class name="edm::RangeMap<CSCDetId,edm::OwnVector<CSCSegment,edm::ClonePolicy<CSCSegment> >,edm::ClonePolicy<CSCSegment> >"/>
   <ioread sourceClass="edm::RangeMap<CSCDetId, edm::OwnVector<CSCSegment, edm::ClonePolicy<CSCSegment> >, edm::ClonePolicy<CSCSegment> >" targetClass="edm::RangeMap<CSCDetId, edm::OwnVector<CSCSegment, edm::ClonePolicy<CSCSegment> >, edm::ClonePolicy<CSCSegment> >" version="[1-10]" source="edm::OwnVector<CSCSegment> collection_" target="collection_">
