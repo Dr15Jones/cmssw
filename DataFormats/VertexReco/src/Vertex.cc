@@ -1,6 +1,7 @@
 #include "DataFormats/VertexReco/interface/Vertex.h"
 #include <Math/GenVector/PxPyPzE4D.h>
 #include <Math/GenVector/PxPyPzM4D.h>
+#include "DataFormats/Common/interface/RefToPtr.h"
 
 using namespace reco;
 using namespace std;
@@ -66,7 +67,7 @@ void Vertex::fill(Error4D& err) const {
       err(i, j) = covariance_[idx++];
 }
 
-void Vertex::add(const TrackBaseRef& r, const Track& refTrack, float w) {
+void Vertex::add(const edm::Ptr<reco::Track>& r, const Track& refTrack, float w) {
   tracks_.push_back(r);
   refittedTracks_.push_back(refTrack);
   weights_.push_back(w * 255);
@@ -78,7 +79,7 @@ void Vertex::removeTracks() {
   refittedTracks_.clear();
 }
 
-TrackBaseRef Vertex::originalTrack(const Track& refTrack) const {
+edm::Ptr<reco::Track> Vertex::originalTrack(const Track& refTrack) const {
   if (refittedTracks_.empty())
     throw cms::Exception("Vertex") << "No refitted tracks stored in vertex\n";
   std::vector<Track>::const_iterator it = find_if(refittedTracks_.begin(), refittedTracks_.end(), TrackEqual(refTrack));
@@ -88,7 +89,7 @@ TrackBaseRef Vertex::originalTrack(const Track& refTrack) const {
   return tracks_[pos];
 }
 
-Track Vertex::refittedTrack(const TrackBaseRef& track) const {
+Track Vertex::refittedTrack(const edm::Ptr<reco::Track>& track) const {
   if (refittedTracks_.empty())
     throw cms::Exception("Vertex") << "No refitted tracks stored in vertex\n";
   trackRef_iterator it = find(tracks_begin(), tracks_end(), track);
@@ -98,7 +99,7 @@ Track Vertex::refittedTrack(const TrackBaseRef& track) const {
   return refittedTracks_[pos];
 }
 
-Track Vertex::refittedTrack(const TrackRef& track) const { return refittedTrack(TrackBaseRef(track)); }
+Track Vertex::refittedTrack(const TrackRef& track) const { return refittedTrack(edm::refToPtr(track)); }
 
 math::XYZTLorentzVectorD Vertex::p4(float mass, float minWeight) const {
   math::XYZTLorentzVectorD sum;
@@ -115,11 +116,11 @@ math::XYZTLorentzVectorD Vertex::p4(float mass, float minWeight) const {
       }
     }
   } else {
-    for (std::vector<reco::TrackBaseRef>::const_iterator iter = tracks_begin(); iter != tracks_end(); iter++) {
-      if (trackWeight(*iter) >= minWeight) {
-        vec.SetPx((*iter)->px());
-        vec.SetPy((*iter)->py());
-        vec.SetPz((*iter)->pz());
+    for (auto const& track: tracks_) {
+      if (trackWeight(track) >= minWeight) {
+        vec.SetPx((track)->px());
+        vec.SetPy((track)->py());
+        vec.SetPz((track)->pz());
         vec.SetM(mass);
         sum += vec;
       }
@@ -135,9 +136,10 @@ unsigned int Vertex::nTracks(float minWeight) const {
       if (trackWeight(originalTrack(*iter)) >= minWeight)
         n++;
   } else {
-    for (std::vector<reco::TrackBaseRef>::const_iterator iter = tracks_begin(); iter != tracks_end(); iter++)
-      if (trackWeight(*iter) >= minWeight)
+    for (auto const& track: tracks_) {
+      if (trackWeight(track) >= minWeight)
         n++;
+    }
   }
   return n;
 }

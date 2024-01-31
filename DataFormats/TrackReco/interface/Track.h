@@ -152,7 +152,7 @@ namespace reco {
      *   Event, the reference may be invalid. Its validity should be tested,
      *   before the reference is actually used.
      */
-    const edm::RefToBase<TrajectorySeed>& seedRef() const { return extra_->seedRef(); }
+    const edm::Ptr<TrajectorySeed>& seedRef() const { return extra_->seedRef(); }
 
     /// get the residuals
     const TrackResiduals& residuals() const { return extra_->residuals(); }

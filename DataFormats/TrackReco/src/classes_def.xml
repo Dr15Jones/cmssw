@@ -318,7 +318,8 @@
   </ioread>
 
 
-  <class name="reco::TrackExtra" ClassVersion="14">
+  <class name="reco::TrackExtra" ClassVersion="15">
+   <version ClassVersion="15" checksum="522273135"/>
    <version ClassVersion="14" checksum="388593738"/>
    <version ClassVersion="13" checksum="2526033150"/>
    <version ClassVersion="12" checksum="106004853"/>
@@ -329,6 +330,12 @@
     <field name="innerPosition_" iotype="ROOT::Math::PositionVector3D<ROOT::Math::Cartesian3D<Double32_t>,ROOT::Math::DefaultCoordinateSystemTag>" /> 
     <field name="innerMomentum_" iotype="ROOT::Math::DisplacementVector3D<ROOT::Math::Cartesian3D<Double32_t>,ROOT::Math::DefaultCoordinateSystemTag>" /> 
   </class>
+  <ioread sourceClass = "reco::TrackExtra" version="[1-14]" targetClass="reco::TrackExtra" source="edm::RefToBase<TrajectorySeed> seedRef_" target="seedRef_">
+   <![CDATA[
+     seedRef_ = edm::refToBaseToPtr_ioread(onfile.seedRef_);
+      ]]>
+  </ioread>
+
   <class name="std::vector<reco::TrackExtra>"/>
   <class name="edm::Wrapper<std::vector<reco::TrackExtra> >"/>
   <class name="edm::RefProd<std::vector<reco::TrackExtra> >"/>

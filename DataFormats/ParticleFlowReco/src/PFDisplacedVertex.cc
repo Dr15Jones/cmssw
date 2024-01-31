@@ -9,7 +9,7 @@ PFDisplacedVertex::PFDisplacedVertex() : Vertex(), vertexType_(ANY), primaryDire
 
 PFDisplacedVertex::PFDisplacedVertex(Vertex& v) : Vertex(v), vertexType_(ANY), primaryDirection_(0, 0, 0) {}
 
-void PFDisplacedVertex::addElement(const TrackBaseRef& r,
+void PFDisplacedVertex::addElement(const edm::Ptr<reco::Track>& r,
                                    const Track& refTrack,
                                    const PFTrackHitFullInfo& hitInfo,
                                    VertexTrackType trackType,
@@ -34,7 +34,7 @@ const int PFDisplacedVertex::nKindTracks(VertexTrackType T) const {
   return count(trackTypes_.begin(), trackTypes_.end(), T);
 }
 
-const size_t PFDisplacedVertex::trackPosition(const reco::TrackBaseRef& originalTrack) const {
+const size_t PFDisplacedVertex::trackPosition(const edm::Ptr<reco::Track>& originalTrack) const {
   size_t pos = -1;
 
   const Track refittedTrack = PFDisplacedVertex::refittedTrack(originalTrack);
@@ -136,7 +136,7 @@ const math::XYZTLorentzVector PFDisplacedVertex::momentum(M_Hypo massHypo,
 
     if (bType) {
       if (!useRefitted) {
-        TrackBaseRef trackRef = originalTrack(refittedTracks()[i]);
+        auto trackRef = originalTrack(refittedTracks()[i]);
 
         double p2 = trackRef->momentum().Mag2();
         P += math::XYZTLorentzVector(

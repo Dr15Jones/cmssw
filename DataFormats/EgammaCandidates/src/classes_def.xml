@@ -17,12 +17,26 @@
    <version ClassVersion="13" checksum="2963666409"/>
    <version ClassVersion="14" checksum="753726370"/>
   </class>
-  <class name="reco::Conversion" ClassVersion="11">
-   <version ClassVersion="10" checksum="2140222741"/>
+  <class name="reco::Conversion" ClassVersion="12">
+   <version ClassVersion="12" checksum="3945296887"/>
    <version ClassVersion="11" checksum="598717096"/>
+   <version ClassVersion="10" checksum="2140222741"/>
   </class>
+  <ioread sourceClass = "reco::Conversion" version="[11]" targetClass="reco::Conversion" source="std::vector<edm::RefToBase<reco::Track> > trackToBaseRefs_" target="trackToBaseRefs_">
+     <![CDATA[
+              std::transform(onfile.trackToBaseRefs_.begin(), onfile.trackToBaseRefs_.end(), 
+                             std::back_inserter(trackToBaseRefs_), [](auto const& iOld) {  
+                             return edm::refToBaseToPtr_ioread(iOld);
+                             });
+     ]]>
+  </ioread>
   <ioread sourceClass = "reco::Conversion" version="[1-10]" targetClass="reco::Conversion" source="std::vector<reco::TrackRef> tracks_; std::vector<edm::RefToBase<reco::Track> > trackToBaseRefs_" target="trackToBaseRefs_">
-     <![CDATA[trackToBaseRefs_=onfile.trackToBaseRefs_; if(onfile.tracks_.size()>onfile.trackToBaseRefs_.size()) { for(auto const& t: onfile.tracks_) { trackToBaseRefs_.emplace_back(t);} }]]>
+     <![CDATA[
+              std::transform(onfile.trackToBaseRefs_.begin(), onfile.trackToBaseRefs_.end(), 
+                             std::back_inserter(trackToBaseRefs_), [](auto const& iOld) {  
+                             return edm::refToBaseToPtr_ioread(iOld);
+                             });
+             if(onfile.tracks_.size()>onfile.trackToBaseRefs_.size()) { for(auto const& t: onfile.tracks_) { trackToBaseRefs_.emplace_back(edm::refToPtr(t));} }]]>
   </ioread>
   <class name="reco::Electron" ClassVersion="13">
    <version ClassVersion="13" checksum="827670837"/>
@@ -176,10 +190,17 @@
    <version ClassVersion="11" checksum="1799511018"/>
    <version ClassVersion="10" checksum="4260674990"/>
   </class>
-  <class name="reco::GsfElectron::ConversionRejection" ClassVersion="11">
+  <class name="reco::GsfElectron::ConversionRejection" ClassVersion="12">
+    <version ClassVersion="12" checksum="2742251964"/>
    <version ClassVersion="11" checksum="2813508647"/>
    <version ClassVersion="10" checksum="190549577"/>
   </class>
+  <ioread sourceClass = "reco::GsfElectron::ConversionRejection" version="[1-11]" targetClass="reco::GsfElectron::ConversionRejection" source="edm::RefToBase<reco::Track> partner" target="partner">
+   <![CDATA[
+     partner = edm::refToBaseToPtr_ioread(onfile.partner);
+      ]]>
+ </ioread>
+
   <class name="reco::GsfElectron::Corrections" ClassVersion="12">
    <version ClassVersion="12" checksum="796270676"/>
    <version ClassVersion="11" checksum="4279379731"/>

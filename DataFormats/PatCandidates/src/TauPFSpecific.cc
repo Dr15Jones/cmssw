@@ -1,10 +1,10 @@
 #include "DataFormats/PatCandidates/interface/TauPFSpecific.h"
-
+#include "DataFormats/Common/interface/RefToBaseToPtr.h"
 #include "DataFormats/JetReco/interface/Jet.h"
 
 pat::tau::TauPFSpecific::TauPFSpecific(const reco::PFTau& tau)
     :  // reference to PFJet from which PFTau was made
-      pfJetRef_(tau.jetRef()),
+      pfJetRef_(edm::refToBaseToPtr(tau.jetRef())),
       // Leading track/charged candidate
       leadPFChargedHadrCand_(tau.leadPFChargedHadrCand()),
       leadPFChargedHadrCandsignedSipt_(tau.leadPFChargedHadrCandsignedSipt()),

@@ -10,6 +10,7 @@
 #include "DataFormats/ParticleFlowReco/interface/PFDisplacedVertexFwd.h"
 #include "DataFormats/ParticleFlowReco/interface/PFRecTrack.h"
 #include "DataFormats/ParticleFlowReco/interface/PFRecTrackFwd.h"
+#include "DataFormats/Common/interface/RefToPtr.h"
 
 namespace reco {
   class PFDisplacedTrackerVertex {
@@ -21,13 +22,11 @@ namespace reco {
     const PFRecTrackRefVector& pfRecTracks() const { return pfRecTracks_; }
 
     const bool isIncomingTrack(const reco::PFRecTrackRef originalTrack) const {
-      reco::TrackBaseRef trackBaseRef(originalTrack->trackRef());
-      return displacedVertexRef_->isIncomingTrack(trackBaseRef);
+      return displacedVertexRef_->isIncomingTrack(edm::refToPtr(originalTrack->trackRef()));
     }
 
     const bool isOutgoingTrack(const reco::PFRecTrackRef originalTrack) const {
-      reco::TrackBaseRef trackBaseRef(originalTrack->trackRef());
-      return displacedVertexRef_->isOutgoingTrack(trackBaseRef);
+      return displacedVertexRef_->isOutgoingTrack(edm::refToPtr(originalTrack->trackRef()));
     }
 
     const PFDisplacedVertexRef& displacedVertexRef() const { return displacedVertexRef_; }

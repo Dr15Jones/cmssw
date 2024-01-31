@@ -85,7 +85,7 @@ namespace reco {
       else
         return false;
     }
-    int conversionTrackProvenance(const edm::RefToBase<reco::Track>& convTrack) const;
+    int conversionTrackProvenance(const edm::Ptr<reco::Track>& convTrack) const;
 
     /// position in ECAL: this is th SC position if r9<0.93. If r8>0.93 is position of seed BasicCluster taking shower depth for unconverted photon
     math::XYZPointF caloPosition() const { return caloPosition_; }

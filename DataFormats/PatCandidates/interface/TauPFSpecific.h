@@ -15,6 +15,7 @@
 #include "DataFormats/TauReco/interface/PFTauTransverseImpactParameter.h"
 #include "DataFormats/Candidate/interface/Candidate.h"
 #include "DataFormats/VertexReco/interface/VertexFwd.h"
+#include "DataFormats/Common/interface/Ptr.h"
 
 namespace pat {
   namespace tau {
@@ -25,7 +26,7 @@ namespace pat {
       // constructor from PFTau
       TauPFSpecific(const reco::PFTau& tau);
       // datamembers
-      reco::JetBaseRef pfJetRef_;
+      edm::Ptr<reco::Jet> pfJetRef_;
       reco::CandidatePtr leadPFChargedHadrCand_;
       float leadPFChargedHadrCandsignedSipt_;
       reco::PFCandidatePtr leadPFNeutralCand_;

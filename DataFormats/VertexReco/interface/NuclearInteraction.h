@@ -24,7 +24,7 @@ namespace reco {
     }
 
     /// return the base reference to the primary track
-    const edm::RefToBase<reco::Track>& primaryTrack() const { return *(vertex_.tracks_begin()); }
+    const edm::Ptr<reco::Track>& primaryTrack() const { return *(vertex_.tracks_begin()); }
 
     /// return the number of secondary tracks
     int secondaryTracksSize() const { return vertex_.tracksSize() - 1; }

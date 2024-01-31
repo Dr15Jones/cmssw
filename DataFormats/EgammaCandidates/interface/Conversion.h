@@ -42,7 +42,7 @@ namespace reco {
     Conversion();
 
     Conversion(const reco::CaloClusterPtrVector& clu,
-               const std::vector<edm::RefToBase<reco::Track> >& tr,
+               const std::vector<edm::Ptr<reco::Track> >& tr,
                const std::vector<math::XYZPointF>& trackPositionAtEcal,
                const reco::Vertex& convVtx,
                const std::vector<reco::CaloClusterPtr>& matchingBC,
@@ -74,7 +74,7 @@ namespace reco {
                ConversionAlgorithm = undefined);
 
     Conversion(const reco::CaloClusterPtrVector& clu,
-               const std::vector<edm::RefToBase<reco::Track> >& tr,
+               const std::vector<edm::Ptr<reco::Track> >& tr,
                const reco::Vertex& convVtx,
                ConversionAlgorithm = undefined);
 
@@ -83,7 +83,7 @@ namespace reco {
     /// Pointer to CaloCluster (foe Egamma Conversions it points to  a SuperCluster)
     reco::CaloClusterPtrVector caloCluster() const { return caloCluster_; }
     /// vector of track to base references
-    std::vector<edm::RefToBase<reco::Track> > const& tracks() const;
+    std::vector<edm::Ptr<reco::Track> > const& tracks() const;
     /// returns  the reco conversion vertex
     const reco::Vertex& conversionVertex() const { return theConversionVertex_; }
     /// Bool flagging objects having track size >0
@@ -182,7 +182,7 @@ namespace reco {
     /// vector pointer to a/multiple seed CaloCluster(s)
     reco::CaloClusterPtrVector caloCluster_;
     /// vector Track RefToBase
-    std::vector<edm::RefToBase<reco::Track> > trackToBaseRefs_;
+    std::vector<edm::Ptr<reco::Track> > trackToBaseRefs_;
     /// position at the ECAl surface of the track extrapolation
     std::vector<math::XYZPointF> thePositionAtEcal_;
     /// Fitted Kalman conversion vertex

@@ -48,7 +48,7 @@ void Photon::setVertex(const Point& vertex) {
 
 reco::SuperClusterRef Photon::superCluster() const { return this->photonCore()->superCluster(); }
 
-int Photon::conversionTrackProvenance(const edm::RefToBase<reco::Track>& convTrack) const {
+int Photon::conversionTrackProvenance(const edm::Ptr<reco::Track>& convTrack) const {
   const reco::ConversionRefVector& conv2leg = this->photonCore()->conversions();
   const reco::ConversionRefVector& conv1leg = this->photonCore()->conversionsOneLeg();
 
@@ -56,7 +56,7 @@ int Photon::conversionTrackProvenance(const edm::RefToBase<reco::Track>& convTra
   bool isEg = false, isPf = false;
 
   for (unsigned iConv = 0; iConv < conv2leg.size(); iConv++) {
-    std::vector<edm::RefToBase<reco::Track> > convtracks = conv2leg[iConv]->tracks();
+    std::vector<edm::Ptr<reco::Track> > convtracks = conv2leg[iConv]->tracks();
     for (unsigned itk = 0; itk < convtracks.size(); itk++) {
       if (convTrack == convtracks[itk])
         isEg = true;
@@ -64,7 +64,7 @@ int Photon::conversionTrackProvenance(const edm::RefToBase<reco::Track>& convTra
   }
 
   for (unsigned iConv = 0; iConv < conv1leg.size(); iConv++) {
-    std::vector<edm::RefToBase<reco::Track> > convtracks = conv1leg[iConv]->tracks();
+    std::vector<edm::Ptr<reco::Track> > convtracks = conv1leg[iConv]->tracks();
     for (unsigned itk = 0; itk < convtracks.size(); itk++) {
       if (convTrack == convtracks[itk])
         isPf = true;

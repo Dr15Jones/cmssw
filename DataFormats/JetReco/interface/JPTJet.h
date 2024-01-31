@@ -23,6 +23,7 @@
 #include "DataFormats/CaloTowers/interface/CaloTowerCollection.h"
 #include "DataFormats/Common/interface/Ref.h"
 #include "DataFormats/Common/interface/RefVector.h"
+#include "DataFormats/Common/interface/Ptr.h"
 
 namespace reco {
   class JPTJet : public Jet {
@@ -43,7 +44,7 @@ namespace reco {
             Pout(0),
             Zch(0),
             JPTSeed(0) {}
-      edm::RefToBase<reco::Jet> theCaloJetRef;
+      edm::Ptr<reco::Jet> theCaloJetRef;
       reco::TrackRefVector pionsInVertexInCalo;
       reco::TrackRefVector pionsInVertexOutCalo;
       reco::TrackRefVector pionsOutVertexInCalo;
@@ -115,7 +116,7 @@ namespace reco {
     const reco::TrackRefVector& getElecsInVertexOutCalo() const { return mspecific.elecsInVertexOutCalo; }
     const reco::TrackRefVector& getElecsOutVertexInCalo() const { return mspecific.elecsOutVertexInCalo; }
 
-    const edm::RefToBase<reco::Jet>& getCaloJetRef() const { return mspecific.theCaloJetRef; }
+    const edm::Ptr<reco::Jet>& getCaloJetRef() const { return mspecific.theCaloJetRef; }
     /// block accessors
 
     const Specific& getSpecific() const { return mspecific; }

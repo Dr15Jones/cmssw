@@ -36,6 +36,8 @@
 #include "DataFormats/Common/interface/Ptr.h"
 #include "DataFormats/Common/interface/PtrVector.h"
 #include "DataFormats/Common/interface/ValueMap.h"
+#include "DataFormats/Common/interface/RefToBaseToPtr_ioread.h"
+#include "DataFormats/Common/interface/RefToPtr.h"
 #include "Rtypes.h"
 #include "Math/Cartesian3D.h"
 #include "Math/Polar3D.h"

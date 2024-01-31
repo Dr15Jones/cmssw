@@ -124,7 +124,7 @@ namespace pat {
     const pat::tau::TauPFEssential& pfEssential() const;
     /// Method copied from reco::PFTau.
     /// Throws an exception if this pat::Tau was not made from a reco::PFTau
-    const reco::JetBaseRef& pfJetRef() const { return pfSpecific().pfJetRef_; }
+    const edm::Ptr<reco::Jet>& pfJetRef() const { return pfSpecific().pfJetRef_; }
     /// Method copied from reco::PFTau.
     /// Throws an exception if this pat::Tau was not made from a reco::PFTau
     reco::PFRecoTauChargedHadronRef leadTauChargedHadronCandidate() const;

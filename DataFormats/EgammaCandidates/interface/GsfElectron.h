@@ -15,6 +15,7 @@
 //#include "DataFormats/Math/interface/LorentzVector.h"
 #include "DataFormats/GeometryVector/interface/GlobalPoint.h"
 #include "DataFormats/GeometryVector/interface/GlobalVector.h"
+#include "DataFormats/Common/interface/Ptr.h"
 #include <vector>
 #include <limits>
 #include <numeric>
@@ -63,7 +64,7 @@ namespace reco {
                 const GsfElectronCoreRef &core,
                 const CaloClusterPtr &electronCluster,
                 const TrackRef &closestCtfTrack,
-                const TrackBaseRef &conversionPartner,
+                const edm::Ptr<Track> &conversionPartner,
                 const GsfTrackRefVector &ambiguousTracks);
     GsfElectron(int charge,
                 const ChargeInfo &,
@@ -89,7 +90,7 @@ namespace reco {
     GsfElectron *clone(const GsfElectronCoreRef &core,
                        const CaloClusterPtr &electronCluster,
                        const TrackRef &closestCtfTrack,
-                       const TrackBaseRef &conversionPartner,
+                       const edm::Ptr<Track> &conversionPartner,
                        const GsfTrackRefVector &ambiguousTracks) const;
     ~GsfElectron() override{};
 
@@ -626,7 +627,7 @@ namespace reco {
   public:
     struct ConversionRejection {
       int flags;             // -max:not-computed, other: as computed by Puneeth conversion code
-      TrackBaseRef partner;  // conversion partner
+      edm::Ptr<reco::Track> partner;  // conversion partner
       float dist;            // distance to the conversion partner
       float dcot;            // difference of cot(angle) with the conversion partner track
       float radius;          // signed conversion radius
@@ -641,7 +642,7 @@ namespace reco {
 
     // accessors
     int convFlags() const { return conversionRejection_.flags; }
-    TrackBaseRef convPartner() const { return conversionRejection_.partner; }
+    edm::Ptr<reco::Track> convPartner() const { return conversionRejection_.partner; }
     float convDist() const { return conversionRejection_.dist; }
     float convDcot() const { return conversionRejection_.dcot; }
     float convRadius() const { return conversionRejection_.radius; }
