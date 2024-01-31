@@ -23,7 +23,7 @@
 #include "DataFormats/Math/interface/Point3D.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
 #include "DataFormats/TrackReco/interface/Track.h"
-#include "DataFormats/Common/interface/RefToBase.h"
+#include "DataFormats/Common/interface/Ptr.h"
 #include <Math/GenVector/PxPyPzE4D.h>
 #include <Math/GenVector/PxPyPzM4D.h>
 #include "DataFormats/Math/interface/LorentzVector.h"
@@ -35,7 +35,7 @@ namespace reco {
   class Vertex {
   public:
     /// The iteratator for the vector<TrackRef>
-    typedef std::vector<TrackBaseRef>::const_iterator trackRef_iterator;
+    typedef std::vector<edm::Ptr<reco::Track>>::const_iterator trackRef_iterator;
     /// point in the space
     typedef math::XYZPoint Point;
     /// error matrix dimension
@@ -89,7 +89,7 @@ namespace reco {
       weights_.emplace_back(w * 255.f);
     }
     /// add the original a Track(reference) and the smoothed Track
-    void add(const TrackBaseRef &r, const Track &refTrack, float w = 1.0);
+    void add(const edm::Ptr<reco::Track> &r, const Track &refTrack, float w = 1.0);
     void removeTracks();
 
     ///returns the weight with which a Track has contributed to the vertex-fit.
@@ -112,7 +112,7 @@ namespace reco {
     /// number of tracks
     size_t tracksSize() const { return tracks_.size(); }
     /// python friendly track getting
-    const TrackBaseRef &trackRefAt(size_t idx) const { return tracks_[idx]; }
+    const edm::Ptr<reco::Track> &trackRefAt(size_t idx) const { return tracks_[idx]; }
     /// chi-squares
     double chi2() const { return chi2_; }
     /** Number of degrees of freedom
@@ -183,11 +183,11 @@ namespace reco {
 
     /// Returns the original track which corresponds to a particular refitted Track
     /// Throws an exception if now refitted tracks are stored ot the track is not found in the list
-    TrackBaseRef originalTrack(const Track &refTrack) const;
+    edm::Ptr<reco::Track> originalTrack(const Track &refTrack) const;
 
     /// Returns the refitted track which corresponds to a particular original Track
     /// Throws an exception if now refitted tracks are stored ot the track is not found in the list
-    Track refittedTrack(const TrackBaseRef &track) const;
+    Track refittedTrack(const edm::Ptr<reco::Track> &track) const;
 
     /// Returns the refitted track which corresponds to a particular original Track
     /// Throws an exception if now refitted tracks are stored ot the track is not found in the list
@@ -221,7 +221,7 @@ namespace reco {
     /// covariance matrix (4x4) as vector
     float covariance_[size4D];
     /// reference to tracks
-    std::vector<TrackBaseRef> tracks_;
+    std::vector<edm::Ptr<reco::Track>> tracks_;
     /// The vector of refitted tracks
     std::vector<Track> refittedTracks_;
     std::vector<uint8_t> weights_;

@@ -22,5 +22,6 @@
 
 #include "DataFormats/Common/interface/PtrVector.h"
 #include "DataFormats/Common/interface/Ptr.h"
+#include "DataFormats/Common/interface/RefToBaseToPtr_ioread.h"
 
 #endif

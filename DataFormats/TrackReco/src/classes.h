@@ -17,6 +17,7 @@
 #include "DataFormats/Common/interface/OneToValue.h"
 #include "DataFormats/Common/interface/Ptr.h"
 #include "DataFormats/Common/interface/ValueMap.h"
+#include "DataFormats/Common/interface/RefToBaseToPtr_ioread.h"
 #include "DataFormats/TrackReco/interface/TrackToTrackMap.h"
 //#include "DataFormats/TrackReco/interface/DeDxHitFwd.h"
 #include "DataFormats/TrackReco/interface/DeDxHit.h"

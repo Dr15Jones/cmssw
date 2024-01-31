@@ -67,7 +67,7 @@ namespace reco {
                const CovarianceMatrix &innerState,
                unsigned int innerId,
                PropagationDirection seedDir,
-               edm::RefToBase<TrajectorySeed> seedRef = edm::RefToBase<TrajectorySeed>());
+               edm::Ptr<TrajectorySeed> seedRef = edm::Ptr<TrajectorySeed>());
 
     /// outermost hit position
     const Point &outerPosition() const { return outerPosition_; }
@@ -126,8 +126,8 @@ namespace reco {
      *   Event, the reference may be invalid. Its validity should be tested,
      *   before the reference is actually used.
      */
-    const edm::RefToBase<TrajectorySeed> &seedRef() const { return seedRef_; }
-    void setSeedRef(const edm::RefToBase<TrajectorySeed> &r) { seedRef_ = r; }
+    const edm::Ptr<TrajectorySeed> &seedRef() const { return seedRef_; }
+    void setSeedRef(const edm::Ptr<TrajectorySeed> &r) { seedRef_ = r; }
     /// set the residuals
     void setResiduals(const TrackResiduals &r) { trackResiduals_ = r; }
 
@@ -156,7 +156,7 @@ namespace reco {
     unsigned int innerDetId_;
 
     PropagationDirection seedDir_;
-    edm::RefToBase<TrajectorySeed> seedRef_;
+    edm::Ptr<TrajectorySeed> seedRef_;
 
     /// unbiased track residuals
     TrackResiduals trackResiduals_;

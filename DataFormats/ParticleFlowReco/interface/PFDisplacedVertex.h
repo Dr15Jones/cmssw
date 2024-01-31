@@ -64,7 +64,7 @@ namespace reco {
     PFDisplacedVertex(reco::Vertex&);
 
     /// Add a new track to the vertex
-    void addElement(const TrackBaseRef& r,
+    void addElement(const edm::Ptr<reco::Track>& r,
                     const Track& refTrack,
                     const PFTrackHitFullInfo& hitInfo,
                     VertexTrackType trackType = T_NOT_FROM_VERTEX,
@@ -102,36 +102,36 @@ namespace reco {
     const bool isThereNotFromVertexTracks() const { return isThereKindTracks(T_NOT_FROM_VERTEX); }
 
     /// Is a primary track was identified
-    const bool isPrimaryTrack(const reco::TrackBaseRef& originalTrack) const {
+    const bool isPrimaryTrack(const edm::Ptr<reco::Track>& originalTrack) const {
       size_t itrk = trackPosition(originalTrack);
       return isTrack(itrk, T_TO_VERTEX);
     }
 
     /// Is a secondary track was identified
-    const bool isSecondaryTrack(const reco::TrackBaseRef& originalTrack) const {
+    const bool isSecondaryTrack(const edm::Ptr<reco::Track>& originalTrack) const {
       size_t itrk = trackPosition(originalTrack);
       return isTrack(itrk, T_FROM_VERTEX);
     }
 
     /// Is a secondary track was identified
-    const bool isMergedTrack(const reco::TrackBaseRef& originalTrack) const {
+    const bool isMergedTrack(const edm::Ptr<reco::Track>& originalTrack) const {
       size_t itrk = trackPosition(originalTrack);
       return isTrack(itrk, T_MERGED);
     }
 
-    const PFTrackHitFullInfo trackHitFullInfo(const reco::TrackBaseRef& originalTrack) const {
+    const PFTrackHitFullInfo trackHitFullInfo(const edm::Ptr<reco::Track>& originalTrack) const {
       size_t itrk = trackPosition(originalTrack);
       return trackHitFullInfos_[itrk];
     }
 
     /// Is primary or merged track
-    const bool isIncomingTrack(const reco::TrackBaseRef& originalTrack) const {
+    const bool isIncomingTrack(const edm::Ptr<reco::Track>& originalTrack) const {
       size_t itrk = trackPosition(originalTrack);
       return isTrack(itrk, T_MERGED) || isTrack(itrk, T_TO_VERTEX);
     }
 
     /// Is secondary track
-    const bool isOutgoingTrack(const reco::TrackBaseRef& originalTrack) const {
+    const bool isOutgoingTrack(const edm::Ptr<reco::Track>& originalTrack) const {
       size_t itrk = trackPosition(originalTrack);
       return isTrack(itrk, T_FROM_VERTEX);
     }
@@ -151,7 +151,7 @@ namespace reco {
     /// Number of tracks
     const int nTracks() const { return trackTypes_.size(); }
 
-    //    const reco::VertexTrackType vertexTrackType(reco::TrackBaseRef tkRef) const;
+    //    const reco::VertexTrackType vertexTrackType(edm::Ptr<reco::Track> tkRef) const;
 
     /// Momentum of secondary tracks calculated with a mass hypothesis. Some of those
     /// hypothesis are default: "PI" , "KAON", "LAMBDA", "MASSLESS", "CUSTOM"
@@ -241,7 +241,7 @@ namespace reco {
     /// Get the mass with a given hypothesis
     const double getMass2(M_Hypo, double) const;
 
-    const size_t trackPosition(const reco::TrackBaseRef& originalTrack) const;
+    const size_t trackPosition(const edm::Ptr<reco::Track>& originalTrack) const;
 
     const bool isTrack(size_t itrk, VertexTrackType T) const { return trackTypes_[itrk] == T; }
 

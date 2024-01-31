@@ -106,7 +106,7 @@ GsfElectron::GsfElectron(const GsfElectron& electron,
                          const GsfElectronCoreRef& core,
                          const CaloClusterPtr& electronCluster,
                          const TrackRef& closestCtfTrack,
-                         const TrackBaseRef& conversionPartner,
+                         const edm::Ptr<Track>& conversionPartner,
                          const GsfTrackRefVector& ambiguousTracks)
     : RecoCandidate(electron),
       chargeInfo_(electron.chargeInfo_),
@@ -160,7 +160,7 @@ GsfElectron* GsfElectron::clone() const { return new GsfElectron(*this); }
 GsfElectron* GsfElectron::clone(const GsfElectronCoreRef& core,
                                 const CaloClusterPtr& electronCluster,
                                 const TrackRef& closestCtfTrack,
-                                const TrackBaseRef& conversionPartner,
+                                const edm::Ptr<Track>& conversionPartner,
                                 const GsfTrackRefVector& ambiguousTracks) const {
   return new GsfElectron(*this, core, electronCluster, closestCtfTrack, conversionPartner, ambiguousTracks);
 }

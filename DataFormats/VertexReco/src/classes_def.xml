@@ -1,8 +1,17 @@
 <lcgdict>
-  <class name="reco::Vertex"  ClassVersion="11">
+  <class name="reco::Vertex"  ClassVersion="12">
+    <version ClassVersion="12" checksum="3100519676"/>
    <version ClassVersion="11" checksum="4120119845"/>
    <version ClassVersion="10" checksum="414871454"/>
   </class>
+<ioread sourceClass = "reco::Vertex" version="[1-11]" targetClass="reco::Vertex" source="std::vector<edm::RefToBase<reco::Track>> tracks_" target="tracks_">
+   <![CDATA[
+     tracks_.reserve(onfile.tracks_.size());
+     std::transform(onfile.tracks_.begin(), onfile.tracks_.end(), std::back_inserter(tracks_), [](auto const&r) {
+       return edm::refToBaseToPtr_ioread(r);
+     });
+      ]]>
+ </ioread>
   <class name="std::vector<reco::Vertex>" />
   <class name="edm::Wrapper<std::vector<reco::Vertex> >" />
   <class name="edm::Ref<std::vector<reco::Vertex>, reco::Vertex, edm::refhelper::FindUsingAdvance<std::vector<reco::Vertex>, reco::Vertex> >" />

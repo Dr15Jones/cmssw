@@ -14,7 +14,7 @@ TrackExtra::TrackExtra(const Point &outerPosition,
                        const CovarianceMatrix &innerCov,
                        unsigned int innerId,
                        PropagationDirection seedDir,
-                       edm::RefToBase<TrajectorySeed> seedRef)
+                       edm::Ptr<TrajectorySeed> seedRef)
     :
 
       TrackExtraBase(),

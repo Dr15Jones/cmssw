@@ -2,6 +2,7 @@
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/CaloRecHit/interface/CaloCluster.h"
 #include "CLHEP/Units/GlobalPhysicalConstants.h"
+#include "DataFormats/Common/interface/RefToPtr.h"
 
 using namespace reco;
 
@@ -33,12 +34,12 @@ Conversion::Conversion(const reco::CaloClusterPtrVector& sc,
       algorithm_(algo) {
   trackToBaseRefs_.reserve(tr.size());
   for (auto const& track : tr) {
-    trackToBaseRefs_.emplace_back(track);
+    trackToBaseRefs_.emplace_back(edm::refToPtr(track));
   }
 }
 
 Conversion::Conversion(const reco::CaloClusterPtrVector& sc,
-                       const std::vector<edm::RefToBase<reco::Track> >& tr,
+                       const std::vector<edm::Ptr<reco::Track> >& tr,
                        const std::vector<math::XYZPointF>& trackPositionAtEcal,
                        const reco::Vertex& convVtx,
                        const std::vector<reco::CaloClusterPtr>& matchingBC,
@@ -81,7 +82,7 @@ Conversion::Conversion(const reco::CaloClusterPtrVector& sc,
       algorithm_(algo) {
   trackToBaseRefs_.reserve(tr.size());
   for (auto const& track : tr) {
-    trackToBaseRefs_.emplace_back(track);
+    trackToBaseRefs_.emplace_back(edm::refToPtr(track));
   }
 
   theMinDistOfApproach_ = 9999.;
@@ -97,7 +98,7 @@ Conversion::Conversion(const reco::CaloClusterPtrVector& sc,
 }
 
 Conversion::Conversion(const reco::CaloClusterPtrVector& sc,
-                       const std::vector<edm::RefToBase<reco::Track> >& tr,
+                       const std::vector<edm::Ptr<reco::Track> >& tr,
                        const reco::Vertex& convVtx,
                        ConversionAlgorithm algo)
     : caloCluster_(sc),
@@ -147,7 +148,7 @@ Conversion::ConversionAlgorithm Conversion::algoByName(const std::string& name) 
 
 Conversion* Conversion::clone() const { return new Conversion(*this); }
 
-std::vector<edm::RefToBase<reco::Track> > const& Conversion::tracks() const { return trackToBaseRefs_; }
+std::vector<edm::Ptr<reco::Track> > const& Conversion::tracks() const { return trackToBaseRefs_; }
 
 bool Conversion::isConverted() const {
   if (this->nTracks() == 2)

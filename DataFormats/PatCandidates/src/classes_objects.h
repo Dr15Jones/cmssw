@@ -4,6 +4,7 @@
 #include "DataFormats/Common/interface/Wrapper.h"
 #include "DataFormats/Common/interface/PtrVector.h"
 #include "DataFormats/Common/interface/FwdPtr.h"
+#include "DataFormats/Common/interface/RefToBaseToPtr_ioread.h"
 
 #include "DataFormats/PatCandidates/interface/Electron.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"

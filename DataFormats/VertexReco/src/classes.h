@@ -8,6 +8,8 @@
 #include "DataFormats/Common/interface/Handle.h"
 #include "DataFormats/Common/interface/OneToManyWithQuality.h"
 #include "DataFormats/Common/interface/OneToManyWithQualityGeneric.h"
+#include "DataFormats/Common/interface/RefToBase.h"
+#include "DataFormats/Common/interface/RefToBaseToPtr_ioread.h"
 #include "DataFormats/Common/interface/View.h"
 
 #include "DataFormats/VertexReco/interface/Vertex.h"

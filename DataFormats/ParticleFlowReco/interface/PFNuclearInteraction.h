@@ -23,7 +23,7 @@ namespace reco {
         : nuclInterRef_(nuclref), pfSecTracks_(pfSeconds) {}
 
     /// \return the base reference to the primary track
-    const edm::RefToBase<reco::Track>& primaryTrack() const { return nuclInterRef_->primaryTrack(); }
+    const edm::Ptr<reco::Track>& primaryTrack() const { return nuclInterRef_->primaryTrack(); }
 
     /// \return first iterator over secondary tracks
     trackRef_iterator secondaryTracks_begin() const { return nuclInterRef_->secondaryTracks_begin(); }
