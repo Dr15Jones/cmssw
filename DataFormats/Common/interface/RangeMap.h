@@ -42,11 +42,12 @@ namespace edm {
     }
   }
   
-  template <typename ID, typename C, typename P = typename clonehelper::CloneTrait<typename detail::RangeMapContainer<C>::type>::type>
+  template <typename ID, typename C, typename P = typename clonehelper::CloneTrait<C>::type>
   class RangeMap {
   public:
     /// contained object type
     using Container = typename detail::RangeMapContainer<C>::type;
+    using Cloner_t = typename clonehelper::CloneTrait<typename detail::RangeMapContainer<C>::type>::type;
     typedef typename Container::value_type value_type;
     /// collection size type
     typedef typename Container::size_type size_type;
@@ -132,7 +133,7 @@ namespace edm {
       pairType& p = map_[id];
       p.first = collection_.size();
       for (CI ii = begin; ii != end; ++ii)
-        collection_.push_back(P::clone(*ii));
+        collection_.push_back(Cloner_t::clone(*ii));
       p.second = collection_.size();
     }
     /// return number of contained object
@@ -185,7 +186,7 @@ namespace edm {
         //do cast to acknowledge that we may be going from a larger type to a smaller type but we are OK
         unsigned int begIt = static_cast<unsigned int>(tmp.size());
         for (const_iterator i = r.first; i != r.second; ++i)
-          tmp.push_back(P::clone(*i));
+          tmp.push_back(Cloner_t::clone(*i));
         unsigned int endIt = static_cast<unsigned int>(tmp.size());
         it->second = pairType(begIt, endIt);
       }
