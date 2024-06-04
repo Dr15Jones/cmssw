@@ -24,12 +24,25 @@
 extern "C" {
 void alloc_monitor_start();
 void alloc_monitor_stop();
+bool& alloc_monitor_thread_reporting();
 }
 
 namespace {
-  bool& threadRunning() {
+  bool& dummyThreadReportingFcn() {
     static thread_local bool s_running = true;
     return s_running;
+  }
+
+  bool& threadReporting() {
+    static decltype(&::alloc_monitor_thread_reporting) running = []() {
+      void* fcn = dlsym(RTLD_DEFAULT, "alloc_monitor_thread_reporting");
+      if (fcn != nullptr) {
+        return reinterpret_cast<decltype(&::alloc_monitor_thread_reporting)>(fcn);
+      }
+      //this should only be called for testing;
+      return &::dummyThreadReportingFcn;
+    }();
+    return running();
   }
 }  // namespace
 
@@ -43,7 +56,7 @@ using namespace cms::perftools;
 // constructors and destructor
 //
 AllocMonitorRegistry::AllocMonitorRegistry() {
-  threadRunning() = true;
+  threadReporting() = true;
   //Cannot start here because statics can cause memory to be allocated in the atexit registration
   // done behind the scenes. If the allocation happens, AllocMonitorRegistry::instance will be called
   // recursively before the static has finished and we well deadlock
@@ -55,7 +68,7 @@ AllocMonitorRegistry::~AllocMonitorRegistry() {
     auto s = reinterpret_cast<decltype(&::alloc_monitor_stop)>(stop);
     s();
   }
-  threadRunning() = false;
+  threadReporting() = false;
   monitors_.clear();
 }
 
@@ -78,7 +91,7 @@ void AllocMonitorRegistry::start() {
   }
 }
 
-bool& AllocMonitorRegistry::isRunning() { return threadRunning(); }
+bool& AllocMonitorRegistry::shouldReport() { return threadReporting(); }
 
 void AllocMonitorRegistry::deregisterMonitor(AllocMonitorBase* iMonitor) {
   for (auto it = monitors_.begin(); monitors_.end() != it; ++it) {

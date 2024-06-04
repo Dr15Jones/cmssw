@@ -1,8 +1,11 @@
 #include <memory>
 #include <cassert>
 #include <atomic>
+#include <mutex>
+#include <limits>
 #include <cstddef>
 #include <malloc.h>
+#include <pthread.h>
 
 #include "PerfTools/AllocMonitor/interface/AllocMonitorRegistry.h"
 #include "FWCore/Utilities/interface/thread_safety_macros.h"
@@ -81,6 +84,40 @@ namespace {
 #else
   constexpr inline bool is_local_alloc(void* ptr) noexcept { return false; }
 #endif
+
+  std::mutex& thread_local_guard() {
+    static std::mutex s_mutex;
+    return s_mutex;
+  }
+
+  static constexpr decltype(pthread_self()) kEmpty = std::numeric_limits<decltype(pthread_self())>::max();
+
+  std::atomic<decltype(pthread_self())>& thread_id_in_thread_running() {
+    static std::atomic<decltype(pthread_self())> s_id = kEmpty;
+    return s_id;
+  }
+
+  bool thread_in_thread_running() {
+    auto p = pthread_self();
+    return p == thread_id_in_thread_running().load(std::memory_order_relaxed);
+  }
+
+  struct Guard {
+    Guard() : m_lock(thread_local_guard()), m_id(thread_id_in_thread_running()) {
+      m_id.store(pthread_self(), std::memory_order_relaxed);
+    }
+    ~Guard() { m_id.store(kEmpty, std::memory_order_relaxed); }
+    std::lock_guard<std::mutex> m_lock;
+    std::atomic<decltype(pthread_self())>& m_id;
+  };
+
+  //need to no-inline else optimizer will call the thread local call
+  // after the lock is released.
+  bool& __attribute__((noinline)) alloc_monitor_thread_reporting_imp() {
+    static thread_local bool s_running = true;
+    return s_running;
+  }
+
 }  // namespace
 
 using namespace cms::perftools;
@@ -88,6 +125,10 @@ using namespace cms::perftools;
 extern "C" {
 void alloc_monitor_start() { alloc_monitor_running_state() = true; }
 void alloc_monitor_stop() { alloc_monitor_running_state() = false; }
+bool& alloc_monitor_thread_reporting() {
+  [[maybe_unused]] Guard g;
+  return alloc_monitor_thread_reporting_imp();
+}
 
 //----------------------------------------------------------------
 //C memory functions
@@ -119,6 +160,9 @@ void* calloc(size_t nitems, size_t item_size) noexcept {
 #else
 void* malloc(size_t size) noexcept {
   CMS_SA_ALLOW static const auto original = get<decltype(&::malloc)>("malloc");
+  if (thread_in_thread_running()) {
+    return original(size);
+  }
   if (not alloc_monitor_running_state()) {
     return original(size);
   }
@@ -142,6 +186,9 @@ void* calloc(size_t nitems, size_t item_size) noexcept {
 
 void* realloc(void* ptr, size_t size) noexcept {
   CMS_SA_ALLOW static const auto original = get<decltype(&::realloc)>("realloc");
+  if (thread_in_thread_running()) {
+    return original(ptr, size);
+  }
   if (not alloc_monitor_running_state()) {
     return original(ptr, size);
   }
@@ -213,6 +260,10 @@ void free(void* ptr) noexcept {
   CMS_SA_ALLOW static const auto original = get<decltype(&::free)>("free");
   // ignore memory allocated from our static array at startup
   if (not is_local_alloc(ptr)) {
+    if (thread_in_thread_running()) {
+      original(ptr);
+      return;
+    }
     if (not alloc_monitor_running_state()) {
       original(ptr);
       return;
