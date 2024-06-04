@@ -1,8 +1,17 @@
 #include <memory>
 #include <cassert>
 #include <atomic>
+#include <mutex>
+#include <array>
+#include <limits>
 #include <cstddef>
 #include <malloc.h>
+#if defined(ALLOC_USE_PTHREADS)
+#include <pthread.h>
+#else
+#include <unistd.h>
+#include <sys/syscall.h>
+#endif
 
 #include "PerfTools/AllocMonitor/interface/AllocMonitorRegistry.h"
 #include "FWCore/Utilities/interface/thread_safety_macros.h"
@@ -28,6 +37,18 @@ namespace {
     void* original = dlsym(RTLD_NEXT, iName);
     assert(original);
     return reinterpret_cast<T>(original);
+  }
+
+  auto thread_id() {
+#if defined(ALLOC_USE_PTHREADS)
+    /*NOTE: if use pthread_self, the values returned by linux had
+     lots of hash collisions when using a simple % hash. Worked
+     better if first divided value by 0x700 and then did %.
+     [test done on el8] */
+    return pthread_self();
+#else
+    return syscall(SYS_gettid);
+#endif
   }
 
 #ifdef USE_LOCAL_MALLOC
@@ -81,6 +102,60 @@ namespace {
 #else
   constexpr inline bool is_local_alloc(void* ptr) noexcept { return false; }
 #endif
+
+  struct Tracker {
+    static constexpr unsigned int kEntries = 128;
+    using entry_type = decltype(thread_id());
+    std::array<std::atomic<entry_type>, kEntries> ids_;
+    std::array<std::mutex, kEntries> guards_;
+
+    Tracker() {
+      entry_type entry = 0;
+      for (auto& i : ids_) {
+        i = ++entry;
+      }
+    }
+    std::size_t indexOf(entry_type iEntry) const {
+#if defined(ALLOC_USE_PTHREADS)
+      return (iEntry / 0x700) % kEntries;
+#else
+      return iEntry % kEntries;
+#endif
+    }
+
+    std::mutex& guard(entry_type iEntry) { return guards_[indexOf(iEntry)]; }
+
+    std::atomic<entry_type>& id(entry_type iEntry) { return ids_[indexOf(iEntry)]; }
+  };
+
+  Tracker& getTracker() {
+    static Tracker s_tracker;
+    return s_tracker;
+  }
+
+  bool thread_in_thread_running() {
+    auto p = thread_id();
+    return p == getTracker().id(p).load(std::memory_order_relaxed);
+  }
+
+  struct Guard {
+    explicit Guard(decltype(thread_id()) id)
+        : m_lock(getTracker().guard(id)), m_id(getTracker().id(id)), m_last(m_id.load(std::memory_order_relaxed)) {
+      m_id.store(id, std::memory_order_relaxed);
+    }
+    ~Guard() { m_id.store(m_last, std::memory_order_relaxed); }
+    std::lock_guard<std::mutex> m_lock;
+    std::atomic<decltype(thread_id())>& m_id;
+    decltype(thread_id()) m_last;
+  };
+
+  //need to no-inline else optimizer will call the thread local call
+  // after the lock is released.
+  bool& __attribute__((noinline)) alloc_monitor_thread_reporting_imp() {
+    static thread_local bool s_running = true;
+    return s_running;
+  }
+
 }  // namespace
 
 using namespace cms::perftools;
@@ -88,6 +163,10 @@ using namespace cms::perftools;
 extern "C" {
 void alloc_monitor_start() { alloc_monitor_running_state() = true; }
 void alloc_monitor_stop() { alloc_monitor_running_state() = false; }
+bool& alloc_monitor_thread_reporting() {
+  [[maybe_unused]] Guard g(thread_id());
+  return alloc_monitor_thread_reporting_imp();
+}
 
 //----------------------------------------------------------------
 //C memory functions
@@ -119,6 +198,9 @@ void* calloc(size_t nitems, size_t item_size) noexcept {
 #else
 void* malloc(size_t size) noexcept {
   CMS_SA_ALLOW static const auto original = get<decltype(&::malloc)>("malloc");
+  if (thread_in_thread_running()) {
+    return original(size);
+  }
   if (not alloc_monitor_running_state()) {
     return original(size);
   }
@@ -142,6 +224,9 @@ void* calloc(size_t nitems, size_t item_size) noexcept {
 
 void* realloc(void* ptr, size_t size) noexcept {
   CMS_SA_ALLOW static const auto original = get<decltype(&::realloc)>("realloc");
+  if (thread_in_thread_running()) {
+    return original(ptr, size);
+  }
   if (not alloc_monitor_running_state()) {
     return original(ptr, size);
   }
@@ -213,6 +298,10 @@ void free(void* ptr) noexcept {
   CMS_SA_ALLOW static const auto original = get<decltype(&::free)>("free");
   // ignore memory allocated from our static array at startup
   if (not is_local_alloc(ptr)) {
+    if (thread_in_thread_running()) {
+      original(ptr);
+      return;
+    }
     if (not alloc_monitor_running_state()) {
       original(ptr);
       return;
