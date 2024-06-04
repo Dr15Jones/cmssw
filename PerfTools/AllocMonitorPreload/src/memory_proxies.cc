@@ -1,8 +1,11 @@
 #include <memory>
 #include <cassert>
 #include <atomic>
+#include <array>
+#include <limits>
 #include <cstddef>
 #include <malloc.h>
+#include <pthread.h>
 
 #include "PerfTools/AllocMonitor/interface/AllocMonitorRegistry.h"
 #include "FWCore/Utilities/interface/thread_safety_macros.h"
@@ -81,6 +84,94 @@ namespace {
 #else
   constexpr inline bool is_local_alloc(void* ptr) noexcept { return false; }
 #endif
+
+  struct ThreadTracker {
+    std::array<std::atomic<decltype(pthread_self())>, 128> s_used_threads;
+    std::atomic<int> s_lowest_unoccupied_entry;
+    std::atomic<int> s_highest_occupied_entry;
+    static constexpr decltype(pthread_self()) kEmpty = std::numeric_limits<decltype(pthread_self())>::max();
+
+    ThreadTracker() : s_lowest_unoccupied_entry{0}, s_highest_occupied_entry{0} {
+      for (auto& v : s_used_threads) {
+        v = kEmpty;
+      }
+    }
+
+    int push_thread() {
+      auto expected = kEmpty;
+      auto p = pthread_self();
+      auto entry = s_lowest_unoccupied_entry++;
+      //assert(static_cast<std::size_t>(entry) < s_used_threads.size());
+      while (not s_used_threads[entry].compare_exchange_strong(expected, p)) {
+        expected = kEmpty;
+        entry = s_lowest_unoccupied_entry++;
+        //assert(static_cast<std::size_t>(entry) < s_used_threads.size());
+      }
+
+      int hi = s_highest_occupied_entry.load();
+      while (hi < entry) {
+        s_highest_occupied_entry.compare_exchange_strong(hi, entry);
+      }
+      return entry;
+    }
+
+    void pop_thread(int entry) {
+      //assert(static_cast<std::size_t>(entry) < s_used_threads.size());
+      s_used_threads[entry] = kEmpty;
+      int low = s_lowest_unoccupied_entry.load();
+      while (entry < low) {
+        s_lowest_unoccupied_entry.compare_exchange_strong(low, entry);
+      }
+    }
+
+    bool found_thread() {
+      auto p = pthread_self();
+      int end = s_highest_occupied_entry.load();
+      for (int i = 0; i < end; ++i) {
+        if (s_used_threads[i].load(std::memory_order_relaxed) == p) {
+          return true;
+        }
+      }
+      return false;
+    }
+  };
+
+  static ThreadTracker& getTracker() {
+    static ThreadTracker s_tracker;
+    return s_tracker;
+  }
+
+  std::atomic<int>& n_calls_in_thread_running() {
+    static std::atomic<int> s_count = 0;
+    return s_count;
+  }
+
+  bool thread_in_thread_running() {
+    if (0 == n_calls_in_thread_running()) {
+      return false;
+    }
+    return getTracker().found_thread();
+  }
+
+  struct CountGuard {
+    CountGuard() {
+      ++(n_calls_in_thread_running());
+      thread_entry = getTracker().push_thread();
+    }
+    ~CountGuard() {
+      --(n_calls_in_thread_running());
+      getTracker().pop_thread(thread_entry);
+    }
+    int thread_entry;
+  };
+
+  //Need to avoid inlining so the optimizer will not move the
+  // call to the thread local access function outside of the
+  // guard.
+  bool& __attribute__((noinline)) alloc_monitor_thread_running_imp() {
+    static thread_local bool s_running = true;
+    return s_running;
+  }
 }  // namespace
 
 using namespace cms::perftools;
@@ -88,6 +179,10 @@ using namespace cms::perftools;
 extern "C" {
 void alloc_monitor_start() { alloc_monitor_running_state() = true; }
 void alloc_monitor_stop() { alloc_monitor_running_state() = false; }
+bool& alloc_monitor_thread_running() {
+  [[maybe_unused]] CountGuard g;
+  return alloc_monitor_thread_running_imp();
+}
 
 //----------------------------------------------------------------
 //C memory functions
@@ -119,6 +214,9 @@ void* calloc(size_t nitems, size_t item_size) noexcept {
 #else
 void* malloc(size_t size) noexcept {
   CMS_SA_ALLOW static const auto original = get<decltype(&::malloc)>("malloc");
+  if (thread_in_thread_running()) {
+    return original(size);
+  }
   if (not alloc_monitor_running_state()) {
     return original(size);
   }
@@ -142,6 +240,9 @@ void* calloc(size_t nitems, size_t item_size) noexcept {
 
 void* realloc(void* ptr, size_t size) noexcept {
   CMS_SA_ALLOW static const auto original = get<decltype(&::realloc)>("realloc");
+  if (thread_in_thread_running()) {
+    return original(ptr, size);
+  }
   if (not alloc_monitor_running_state()) {
     return original(ptr, size);
   }
@@ -213,6 +314,10 @@ void free(void* ptr) noexcept {
   CMS_SA_ALLOW static const auto original = get<decltype(&::free)>("free");
   // ignore memory allocated from our static array at startup
   if (not is_local_alloc(ptr)) {
+    if (thread_in_thread_running()) {
+      original(ptr);
+      return;
+    }
     if (not alloc_monitor_running_state()) {
       original(ptr);
       return;

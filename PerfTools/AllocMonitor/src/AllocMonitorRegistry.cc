@@ -24,12 +24,25 @@
 extern "C" {
 void alloc_monitor_start();
 void alloc_monitor_stop();
+bool& alloc_monitor_thread_running();
 }
 
 namespace {
-  bool& threadRunning() {
+  bool& dummyThreadRunningFcn() {
     static thread_local bool s_running = true;
     return s_running;
+  }
+
+  bool& threadRunning() {
+    static decltype(&::alloc_monitor_thread_running) running = []() {
+      void* fcn = dlsym(RTLD_DEFAULT, "alloc_monitor_thread_running");
+      if (fcn != nullptr) {
+        return reinterpret_cast<decltype(&::alloc_monitor_thread_running)>(fcn);
+      }
+      //this should only be called for testing;
+      return &::dummyThreadRunningFcn;
+    }();
+    return running();
   }
 }  // namespace
 
