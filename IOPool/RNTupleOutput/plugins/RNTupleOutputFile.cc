@@ -301,6 +301,7 @@ namespace edm {
 
     rentry->BindRawPtr("FileIdentifier", &id);
 
+    indexIntoFile_.sortVector_Run_Or_Lumi_Entries();
     rentry->BindRawPtr("IndexIntoFile", &indexIntoFile_);
 
     ProcessHistoryVector procHistoryVector;
