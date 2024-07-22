@@ -166,7 +166,7 @@ namespace {
   }
 
   //Contents of a message which should be reported as an INFO not a ERROR
-  constexpr std::array<const char* const, 12> in_message{
+  constexpr std::array<const char* const, 13> in_message{
       {"no dictionary for class",
        "already in TClassTable",
        "matrix not positive definite",
@@ -178,7 +178,8 @@ namespace {
        "oneapi::tbb::global_control is limiting",
        "ufirst < fXmin, fXmin is used",
        "ulast > fXmax, fXmax is used",
-       "The RNTuple file format will change."}};
+       "The RNTuple file format will change.",
+       "Pre-release format version"}};
 
   //Location generating messages which should be reported as an INFO not a ERROR
   constexpr std::array<const char* const, 7> in_location{{"Fit",
