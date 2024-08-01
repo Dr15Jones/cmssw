@@ -1,4 +1,0 @@
-#include "DataFormats/EcalRecHit/interface/EcalUncalibratedRecHitHostCollection.h"
-#include "DataFormats/Portable/interface/PortableHostCollectionReadRules.h"
-
-SET_PORTABLEHOSTCOLLECTION_READ_RULES(EcalUncalibratedRecHitHostCollection);
