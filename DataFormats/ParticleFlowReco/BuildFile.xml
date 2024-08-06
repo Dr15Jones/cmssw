@@ -1,4 +1,3 @@
-<use name="eigen"/>
 <use name="rootcore"/>
 <use name="rootmath"/>
 <use name="DataFormats/CaloRecHit"/>
