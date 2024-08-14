@@ -5,7 +5,7 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wuninitialized"
 #endif
-#include <ap_int.h>
+#include <hls/ap_int.h>
 #if (!defined(__CLANG__)) && defined(__GNUC__) && defined(CMSSW_GIT_HASH)
 #pragma GCC diagnostic pop
 #endif

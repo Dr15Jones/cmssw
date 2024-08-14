@@ -1,7 +1,7 @@
 #ifndef L1TMUONPHASE2_PHASE2GMT_CONSTANTS
 #define L1TMUONPHASE2_PHASE2GMT_CONSTANTS
 
-#include "ap_int.h"
+#include "hls/ap_int.h"
 
 namespace Phase2L1GMT {
 

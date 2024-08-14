@@ -17,7 +17,7 @@
 #include "DataFormats/GeometryVector/interface/GlobalPoint.h"
 #include "DataFormats/Math/interface/deltaPhi.h"
 
-#include <ap_int.h>
+#include <hls/ap_int.h>
 
 #include <algorithm>
 #include <array>

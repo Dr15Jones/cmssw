@@ -2,7 +2,7 @@
 #define DataFormats_L1Trigger_P2GTCandidate_h
 
 #include <vector>
-#include <ap_int.h>
+#include <hls/ap_int.h>
 #include <stdexcept>
 
 #include "DataFormats/Common/interface/Ref.h"

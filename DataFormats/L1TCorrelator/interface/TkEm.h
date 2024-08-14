@@ -16,7 +16,7 @@
 #include "DataFormats/L1TParticleFlow/interface/gt_datatypes.h"
 #include "FWCore/Utilities/interface/Exception.h"
 
-#include <ap_int.h>
+#include <hls/ap_int.h>
 
 namespace l1t {
 

@@ -7,7 +7,7 @@
 // 2nd update: George Karathanasis (Oct 2022)
 
 #include <vector>
-#include <ap_int.h>
+#include <hls/ap_int.h>
 #include <cassert>
 #include <cmath>
 #include <bitset>

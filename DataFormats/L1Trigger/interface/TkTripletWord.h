@@ -5,7 +5,7 @@
 // Original author: George Karathanasis (Dec 2023)
 
 #include <vector>
-#include <ap_int.h>
+#include <hls/ap_int.h>
 #include <cassert>
 #include <cmath>
 #include <bitset>

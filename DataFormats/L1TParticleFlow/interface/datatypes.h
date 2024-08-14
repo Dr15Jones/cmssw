@@ -1,7 +1,7 @@
 #ifndef DataFormats_L1TParticleFlow_datatypes_h
 #define DataFormats_L1TParticleFlow_datatypes_h
 
-#include <ap_int.h>
+#include <hls/ap_int.h>
 #include <cassert>
 #include <cmath>
 
