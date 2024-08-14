@@ -1,26 +1,161 @@
-#add_subdirectory(TestObjects)
-
-add_subdirectory(Provenance)
-
-#add_subdirectory(Streamer)
-
-#add_subdirectory(WrappedStdDictionaries)
-
+add_subdirectory(BTauReco)
+add_subdirectory(BeamSpot)
+add_subdirectory(CLHEP)
+add_subdirectory(CSCDigi)
+add_subdirectory(CSCRecHit)
+add_subdirectory(CTPPSDetId)
+add_subdirectory(CTPPSDigi)
+add_subdirectory(CTPPSReco)
+add_subdirectory(CaloRecHit)
+add_subdirectory(CaloTowers)
+add_subdirectory(Candidate)
 add_subdirectory(Common)
-
-#add_subdirectory(FEDRawData)
-
-#add_subdirectory(StdDictionaries)
-
-#add_subdirectory(FWLite)
+add_subdirectory(DTDigi)
+add_subdirectory(DTRecHit)
+add_subdirectory(DetId)
+add_subdirectory(EcalDetId)
+add_subdirectory(EcalDigi)
+add_subdirectory(EcalRecHit)
+add_subdirectory(EgammaCandidates)
+add_subdirectory(EgammaReco)
+add_subdirectory(FEDRawData)
+add_subdirectory(FTLRecHit)
+add_subdirectory(ForwardDetId)
+add_subdirectory(GEMDigi)
+add_subdirectory(GEMRecHit)
+add_subdirectory(GeometryCommonDetAlgo)
+add_subdirectory(GeometrySurface)
+add_subdirectory(GeometryVector)
+add_subdirectory(GsfTrackReco)
+add_subdirectory(HLTReco)
+add_subdirectory(HcalDetId)
+add_subdirectory(HcalDigi)
+add_subdirectory(HcalIsolatedTrack)
+add_subdirectory(HcalRecHit)
+add_subdirectory(HepMCCandidate)
+add_subdirectory(JetMatching)
+add_subdirectory(JetReco)
+add_subdirectory(L1CaloTrigger)
+add_subdirectory(L1GlobalCaloTrigger)
+add_subdirectory(L1GlobalMuonTrigger)
+add_subdirectory(L1GlobalTrigger)
+add_subdirectory(L1TCorrelator)
+add_subdirectory(L1TGlobal)
+add_subdirectory(L1TMuon)
+add_subdirectory(L1TMuonPhase2)
+add_subdirectory(L1TParticleFlow)
+add_subdirectory(L1TrackTrigger)
+add_subdirectory(L1Trigger)
+add_subdirectory(METReco)
+add_subdirectory(Math)
+add_subdirectory(MuonDetId)
+add_subdirectory(MuonReco)
+add_subdirectory(ParticleFlowCandidate)
+add_subdirectory(ParticleFlowReco)
+add_subdirectory(PatCandidates)
+add_subdirectory(Phase2TrackerCluster)
+add_subdirectory(Phase2TrackerDigi)
+add_subdirectory(ProtonReco)
+add_subdirectory(Provenance)
+add_subdirectory(RecoCandidate)
+add_subdirectory(Scalers)
+add_subdirectory(Scouting)
+add_subdirectory(SiPixelCluster)
+add_subdirectory(SiPixelDetId)
+add_subdirectory(SiStripCluster)
+add_subdirectory(SiStripDetId)
+add_subdirectory(SiStripDigi)
+add_subdirectory(StdDictionaries)
+add_subdirectory(TauReco)
+add_subdirectory(TrackCandidate)
+add_subdirectory(TrackReco)
+add_subdirectory(TrackerCommon)
+add_subdirectory(TrackerRecHit2D)
+add_subdirectory(TrackingRecHit)
+add_subdirectory(TrajectorySeed)
+add_subdirectory(TrajectoryState)
+add_subdirectory(VertexReco)
+add_subdirectory(WrappedStdDictionaries)
 
 add_custom_target(DataFormats_all)
 
 add_dependencies(DataFormats_all
-#  DataFormatsTestObjects
-  DataFormatsProvenance
-#  DataFormatsStreamer
+  DataFormatsBTauReco
+  DataFormatsBeamSpot
+  DataFormatsCLHEP
+  DataFormatsCSCDigi
+  DataFormatsCSCRecHit
+  DataFormatsCTPPSDetId
+  DataFormatsCTPPSDigi
+  DataFormatsCTPPSReco
+  DataFormatsCaloRecHit
+  DataFormatsCaloTowers
+  DataFormatsCandidate
   DataFormatsCommon
-#  DataFormatsFEDRawData
-#  DataFormatsFWLite
+  DataFormatsDTDigi
+  DataFormatsDTRecHit
+  DataFormatsDetId
+  DataFormatsEcalDetId
+  DataFormatsEcalDigi
+  DataFormatsEcalRecHit
+  DataFormatsEgammaCandidates
+  DataFormatsEgammaReco
+  DataFormatsFEDRawData
+  DataFormatsFTLRecHit
+  DataFormatsForwardDetId
+  DataFormatsGEMDigi
+  DataFormatsGEMRecHit
+  DataFormatsGeometryCommonDetAlgo
+  DataFormatsGeometrySurface
+  DataFormatsGeometryVector
+  DataFormatsGsfTrackReco
+  DataFormatsHLTReco
+  DataFormatsHcalDetId
+  DataFormatsHcalDigi
+  DataFormatsHcalIsolatedTrack
+  DataFormatsHcalRecHit
+  DataFormatsHepMCCandidate
+  DataFormatsJetMatching
+  DataFormatsJetReco
+  DataFormatsL1CaloTrigger
+  DataFormatsL1GlobalCaloTrigger
+  DataFormatsL1GlobalMuonTrigger
+  DataFormatsL1GlobalTrigger
+  DataFormatsL1TCorrelator
+  DataFormatsL1TGlobal
+  DataFormatsL1TMuon
+  DataFormatsL1TMuonPhase2
+  DataFormatsL1TParticleFlow
+  DataFormatsL1TrackTrigger
+  DataFormatsL1Trigger
+  DataFormatsMETReco
+  DataFormatsMath
+  DataFormatsMuonDetId
+  DataFormatsMuonReco
+  DataFormatsParticleFlowCandidate
+  DataFormatsParticleFlowReco
+  DataFormatsPatCandidates
+  DataFormatsPhase2TrackerCluster
+  DataFormatsPhase2TrackerDigi
+  DataFormatsProtonReco
+  DataFormatsProvenance
+  DataFormatsRecoCandidate
+  DataFormatsScalers
+  DataFormatsScouting
+  DataFormatsSiPixelCluster
+  DataFormatsSiPixelDetId
+  DataFormatsSiStripCluster
+  DataFormatsSiStripDetId
+  DataFormatsSiStripDigi
+  DataFormatsStdDictionaries
+  DataFormatsTauReco
+  DataFormatsTrackCandidate
+  DataFormatsTrackReco
+  DataFormatsTrackerCommon
+  DataFormatsTrackerRecHit2D
+  DataFormatsTrackingRecHit
+  DataFormatsTrajectorySeed
+  DataFormatsTrajectoryState
+  DataFormatsVertexReco
+  DataFormatsWrappedStdDictionaries
 )

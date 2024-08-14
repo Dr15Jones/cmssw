@@ -1,16 +1,11 @@
 include_directories(${CMAKE_SOURCE_DIR}
-${Boost_INCLUDE_DIR}
-${FMT_INCLUDE_DIR}
 ${ROOT_INCLUDE_DIR}
 ${TBB_INCLUDE_DIRS}
 /usr/include
 )
-
-cms_rootdict(DataFormatsProvenance src/classes.h src/classes_def.xml)
-
-add_rootdict_rules(DataFormatsProvenance)
-
-add_library(DataFormatsProvenance SHARED ${DataFormatsProvenance_EXTRA_SOURCES}
+cms_rootdict( DataFormatsProvenance  src/classes.h src/classes_def.xml)
+add_rootdict_rules( DataFormatsProvenance )
+add_library( DataFormatsProvenance  SHARED ${DataFormatsProvenance_EXTRA_SOURCES}
   src/BranchChildren.cc
   src/BranchDescription.cc
   src/BranchID.cc
@@ -64,31 +59,24 @@ add_library(DataFormatsProvenance SHARED ${DataFormatsProvenance_EXTRA_SOURCES}
   src/ViewTypeChecker.cc
   src/branchIDToProductID.cc
 )
-
-set_target_properties(DataFormatsProvenance PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-
-add_dependencies( ALL_LIBS DataFormatsProvenance)
-
-target_include_directories(DataFormatsProvenance PRIVATE ${CMAKE_SOURCE_DIR})
-
-target_include_directories(DataFormatsProvenance PUBLIC
-${Boost_INCLUDE_DIR}
-${FMT_INCLUDE_DIR}
-${ROOT_INCLUDE_DIR}
-${TBB_INCLUDE_DIRS}
+set_target_properties( DataFormatsProvenance PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+add_dependencies( ALL_LIBS DataFormatsProvenance )
+target_include_directories( DataFormatsProvenance PRIVATE ${CMAKE_SOURCE_DIR})
+target_include_directories( DataFormatsProvenance PUBLIC
+  ${ROOT_INCLUDE_DIR}
+  ${TBB_INCLUDE_DIRS}
 /usr/include
 )
-
-target_link_libraries(DataFormatsProvenance PUBLIC
-${TBB_LIBRARIES}
-FWCoreReflection
-FWCoreUtilities
-ROOT::Core
-ROOT::MathCore
-ROOT::Net
-ROOT::RIO
-ROOT::Thread
-ROOT::Tree
+target_link_libraries( DataFormatsProvenance PUBLIC
+   ROOT::Tree
+   ROOT::Net
+   ROOT::MathCore
+   ROOT::Core
+   ROOT::Thread
+   ROOT::RIO
+   ROOT::Core
+   ${TBB_LIBRARIES}
+   FWCoreUtilities
+   FWCoreReflection
 )
-
-install( TARGETS DataFormatsProvenance DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)
+install( TARGETS  DataFormatsProvenance DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

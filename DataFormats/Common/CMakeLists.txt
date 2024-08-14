@@ -3,12 +3,9 @@ ${Boost_INCLUDE_DIR}
 ${TBB_INCLUDE_DIRS}
 /usr/include
 )
-
-cms_rootdict(DataFormatsCommon src/classes.h src/classes_def.xml)
-
-add_rootdict_rules(DataFormatsCommon)
-
-add_library(DataFormatsCommon SHARED ${DataFormatsCommon_EXTRA_SOURCES}
+cms_rootdict( DataFormatsCommon  src/classes.h src/classes_def.xml)
+add_rootdict_rules( DataFormatsCommon )
+add_library( DataFormatsCommon  SHARED ${DataFormatsCommon_EXTRA_SOURCES}
   src/CommonExceptions.cc
   src/ConvertHandle.cc
   src/DataFrameContainer.cc
@@ -33,25 +30,18 @@ add_library(DataFormatsCommon SHARED ${DataFormatsCommon_EXTRA_SOURCES}
   src/setIsMergeable.cc
   src/traits.cc
 )
-
-set_target_properties(DataFormatsCommon PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-
-add_dependencies( ALL_LIBS DataFormatsCommon)
-
-target_include_directories(DataFormatsCommon PRIVATE ${CMAKE_SOURCE_DIR})
-
-target_include_directories(DataFormatsCommon PUBLIC
-${Boost_INCLUDE_DIR}
-${TBB_INCLUDE_DIRS}
+set_target_properties( DataFormatsCommon PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+add_dependencies( ALL_LIBS DataFormatsCommon )
+target_include_directories( DataFormatsCommon PRIVATE ${CMAKE_SOURCE_DIR})
+target_include_directories( DataFormatsCommon PUBLIC
+  ${TBB_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIR}
 /usr/include
 )
-
-target_link_libraries(DataFormatsCommon PUBLIC
-${TBB_LIBRARIES}
-DataFormatsProvenance
-FWCoreMessageLogger
-FWCoreUtilities
+target_link_libraries( DataFormatsCommon PUBLIC
+   ${TBB_LIBRARIES}
+   DataFormatsProvenance
+   FWCoreMessageLogger
+   FWCoreUtilities
 )
-
-
-install( TARGETS DataFormatsCommon DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)
+install( TARGETS  DataFormatsCommon DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)
