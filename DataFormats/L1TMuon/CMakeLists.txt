@@ -17,6 +17,10 @@ add_library( DataFormatsL1TMuon  SHARED ${DataFormatsL1TMuon_EXTRA_SOURCES}
   src/L1MuKBMTrack.cc
   src/RegionalMuonCand.cc
   src/RegionalMuonShower.cc
+  src/BMTF/L1MuBMAddressArray.cc
+  src/BMTF/L1MuBMSecProcId.cc
+  src/BMTF/L1MuBMTrackAssParam.cc
+  src/BMTF/L1MuBMTrackSegLoc.cc
 )
 set_target_properties( DataFormatsL1TMuon PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 add_dependencies( ALL_LIBS DataFormatsL1TMuon )
