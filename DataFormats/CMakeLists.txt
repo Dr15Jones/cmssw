@@ -76,6 +76,7 @@ add_subdirectory(TrajectorySeed)
 add_subdirectory(TrajectoryState)
 add_subdirectory(VertexReco)
 add_subdirectory(WrappedStdDictionaries)
+add_subdirectory(RPCRecHit)
 
 add_custom_target(DataFormats_all)
 
@@ -158,4 +159,5 @@ add_dependencies(DataFormats_all
   DataFormatsTrajectoryState
   DataFormatsVertexReco
   DataFormatsWrappedStdDictionaries
+  DataFormatsRPCRecHit
 )
