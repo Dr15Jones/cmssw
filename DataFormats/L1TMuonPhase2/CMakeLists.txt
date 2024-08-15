@@ -1,10 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-${CMAKE_SOURCE_DIR}/hls
-${ROOT_INCLUDE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsL1TMuonPhase2  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsL1TMuonPhase2 )
 add_library( DataFormatsL1TMuonPhase2  SHARED ${DataFormatsL1TMuonPhase2_EXTRA_SOURCES}
   src/EMTFHit.cc
   src/EMTFInput.cc
@@ -29,4 +23,5 @@ target_link_libraries( DataFormatsL1TMuonPhase2 PUBLIC
    DataFormatsL1TMuon
    DataFormatsL1TrackTrigger
 )
+add_rootdict_rules( DataFormatsL1TMuonPhase2 )
 install( TARGETS  DataFormatsL1TMuonPhase2 DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

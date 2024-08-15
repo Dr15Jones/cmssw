@@ -1,11 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-${Boost_INCLUDE_DIR}
-${CLHEP_INCLUDE_DIR}
-${ROOT_INCLUDE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsBTauReco  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsBTauReco )
 add_library( DataFormatsBTauReco  SHARED ${DataFormatsBTauReco_EXTRA_SOURCES}
   src/IsolatedTauTagInfo.cc
   src/TaggingVariable.cc
@@ -46,4 +39,5 @@ target_link_libraries( DataFormatsBTauReco PUBLIC
    DataFormatsGeometryCommonDetAlgo
    DataFormatsGeometryVector
 )
+add_rootdict_rules( DataFormatsBTauReco )
 install( TARGETS  DataFormatsBTauReco DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

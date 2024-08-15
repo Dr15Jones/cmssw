@@ -83,16 +83,24 @@ endmacro()
 macro(add_rootdict_rules name)
   set(flags "")
   get_directory_property(defs COMPILE_DEFINITIONS)
+  #if(TARGET ${name})
+  #  list(APPEND defs "$<FILTER:$<TARGET_PROPERTY:${name},COMPILE_DEFINITIONS>,EXCLUDE,^$>")
+  #endif()
   if(defs)
     foreach(d ${defs})
       set(flags ${flags} -D${d})
     endforeach()
   endif()
   get_directory_property(dirs INCLUDE_DIRECTORIES)
+  set(include_dirs ${CMAKE_SOURCE_DIR})
+  if(TARGET ${name})
+    LIST(APPEND include_dirs $<TARGET_PROPERTY:${name},INCLUDE_DIRECTORIES>)
+  endif()
   if(dirs)
     foreach(inc ${dirs})
       set(flags ${flags} -I${inc})
     endforeach()
+    message(${flags})
   endif()
   foreach(dict ${${name}_ROOTDICTS})
     list(GET ROOTDICT_${dict} 0 classes_h)
@@ -102,14 +110,16 @@ macro(add_rootdict_rules name)
     set_source_files_properties(${classes_cc} PROPERTIES COMPILE_FLAGS "-Os -Wno-unused-variable")
     add_custom_command(OUTPUT ${classes_cc}
                     COMMAND ${ROOT_genreflex_CMD} ${CMAKE_CURRENT_SOURCE_DIR}/${classes_h}
-                    -s ${CMAKE_CURRENT_SOURCE_DIR}/${classes_xml}
+                    ARGS -s ${CMAKE_CURRENT_SOURCE_DIR}/${classes_xml}
                     -o ${classes_cc}
                     --deep
                     --rootmap=${CMAKE_BINARY_DIR}/lib/${dict}.rootmap
                     --rootmap-lib=${CMAKE_BINARY_DIR}/lib/lib${name}.so
                     --library ${CMAKE_BINARY_DIR}/lib/lib${name}.so --multiDict
                     -DCMS_DICT_IMPL -D_REENTRANT -DGNUSOURCE -D__STRICT_ANSI__ ${FLAGS} -DCMSSW_REFLEX_DICT 
-                    -I${CMAKE_SOURCE_DIR} ${flags}
+                    "-I$<JOIN:$<REMOVE_DUPLICATES:$<FILTER:${include_dirs},EXCLUDE,^$>>,$<SEMICOLON>-I>"
+                    ${flags}
+                    COMMAND_EXPAND_LISTS
                     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${classes_h} ${CMAKE_CURRENT_SOURCE_DIR}/${classes_xml}
                     )
     list(APPEND rootmapfiles ${CMAKE_BINARY_DIR}/lib/${dict}.rootmap)

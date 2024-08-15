@@ -1,11 +1,5 @@
-include_directories(${CMAKE_SOURCE_DIR}
-${ROOT_INCLUDE_DIR}
-${ROOT_INCLUDE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsParticleFlowReco  src/classes_1.h src/classes_def_1.xml)
 cms_rootdict( DataFormatsParticleFlowReco  src/classes_2.h src/classes_def_2.xml)
-add_rootdict_rules( DataFormatsParticleFlowReco )
 add_library( DataFormatsParticleFlowReco  SHARED ${DataFormatsParticleFlowReco_EXTRA_SOURCES}
   src/GsfPFRecTrack.cc
   src/HGCalMultiCluster.cc
@@ -74,4 +68,5 @@ target_link_libraries( DataFormatsParticleFlowReco PUBLIC
    FWCoreUtilities
    GeometryCaloGeometry
 )
+add_rootdict_rules( DataFormatsParticleFlowReco )
 install( TARGETS  DataFormatsParticleFlowReco DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

@@ -1,11 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-${HepMC_INCLUDE_DIR}
-${HEPMC3_INCLUDE_DIR}
-${ROOT_INCLUDE_DIR}
-/usr/include
-)
 cms_rootdict( SimDataFormatsGeneratorProducts  src/classes.h src/classes_def.xml)
-add_rootdict_rules( SimDataFormatsGeneratorProducts )
 add_library( SimDataFormatsGeneratorProducts  SHARED ${SimDataFormatsGeneratorProducts_EXTRA_SOURCES}
   src/GenEventInfoProduct.cc
   src/GenEventInfoProduct3.cc
@@ -24,9 +17,9 @@ set_target_properties( SimDataFormatsGeneratorProducts PROPERTIES LIBRARY_OUTPUT
 add_dependencies( ALL_LIBS SimDataFormatsGeneratorProducts )
 target_include_directories( SimDataFormatsGeneratorProducts PRIVATE ${CMAKE_SOURCE_DIR})
 target_include_directories( SimDataFormatsGeneratorProducts PUBLIC
+  ${ROOT_INCLUDE_DIR}
   ${HepMC_INCLUDE_DIR}
   ${HEPMC3_INCLUDE_DIR}
-  ${ROOT_INCLUDE_DIR}
 /usr/include
 )
 target_link_libraries( SimDataFormatsGeneratorProducts PUBLIC
@@ -45,4 +38,5 @@ target_link_libraries( SimDataFormatsGeneratorProducts PUBLIC
    FWCoreMessageLogger
    DataFormatsCommon
 )
+add_rootdict_rules( SimDataFormatsGeneratorProducts )
 install( TARGETS  SimDataFormatsGeneratorProducts DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

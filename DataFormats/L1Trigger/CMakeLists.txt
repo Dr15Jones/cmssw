@@ -1,9 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-${CMAKE_SOURCE_DIR}/hls
-/usr/include
-)
 cms_rootdict( DataFormatsL1Trigger  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsL1Trigger )
 add_library( DataFormatsL1Trigger  SHARED ${DataFormatsL1Trigger_EXTRA_SOURCES}
   src/CaloSpare.cc
   src/EGamma.cc
@@ -48,4 +43,5 @@ target_link_libraries( DataFormatsL1Trigger PUBLIC
    FWCoreConcurrency
    FWCoreMessageLogger
 )
+add_rootdict_rules( DataFormatsL1Trigger )
 install( TARGETS  DataFormatsL1Trigger DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

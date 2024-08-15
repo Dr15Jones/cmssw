@@ -1,9 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-${ROOT_INCLUDE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsGEMRecHit  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsGEMRecHit )
 add_library( DataFormatsGEMRecHit  SHARED ${DataFormatsGEMRecHit_EXTRA_SOURCES}
   src/GEMCSCSegment.cc
   src/GEMRecHit.cc
@@ -26,4 +21,5 @@ target_link_libraries( DataFormatsGEMRecHit PUBLIC
    DataFormatsCSCRecHit
    FWCoreMessageLogger
 )
+add_rootdict_rules( DataFormatsGEMRecHit )
 install( TARGETS  DataFormatsGEMRecHit DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

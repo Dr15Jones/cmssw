@@ -1,9 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-${Boost_INCLUDE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsL1GlobalCaloTrigger  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsL1GlobalCaloTrigger )
 add_library( DataFormatsL1GlobalCaloTrigger  SHARED ${DataFormatsL1GlobalCaloTrigger_EXTRA_SOURCES}
   src/L1GctCand.cc
   src/L1GctEmCand.cc
@@ -34,4 +29,5 @@ target_link_libraries( DataFormatsL1GlobalCaloTrigger PUBLIC
    DataFormatsCommon
    DataFormatsL1CaloTrigger
 )
+add_rootdict_rules( DataFormatsL1GlobalCaloTrigger )
 install( TARGETS  DataFormatsL1GlobalCaloTrigger DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

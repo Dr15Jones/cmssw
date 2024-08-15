@@ -1,9 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-${ROOT_INCLUDE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsMuonReco  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsMuonReco )
 add_library( DataFormatsMuonReco  SHARED ${DataFormatsMuonReco_EXTRA_SOURCES}
   src/CaloMuon.cc
   src/DYTInfo.cc
@@ -44,4 +39,5 @@ target_link_libraries( DataFormatsMuonReco PUBLIC
    DataFormatsMath
    DataFormatsMuonDetId
 )
+add_rootdict_rules( DataFormatsMuonReco )
 install( TARGETS  DataFormatsMuonReco DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

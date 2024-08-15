@@ -1,8 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsTrackerRecHit2D  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsTrackerRecHit2D )
 add_library( DataFormatsTrackerRecHit2D  SHARED ${DataFormatsTrackerRecHit2D_EXTRA_SOURCES}
   src/BaseTrackerRecHit.cc
   src/ClusterRemovalInfo.cc
@@ -47,4 +43,5 @@ target_link_libraries( DataFormatsTrackerRecHit2D PUBLIC
    DataFormatsSiStripDetId
    FWCoreUtilities
 )
+add_rootdict_rules( DataFormatsTrackerRecHit2D )
 install( TARGETS  DataFormatsTrackerRecHit2D DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

@@ -1,8 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsFTLRecHit  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsFTLRecHit )
 add_library( DataFormatsFTLRecHit  SHARED ${DataFormatsFTLRecHit_EXTRA_SOURCES}
   src/FTLRecHit.cc
   src/FTLTrackingRecHit.cc
@@ -21,4 +17,5 @@ target_link_libraries( DataFormatsFTLRecHit PUBLIC
    DataFormatsTrackingRecHit
    DataFormatsDetId
 )
+add_rootdict_rules( DataFormatsFTLRecHit )
 install( TARGETS  DataFormatsFTLRecHit DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

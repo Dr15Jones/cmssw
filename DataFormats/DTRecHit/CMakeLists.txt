@@ -1,8 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsDTRecHit  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsDTRecHit )
 add_library( DataFormatsDTRecHit  SHARED ${DataFormatsDTRecHit_EXTRA_SOURCES}
   src/DTChamberRecSegment2D.cc
   src/DTEnums.cc
@@ -29,4 +25,5 @@ target_link_libraries( DataFormatsDTRecHit PUBLIC
    DataFormatsTrackingRecHit
    FWCoreUtilities
 )
+add_rootdict_rules( DataFormatsDTRecHit )
 install( TARGETS  DataFormatsDTRecHit DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

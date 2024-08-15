@@ -1,9 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-${CMAKE_SOURCE_DIR}/hls
-/usr/include
-)
 cms_rootdict( DataFormatsL1TrackTrigger  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsL1TrackTrigger )
 add_library( DataFormatsL1TrackTrigger  SHARED ${DataFormatsL1TrackTrigger_EXTRA_SOURCES}
   src/TTCluster.cc
   src/TTDTC.cc
@@ -29,4 +24,5 @@ target_link_libraries( DataFormatsL1TrackTrigger PUBLIC
    FWCoreMessageLogger
    FWCoreUtilities
 )
+add_rootdict_rules( DataFormatsL1TrackTrigger )
 install( TARGETS  DataFormatsL1TrackTrigger DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

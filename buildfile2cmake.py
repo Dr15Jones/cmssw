@@ -90,16 +90,6 @@ package = parts[0]+parts[1]
 #print(external_dependencies)
 
 
-def printPreamble(external_deps):
-    print("include_directories(${CMAKE_SOURCE_DIR}")
-    for e in external_deps:
-        if e in externals:
-            d = externals[e]
-            if len(d[0]) != 0:
-                print(d[0])
-    
-    print("/usr/include")
-    print(")")
 def printRootDict(package, headers,xml):
     #find matching pairs of classes(_\w)*.h and classes(_(\w))*_def(_(\w)).xml
     import re
@@ -112,8 +102,10 @@ def printRootDict(package, headers,xml):
         if found.group("last") is not None:
             last = '_'+found.group("last")
         print("cms_rootdict(",package, " src/classes"+first+last+".h src/"+x+")")
-    print("add_rootdict_rules(",package,")")
 
+def printRootDictRules(package):
+    print("add_rootdict_rules(",package,")")
+    
 def printLibrary(package, sources, include_dependencies, library_dependencies):
     print("add_library(",package, " SHARED ${"+package+"_EXTRA_SOURCES}")
     for s in sources:
@@ -132,8 +124,9 @@ def printLibrary(package, sources, include_dependencies, library_dependencies):
     for l in library_dependencies:
         print("  ",l)
     print(")")
-    print("install( TARGETS ",package, "DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)")
 
+def printInstall(package):
+    print("install( TARGETS ",package, "DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)")
     
 srcDir = "/".join(parts[0:2])+"/src"
 classHeaders = []
@@ -149,12 +142,17 @@ for f in os.listdir(srcDir):
     if f[0:7] == 'classes' and f[-4:] == '.xml':
         classXML.append(f)
         #print(" xml ",f)
+    if os.path.isdir(f):
+        for fs in os.listdir( srcDir+"/"+f):
+            if fs[-3:] == '.cc':
+                source.append(f+"/"+fs)
         
-printPreamble(external_dependencies)
-if len(classHeaders) > 0:
-    printRootDict(package, classHeaders, classXML)
 external_libraries =[]
 for dep in external_dependencies:
     for ex in externals[dep][1]:
         external_libraries.append(ex)
+if len(classHeaders) > 0:
+    printRootDict(package, classHeaders, classXML)
 printLibrary(package, sources, list(set((externals[i][0] for i in external_dependencies))),  external_libraries + dependencies)
+printRootDictRules(package)
+printInstall(package)

@@ -1,9 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-${ROOT_INCLUDE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsMETReco  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsMETReco )
 add_library( DataFormatsMETReco  SHARED ${DataFormatsMETReco_EXTRA_SOURCES}
   src/BeamHaloSummary.cc
   src/CSCHaloData.cc
@@ -60,4 +55,5 @@ target_link_libraries( DataFormatsMETReco PUBLIC
    DataFormatsMath
    DataFormatsTrackReco
 )
+add_rootdict_rules( DataFormatsMETReco )
 install( TARGETS  DataFormatsMETReco DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

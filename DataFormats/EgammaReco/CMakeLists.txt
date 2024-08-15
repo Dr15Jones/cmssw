@@ -1,9 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-${CLHEP_INCLUDE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsEgammaReco  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsEgammaReco )
 add_library( DataFormatsEgammaReco  SHARED ${DataFormatsEgammaReco_EXTRA_SOURCES}
   src/BasicCluster.cc
   src/ClusterShape.cc
@@ -32,4 +27,5 @@ target_link_libraries( DataFormatsEgammaReco PUBLIC
    DataFormatsMath
    DataFormatsTrajectoryState
 )
+add_rootdict_rules( DataFormatsEgammaReco )
 install( TARGETS  DataFormatsEgammaReco DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

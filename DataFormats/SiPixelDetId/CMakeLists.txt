@@ -1,8 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsSiPixelDetId  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsSiPixelDetId )
 add_library( DataFormatsSiPixelDetId  SHARED ${DataFormatsSiPixelDetId_EXTRA_SOURCES}
   src/ES_PixelFEDChannelCollectionMap.cc
   src/PXBDetId.cc
@@ -23,4 +19,5 @@ target_link_libraries( DataFormatsSiPixelDetId PUBLIC
    FWCoreMessageLogger
    DataFormatsCommon
 )
+add_rootdict_rules( DataFormatsSiPixelDetId )
 install( TARGETS  DataFormatsSiPixelDetId DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

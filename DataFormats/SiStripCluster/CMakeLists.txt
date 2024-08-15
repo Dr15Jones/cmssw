@@ -1,8 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsSiStripCluster  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsSiStripCluster )
 add_library( DataFormatsSiStripCluster  SHARED ${DataFormatsSiStripCluster_EXTRA_SOURCES}
   src/SiStripApproximateCluster.cc
   src/SiStripApproximateClusterCollection.cc
@@ -22,4 +18,5 @@ target_link_libraries( DataFormatsSiStripCluster PUBLIC
    DataFormatsSiStripDetId
    FWCoreUtilities
 )
+add_rootdict_rules( DataFormatsSiStripCluster )
 install( TARGETS  DataFormatsSiStripCluster DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

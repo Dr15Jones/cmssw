@@ -1,8 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsTrackerCommon  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsTrackerCommon )
 add_library( DataFormatsTrackerCommon  SHARED ${DataFormatsTrackerCommon_EXTRA_SOURCES}
   src/ClusterSummary.cc
   src/ES_TrackerTopology.cc
@@ -28,4 +24,5 @@ target_link_libraries( DataFormatsTrackerCommon PUBLIC
    FWCoreMessageLogger
    FWCoreUtilities
 )
+add_rootdict_rules( DataFormatsTrackerCommon )
 install( TARGETS  DataFormatsTrackerCommon DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

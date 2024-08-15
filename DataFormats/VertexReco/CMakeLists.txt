@@ -1,8 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsVertexReco  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsVertexReco )
 add_library( DataFormatsVertexReco  SHARED ${DataFormatsVertexReco_EXTRA_SOURCES}
   src/TrackTimeLifeInfo.cc
   src/Vertex.cc
@@ -20,4 +16,5 @@ target_link_libraries( DataFormatsVertexReco PUBLIC
    DataFormatsTrackReco
    DataFormatsTrajectorySeed
 )
+add_rootdict_rules( DataFormatsVertexReco )
 install( TARGETS  DataFormatsVertexReco DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

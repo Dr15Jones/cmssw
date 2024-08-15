@@ -1,8 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsCSCRecHit  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsCSCRecHit )
 add_library( DataFormatsCSCRecHit  SHARED ${DataFormatsCSCRecHit_EXTRA_SOURCES}
   src/CSCRangeMapAccessor.cc
   src/CSCRecHit2D.cc
@@ -19,4 +15,5 @@ target_link_libraries( DataFormatsCSCRecHit PUBLIC
    DataFormatsMuonDetId
    DataFormatsTrackingRecHit
 )
+add_rootdict_rules( DataFormatsCSCRecHit )
 install( TARGETS  DataFormatsCSCRecHit DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

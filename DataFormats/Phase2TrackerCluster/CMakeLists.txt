@@ -1,9 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-${ROOT_INCLUDE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsPhase2TrackerCluster  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsPhase2TrackerCluster )
 add_library( DataFormatsPhase2TrackerCluster  SHARED ${DataFormatsPhase2TrackerCluster_EXTRA_SOURCES}
 )
 set_target_properties( DataFormatsPhase2TrackerCluster PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -18,4 +13,5 @@ target_link_libraries( DataFormatsPhase2TrackerCluster PUBLIC
    DataFormatsCommon
    DataFormatsPhase2TrackerDigi
 )
+add_rootdict_rules( DataFormatsPhase2TrackerCluster )
 install( TARGETS  DataFormatsPhase2TrackerCluster DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

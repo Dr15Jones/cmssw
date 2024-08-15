@@ -1,8 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsDetId  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsDetId )
 add_library( DataFormatsDetId  SHARED ${DataFormatsDetId_EXTRA_SOURCES}
   src/DetId.cc
 )
@@ -15,4 +11,5 @@ target_include_directories( DataFormatsDetId PUBLIC
 target_link_libraries( DataFormatsDetId PUBLIC
    DataFormatsCommon
 )
+add_rootdict_rules( DataFormatsDetId )
 install( TARGETS  DataFormatsDetId DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

@@ -1,8 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsProtonReco  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsProtonReco )
 add_library( DataFormatsProtonReco  SHARED ${DataFormatsProtonReco_EXTRA_SOURCES}
   src/ForwardProton.cc
 )
@@ -17,4 +13,5 @@ target_link_libraries( DataFormatsProtonReco PUBLIC
    DataFormatsCTPPSReco
    DataFormatsMath
 )
+add_rootdict_rules( DataFormatsProtonReco )
 install( TARGETS  DataFormatsProtonReco DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

@@ -1,8 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsEcalDetId  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsEcalDetId )
 add_library( DataFormatsEcalDetId  SHARED ${DataFormatsEcalDetId_EXTRA_SOURCES}
   src/EBDetId.cc
   src/EEDetId.cc
@@ -24,4 +20,5 @@ target_link_libraries( DataFormatsEcalDetId PUBLIC
    DataFormatsDetId
    FWCoreUtilities
 )
+add_rootdict_rules( DataFormatsEcalDetId )
 install( TARGETS  DataFormatsEcalDetId DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

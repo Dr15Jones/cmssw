@@ -1,9 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-${ROOT_INCLUDE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsCandidate  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsCandidate )
 add_library( DataFormatsCandidate  SHARED ${DataFormatsCandidate_EXTRA_SOURCES}
   src/Candidate.cc
   src/CompositeCandidate.cc
@@ -42,4 +37,5 @@ target_link_libraries( DataFormatsCandidate PUBLIC
    DataFormatsMath
    FWCoreUtilities
 )
+add_rootdict_rules( DataFormatsCandidate )
 install( TARGETS  DataFormatsCandidate DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

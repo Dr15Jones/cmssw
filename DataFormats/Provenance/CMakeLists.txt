@@ -1,10 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-${ROOT_INCLUDE_DIR}
-${TBB_INCLUDE_DIRS}
-/usr/include
-)
 cms_rootdict( DataFormatsProvenance  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsProvenance )
 add_library( DataFormatsProvenance  SHARED ${DataFormatsProvenance_EXTRA_SOURCES}
   src/BranchChildren.cc
   src/BranchDescription.cc
@@ -63,8 +57,8 @@ set_target_properties( DataFormatsProvenance PROPERTIES LIBRARY_OUTPUT_DIRECTORY
 add_dependencies( ALL_LIBS DataFormatsProvenance )
 target_include_directories( DataFormatsProvenance PRIVATE ${CMAKE_SOURCE_DIR})
 target_include_directories( DataFormatsProvenance PUBLIC
-  ${ROOT_INCLUDE_DIR}
   ${TBB_INCLUDE_DIRS}
+  ${ROOT_INCLUDE_DIR}
 /usr/include
 )
 target_link_libraries( DataFormatsProvenance PUBLIC
@@ -79,4 +73,5 @@ target_link_libraries( DataFormatsProvenance PUBLIC
    FWCoreUtilities
    FWCoreReflection
 )
+add_rootdict_rules( DataFormatsProvenance )
 install( TARGETS  DataFormatsProvenance DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

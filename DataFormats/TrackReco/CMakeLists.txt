@@ -1,10 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-${CLHEP_INCLUDE_DIR}
-${ROOT_INCLUDE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsTrackReco  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsTrackReco )
 add_library( DataFormatsTrackReco  SHARED ${DataFormatsTrackReco_EXTRA_SOURCES}
   src/DeDxData.cc
   src/HitPattern.cc
@@ -54,4 +48,5 @@ target_link_libraries( DataFormatsTrackReco PUBLIC
    DataFormatsTrajectoryState
    FWCoreUtilities
 )
+add_rootdict_rules( DataFormatsTrackReco )
 install( TARGETS  DataFormatsTrackReco DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

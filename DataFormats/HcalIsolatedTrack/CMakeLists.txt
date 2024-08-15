@@ -1,8 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsHcalIsolatedTrack  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsHcalIsolatedTrack )
 add_library( DataFormatsHcalIsolatedTrack  SHARED ${DataFormatsHcalIsolatedTrack_EXTRA_SOURCES}
   src/EcalIsolatedParticleCandidate.cc
   src/HcalIsolatedTrackCandidate.cc
@@ -22,4 +18,5 @@ target_link_libraries( DataFormatsHcalIsolatedTrack PUBLIC
    DataFormatsTrackReco
    DataFormatsL1Trigger
 )
+add_rootdict_rules( DataFormatsHcalIsolatedTrack )
 install( TARGETS  DataFormatsHcalIsolatedTrack DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

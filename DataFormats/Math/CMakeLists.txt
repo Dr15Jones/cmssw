@@ -1,9 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-${ROOT_INCLUDE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsMath  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsMath )
 add_library( DataFormatsMath  SHARED ${DataFormatsMath_EXTRA_SOURCES}
   src/ExtVec.cc
   src/FastMath.cc
@@ -30,4 +25,5 @@ target_link_libraries( DataFormatsMath PUBLIC
    DataFormatsCommon
    FWCoreUtilities
 )
+add_rootdict_rules( DataFormatsMath )
 install( TARGETS  DataFormatsMath DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

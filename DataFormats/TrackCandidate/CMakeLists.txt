@@ -1,9 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-${CLHEP_INCLUDE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsTrackCandidate  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsTrackCandidate )
 add_library( DataFormatsTrackCandidate  SHARED ${DataFormatsTrackCandidate_EXTRA_SOURCES}
   src/TrajectoryStopReasons.cc
 )
@@ -21,4 +16,5 @@ target_link_libraries( DataFormatsTrackCandidate PUBLIC
    DataFormatsTrajectorySeed
    FWCoreUtilities
 )
+add_rootdict_rules( DataFormatsTrackCandidate )
 install( TARGETS  DataFormatsTrackCandidate DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

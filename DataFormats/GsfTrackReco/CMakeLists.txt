@@ -1,8 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsGsfTrackReco  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsGsfTrackReco )
 add_library( DataFormatsGsfTrackReco  SHARED ${DataFormatsGsfTrackReco_EXTRA_SOURCES}
   src/GsfComponent5D.cc
   src/GsfTrack.cc
@@ -21,4 +17,5 @@ target_link_libraries( DataFormatsGsfTrackReco PUBLIC
    DataFormatsMath
    FWCoreUtilities
 )
+add_rootdict_rules( DataFormatsGsfTrackReco )
 install( TARGETS  DataFormatsGsfTrackReco DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

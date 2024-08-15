@@ -1,9 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-${ROOT_INCLUDE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsL1TParticleFlow  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsL1TParticleFlow )
 add_library( DataFormatsL1TParticleFlow  SHARED ${DataFormatsL1TParticleFlow_EXTRA_SOURCES}
   src/HPSPFTau.cc
   src/PFCandidate.cc
@@ -29,4 +24,5 @@ target_link_libraries( DataFormatsL1TParticleFlow PUBLIC
    DataFormatsJetReco
    DataFormatsL1TMuonPhase2
 )
+add_rootdict_rules( DataFormatsL1TParticleFlow )
 install( TARGETS  DataFormatsL1TParticleFlow DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

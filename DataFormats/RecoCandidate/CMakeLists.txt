@@ -1,9 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-${CLHEP_INCLUDE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsRecoCandidate  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsRecoCandidate )
 add_library( DataFormatsRecoCandidate  SHARED ${DataFormatsRecoCandidate_EXTRA_SOURCES}
   src/CaloRecHitCandidate.cc
   src/IsoDeposit.cc
@@ -35,4 +30,5 @@ target_link_libraries( DataFormatsRecoCandidate PUBLIC
    FWCoreMessageLogger
    FWCoreUtilities
 )
+add_rootdict_rules( DataFormatsRecoCandidate )
 install( TARGETS  DataFormatsRecoCandidate DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

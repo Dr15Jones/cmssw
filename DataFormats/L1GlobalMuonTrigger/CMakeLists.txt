@@ -1,9 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-${TBB_INCLUDE_DIRS}
-/usr/include
-)
 cms_rootdict( DataFormatsL1GlobalMuonTrigger  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsL1GlobalMuonTrigger )
 add_library( DataFormatsL1GlobalMuonTrigger  SHARED ${DataFormatsL1GlobalMuonTrigger_EXTRA_SOURCES}
   src/L1MuGMTCand.cc
   src/L1MuGMTExtendedCand.cc
@@ -23,4 +18,5 @@ target_link_libraries( DataFormatsL1GlobalMuonTrigger PUBLIC
    DataFormatsCommon
    FWCoreMessageLogger
 )
+add_rootdict_rules( DataFormatsL1GlobalMuonTrigger )
 install( TARGETS  DataFormatsL1GlobalMuonTrigger DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

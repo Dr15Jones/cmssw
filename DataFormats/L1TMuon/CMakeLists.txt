@@ -1,9 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-${ROOT_INCLUDE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsL1TMuon  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsL1TMuon )
 add_library( DataFormatsL1TMuon  SHARED ${DataFormatsL1TMuon_EXTRA_SOURCES}
   src/CPPFDigi.cc
   src/EMTFDaqOut.cc
@@ -17,10 +12,6 @@ add_library( DataFormatsL1TMuon  SHARED ${DataFormatsL1TMuon_EXTRA_SOURCES}
   src/L1MuKBMTrack.cc
   src/RegionalMuonCand.cc
   src/RegionalMuonShower.cc
-  src/BMTF/L1MuBMAddressArray.cc
-  src/BMTF/L1MuBMSecProcId.cc
-  src/BMTF/L1MuBMTrackAssParam.cc
-  src/BMTF/L1MuBMTrackSegLoc.cc
 )
 set_target_properties( DataFormatsL1TMuon PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 add_dependencies( ALL_LIBS DataFormatsL1TMuon )
@@ -38,4 +29,5 @@ target_link_libraries( DataFormatsL1TMuon PUBLIC
    DataFormatsCandidate
    DataFormatsL1Trigger
 )
+add_rootdict_rules( DataFormatsL1TMuon )
 install( TARGETS  DataFormatsL1TMuon DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

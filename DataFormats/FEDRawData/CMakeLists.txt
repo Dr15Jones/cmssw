@@ -1,8 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsFEDRawData  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsFEDRawData )
 add_library( DataFormatsFEDRawData  SHARED ${DataFormatsFEDRawData_EXTRA_SOURCES}
   src/FEDHeader.cc
   src/FEDNumbering.cc
@@ -20,4 +16,5 @@ target_link_libraries( DataFormatsFEDRawData PUBLIC
    DataFormatsCommon
    FWCoreUtilities
 )
+add_rootdict_rules( DataFormatsFEDRawData )
 install( TARGETS  DataFormatsFEDRawData DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

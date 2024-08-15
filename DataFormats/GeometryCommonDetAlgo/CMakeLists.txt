@@ -1,8 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsGeometryCommonDetAlgo  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsGeometryCommonDetAlgo )
 add_library( DataFormatsGeometryCommonDetAlgo  SHARED ${DataFormatsGeometryCommonDetAlgo_EXTRA_SOURCES}
   src/AlignmentPositionError.cc
   src/PerpendicularBoundPlaneBuilder.cc
@@ -22,4 +18,5 @@ target_link_libraries( DataFormatsGeometryCommonDetAlgo PUBLIC
    DataFormatsCommon
    FWCoreUtilities
 )
+add_rootdict_rules( DataFormatsGeometryCommonDetAlgo )
 install( TARGETS  DataFormatsGeometryCommonDetAlgo DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

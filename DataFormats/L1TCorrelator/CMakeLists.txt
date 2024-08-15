@@ -1,9 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-${ROOT_INCLUDE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsL1TCorrelator  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsL1TCorrelator )
 add_library( DataFormatsL1TCorrelator  SHARED ${DataFormatsL1TCorrelator_EXTRA_SOURCES}
   src/L1CaloTkTau.cc
   src/L1TrkTau.cc
@@ -36,4 +31,5 @@ target_link_libraries( DataFormatsL1TCorrelator PUBLIC
    DataFormatsL1Trigger
    DataFormatsL1TrackTrigger
 )
+add_rootdict_rules( DataFormatsL1TCorrelator )
 install( TARGETS  DataFormatsL1TCorrelator DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

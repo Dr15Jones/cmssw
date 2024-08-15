@@ -1,11 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-${ROOT_INCLUDE_DIR}
-${ROOT_INCLUDE_DIR}
-${CLHEP_INCLUDE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsParticleFlowCandidate  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsParticleFlowCandidate )
 add_library( DataFormatsParticleFlowCandidate  SHARED ${DataFormatsParticleFlowCandidate_EXTRA_SOURCES}
   src/IsolatedPFCandidate.cc
   src/PFCandidate.cc
@@ -18,8 +11,8 @@ set_target_properties( DataFormatsParticleFlowCandidate PROPERTIES LIBRARY_OUTPU
 add_dependencies( ALL_LIBS DataFormatsParticleFlowCandidate )
 target_include_directories( DataFormatsParticleFlowCandidate PRIVATE ${CMAKE_SOURCE_DIR})
 target_include_directories( DataFormatsParticleFlowCandidate PUBLIC
-  ${CLHEP_INCLUDE_DIR}
   ${ROOT_INCLUDE_DIR}
+  ${CLHEP_INCLUDE_DIR}
 /usr/include
 )
 target_link_libraries( DataFormatsParticleFlowCandidate PUBLIC
@@ -51,4 +44,5 @@ target_link_libraries( DataFormatsParticleFlowCandidate PUBLIC
    DataFormatsEgammaReco
    DataFormatsVertexReco
 )
+add_rootdict_rules( DataFormatsParticleFlowCandidate )
 install( TARGETS  DataFormatsParticleFlowCandidate DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

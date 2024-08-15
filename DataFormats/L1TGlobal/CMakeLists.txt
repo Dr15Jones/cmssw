@@ -1,8 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsL1TGlobal  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsL1TGlobal )
 add_library( DataFormatsL1TGlobal  SHARED ${DataFormatsL1TGlobal_EXTRA_SOURCES}
   src/AXOL1TLScore.cc
   src/GlobalAlgBlk.cc
@@ -24,4 +20,5 @@ target_link_libraries( DataFormatsL1TGlobal PUBLIC
    FWCoreMessageLogger
    FWCoreUtilities
 )
+add_rootdict_rules( DataFormatsL1TGlobal )
 install( TARGETS  DataFormatsL1TGlobal DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

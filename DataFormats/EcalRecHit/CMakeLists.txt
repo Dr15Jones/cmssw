@@ -1,8 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsEcalRecHit  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsEcalRecHit )
 add_library( DataFormatsEcalRecHit  SHARED ${DataFormatsEcalRecHit_EXTRA_SOURCES}
   src/EcalRecHit.cc
   src/EcalUncalibratedRecHit.cc
@@ -21,4 +17,5 @@ target_link_libraries( DataFormatsEcalRecHit PUBLIC
    DataFormatsDetId
    FWCoreMessageLogger
 )
+add_rootdict_rules( DataFormatsEcalRecHit )
 install( TARGETS  DataFormatsEcalRecHit DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

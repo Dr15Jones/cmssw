@@ -1,8 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsSiStripDigi  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsSiStripDigi )
 add_library( DataFormatsSiStripDigi  SHARED ${DataFormatsSiStripDigi_EXTRA_SOURCES}
   src/SiStripDigi.cc
 )
@@ -15,4 +11,5 @@ target_include_directories( DataFormatsSiStripDigi PUBLIC
 target_link_libraries( DataFormatsSiStripDigi PUBLIC
    DataFormatsCommon
 )
+add_rootdict_rules( DataFormatsSiStripDigi )
 install( TARGETS  DataFormatsSiStripDigi DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

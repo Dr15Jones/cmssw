@@ -1,11 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-${ROOT_INCLUDE_DIR}
-${ROOT_INCLUDE_DIR}
-${ROOT_INCLUDE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsCTPPSReco  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsCTPPSReco )
 add_library( DataFormatsCTPPSReco  SHARED ${DataFormatsCTPPSReco_EXTRA_SOURCES}
   src/CTPPSDiamondLocalTrack.cc
   src/CTPPSPixelLocalTrack.cc
@@ -49,4 +42,5 @@ target_link_libraries( DataFormatsCTPPSReco PUBLIC
    DataFormatsCTPPSDetId
    DataFormatsGeometryVector
 )
+add_rootdict_rules( DataFormatsCTPPSReco )
 install( TARGETS  DataFormatsCTPPSReco DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

@@ -1,8 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsEcalDigi  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsEcalDigi )
 add_library( DataFormatsEcalDigi  SHARED ${DataFormatsEcalDigi_EXTRA_SOURCES}
   src/EBDataFrame.cc
   src/EBDataFrame_Ph2.cc
@@ -42,4 +38,5 @@ target_link_libraries( DataFormatsEcalDigi PUBLIC
    FWCoreMessageLogger
    FWCoreUtilities
 )
+add_rootdict_rules( DataFormatsEcalDigi )
 install( TARGETS  DataFormatsEcalDigi DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

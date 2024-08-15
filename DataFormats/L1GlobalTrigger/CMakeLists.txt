@@ -1,9 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-${Boost_INCLUDE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsL1GlobalTrigger  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsL1GlobalTrigger )
 add_library( DataFormatsL1GlobalTrigger  SHARED ${DataFormatsL1GlobalTrigger_EXTRA_SOURCES}
   src/L1GlobalTriggerEvmReadoutRecord.cc
   src/L1GlobalTriggerObjectMap.cc
@@ -37,4 +32,5 @@ target_link_libraries( DataFormatsL1GlobalTrigger PUBLIC
    FWCoreMessageLogger
    FWCoreUtilities
 )
+add_rootdict_rules( DataFormatsL1GlobalTrigger )
 install( TARGETS  DataFormatsL1GlobalTrigger DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

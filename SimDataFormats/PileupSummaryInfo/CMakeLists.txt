@@ -1,9 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-${HepMC_INCLUDE_DIR}
-/usr/include
-)
 cms_rootdict( SimDataFormatsPileupSummaryInfo  src/classes.h src/classes_def.xml)
-add_rootdict_rules( SimDataFormatsPileupSummaryInfo )
 add_library( SimDataFormatsPileupSummaryInfo  SHARED ${SimDataFormatsPileupSummaryInfo_EXTRA_SOURCES}
   src/PileupSummaryInfo.cc
 )
@@ -20,4 +15,5 @@ target_link_libraries( SimDataFormatsPileupSummaryInfo PUBLIC
    DataFormatsCommon
    DataFormatsProvenance
 )
+add_rootdict_rules( SimDataFormatsPileupSummaryInfo )
 install( TARGETS  SimDataFormatsPileupSummaryInfo DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

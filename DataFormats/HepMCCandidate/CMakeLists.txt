@@ -1,9 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-${ROOT_INCLUDE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsHepMCCandidate  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsHepMCCandidate )
 add_library( DataFormatsHepMCCandidate  SHARED ${DataFormatsHepMCCandidate_EXTRA_SOURCES}
   src/FlavorHistory.cc
   src/FlavorHistoryEvent.cc
@@ -31,4 +26,5 @@ target_link_libraries( DataFormatsHepMCCandidate PUBLIC
    DataFormatsCandidate
    DataFormatsCommon
 )
+add_rootdict_rules( DataFormatsHepMCCandidate )
 install( TARGETS  DataFormatsHepMCCandidate DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

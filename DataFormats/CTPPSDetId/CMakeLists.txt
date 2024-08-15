@@ -1,8 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsCTPPSDetId  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsCTPPSDetId )
 add_library( DataFormatsCTPPSDetId  SHARED ${DataFormatsCTPPSDetId_EXTRA_SOURCES}
   src/CTPPSDetId.cc
   src/CTPPSDiamondDetId.cc
@@ -21,4 +17,5 @@ target_link_libraries( DataFormatsCTPPSDetId PUBLIC
    DataFormatsDetId
    FWCoreUtilities
 )
+add_rootdict_rules( DataFormatsCTPPSDetId )
 install( TARGETS  DataFormatsCTPPSDetId DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

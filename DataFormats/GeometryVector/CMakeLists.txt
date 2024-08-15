@@ -1,9 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-${ROOT_INCLUDE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsGeometryVector  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsGeometryVector )
 add_library( DataFormatsGeometryVector  SHARED ${DataFormatsGeometryVector_EXTRA_SOURCES}
   src/TrackingJacobians.cc
   src/print.cc
@@ -27,4 +22,5 @@ target_link_libraries( DataFormatsGeometryVector PUBLIC
    ROOT::Core
    DataFormatsMath
 )
+add_rootdict_rules( DataFormatsGeometryVector )
 install( TARGETS  DataFormatsGeometryVector DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

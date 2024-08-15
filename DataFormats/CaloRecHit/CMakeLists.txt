@@ -1,9 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-${ROOT_INCLUDE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsCaloRecHit  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsCaloRecHit )
 add_library( DataFormatsCaloRecHit  SHARED ${DataFormatsCaloRecHit_EXTRA_SOURCES}
   src/CaloCluster.cc
   src/CaloID.cc
@@ -31,4 +26,5 @@ target_link_libraries( DataFormatsCaloRecHit PUBLIC
    DataFormatsDetId
    FWCoreUtilities
 )
+add_rootdict_rules( DataFormatsCaloRecHit )
 install( TARGETS  DataFormatsCaloRecHit DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

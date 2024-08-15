@@ -1,8 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsForwardDetId  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsForwardDetId )
 add_library( DataFormatsForwardDetId  SHARED ${DataFormatsForwardDetId_EXTRA_SOURCES}
   src/BTLDetId.cc
   src/ETLDetId.cc
@@ -32,4 +28,5 @@ target_link_libraries( DataFormatsForwardDetId PUBLIC
    FWCoreUtilities
    DataFormatsDetId
 )
+add_rootdict_rules( DataFormatsForwardDetId )
 install( TARGETS  DataFormatsForwardDetId DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

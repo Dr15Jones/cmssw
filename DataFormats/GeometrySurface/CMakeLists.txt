@@ -1,9 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-${Boost_INCLUDE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsGeometrySurface  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsGeometrySurface )
 add_library( DataFormatsGeometrySurface  SHARED ${DataFormatsGeometrySurface_EXTRA_SOURCES}
   src/BoundCylinder.cc
   src/BoundDisk.cc
@@ -36,4 +31,5 @@ target_link_libraries( DataFormatsGeometrySurface PUBLIC
    DataFormatsMath
    FWCoreUtilities
 )
+add_rootdict_rules( DataFormatsGeometrySurface )
 install( TARGETS  DataFormatsGeometrySurface DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

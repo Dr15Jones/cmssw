@@ -1,8 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsCSCDigi  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsCSCDigi )
 add_library( DataFormatsCSCDigi  SHARED ${DataFormatsCSCDigi_EXTRA_SOURCES}
   src/CSCALCTDigi.cc
   src/CSCALCTPreTriggerDigi.cc
@@ -34,4 +30,5 @@ target_link_libraries( DataFormatsCSCDigi PUBLIC
    DataFormatsGEMDigi
    FWCoreMessageLogger
 )
+add_rootdict_rules( DataFormatsCSCDigi )
 install( TARGETS  DataFormatsCSCDigi DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

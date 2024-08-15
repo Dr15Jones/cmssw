@@ -1,8 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsScalers  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsScalers )
 add_library( DataFormatsScalers  SHARED ${DataFormatsScalers_EXTRA_SOURCES}
   src/BeamSpotOnline.cc
   src/DcsStatus.cc
@@ -23,4 +19,5 @@ target_include_directories( DataFormatsScalers PUBLIC
 target_link_libraries( DataFormatsScalers PUBLIC
    DataFormatsCommon
 )
+add_rootdict_rules( DataFormatsScalers )
 install( TARGETS  DataFormatsScalers DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

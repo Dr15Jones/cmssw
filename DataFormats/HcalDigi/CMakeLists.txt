@@ -1,8 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsHcalDigi  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsHcalDigi )
 add_library( DataFormatsHcalDigi  SHARED ${DataFormatsHcalDigi_EXTRA_SOURCES}
   src/CastorDataFrame.cc
   src/CastorTriggerPrimitiveDigi.cc
@@ -34,4 +30,5 @@ target_link_libraries( DataFormatsHcalDigi PUBLIC
    DataFormatsHcalDetId
    DataFormatsDetId
 )
+add_rootdict_rules( DataFormatsHcalDigi )
 install( TARGETS  DataFormatsHcalDigi DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

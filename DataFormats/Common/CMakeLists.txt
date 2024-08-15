@@ -1,10 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-${Boost_INCLUDE_DIR}
-${TBB_INCLUDE_DIRS}
-/usr/include
-)
 cms_rootdict( DataFormatsCommon  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsCommon )
 add_library( DataFormatsCommon  SHARED ${DataFormatsCommon_EXTRA_SOURCES}
   src/CommonExceptions.cc
   src/ConvertHandle.cc
@@ -44,4 +38,5 @@ target_link_libraries( DataFormatsCommon PUBLIC
    FWCoreMessageLogger
    FWCoreUtilities
 )
+add_rootdict_rules( DataFormatsCommon )
 install( TARGETS  DataFormatsCommon DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

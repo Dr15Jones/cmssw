@@ -1,9 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-${CLHEP_INCLUDE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsTrackingRecHit  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsTrackingRecHit )
 add_library( DataFormatsTrackingRecHit  SHARED ${DataFormatsTrackingRecHit_EXTRA_SOURCES}
   src/InvalidTrackingRecHit.cc
   src/KfComponentsHolder.cc
@@ -29,4 +24,5 @@ target_link_libraries( DataFormatsTrackingRecHit PUBLIC
    DataFormatsGeometryVector
    DataFormatsMath
 )
+add_rootdict_rules( DataFormatsTrackingRecHit )
 install( TARGETS  DataFormatsTrackingRecHit DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

@@ -1,8 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsEgammaCandidates  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsEgammaCandidates )
 add_library( DataFormatsEgammaCandidates  SHARED ${DataFormatsEgammaCandidates_EXTRA_SOURCES}
   src/Conversion.cc
   src/Electron.cc
@@ -35,4 +31,5 @@ target_link_libraries( DataFormatsEgammaCandidates PUBLIC
    FWCoreMessageLogger
    DataFormatsGeometryVector
 )
+add_rootdict_rules( DataFormatsEgammaCandidates )
 install( TARGETS  DataFormatsEgammaCandidates DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

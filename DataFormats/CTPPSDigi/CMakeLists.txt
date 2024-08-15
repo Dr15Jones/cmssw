@@ -1,8 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsCTPPSDigi  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsCTPPSDigi )
 add_library( DataFormatsCTPPSDigi  SHARED ${DataFormatsCTPPSDigi_EXTRA_SOURCES}
   src/CTPPSDiamondDigi.cc
   src/CTPPSPixelDataError.cc
@@ -22,4 +18,5 @@ target_link_libraries( DataFormatsCTPPSDigi PUBLIC
    DataFormatsCommon
    FWCoreUtilities
 )
+add_rootdict_rules( DataFormatsCTPPSDigi )
 install( TARGETS  DataFormatsCTPPSDigi DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

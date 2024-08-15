@@ -1,8 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsHLTReco  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsHLTReco )
 add_library( DataFormatsHLTReco  SHARED ${DataFormatsHLTReco_EXTRA_SOURCES}
   src/EgammaObject.cc
   src/HLTPerformanceInfo.cc
@@ -30,4 +26,5 @@ target_link_libraries( DataFormatsHLTReco PUBLIC
    DataFormatsL1TMuonPhase2
    DataFormatsGsfTrackReco
 )
+add_rootdict_rules( DataFormatsHLTReco )
 install( TARGETS  DataFormatsHLTReco DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)

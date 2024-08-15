@@ -1,8 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}
-/usr/include
-)
 cms_rootdict( DataFormatsMuonDetId  src/classes.h src/classes_def.xml)
-add_rootdict_rules( DataFormatsMuonDetId )
 add_library( DataFormatsMuonDetId  SHARED ${DataFormatsMuonDetId_EXTRA_SOURCES}
   src/CSCDetId.cc
   src/CSCIndexer.cc
@@ -27,4 +23,5 @@ target_link_libraries( DataFormatsMuonDetId PUBLIC
    DataFormatsDetId
    FWCoreUtilities
 )
+add_rootdict_rules( DataFormatsMuonDetId )
 install( TARGETS  DataFormatsMuonDetId DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} EXPORT cms_miniaod::)
