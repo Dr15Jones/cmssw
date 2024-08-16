@@ -142,10 +142,10 @@ for f in os.listdir(srcDir):
     if f[0:7] == 'classes' and f[-4:] == '.xml':
         classXML.append(f)
         #print(" xml ",f)
-    if os.path.isdir(f):
+    if os.path.isdir(srcDir+"/"+f):
         for fs in os.listdir( srcDir+"/"+f):
             if fs[-3:] == '.cc':
-                source.append(f+"/"+fs)
+                sources.append(f+"/"+fs)
         
 external_libraries =[]
 for dep in external_dependencies:

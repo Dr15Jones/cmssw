@@ -1,5 +1,9 @@
 cms_rootdict( DataFormatsL1TMuon  src/classes.h src/classes_def.xml)
 add_library( DataFormatsL1TMuon  SHARED ${DataFormatsL1TMuon_EXTRA_SOURCES}
+  src/BMTF/L1MuBMAddressArray.cc
+  src/BMTF/L1MuBMSecProcId.cc
+  src/BMTF/L1MuBMTrackAssParam.cc
+  src/BMTF/L1MuBMTrackSegLoc.cc
   src/CPPFDigi.cc
   src/EMTFDaqOut.cc
   src/EMTFHit.cc
