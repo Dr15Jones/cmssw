@@ -38,10 +38,13 @@ namespace edm {
   class RNTupleOutputFile {
   public:
     struct Config {
-      bool wantAllEvents;
       ParameterSetID selectorConfig;
+      std::vector<bool> doNotSplitProduct;
       rntuple::CompressionAlgos compressionAlgo = rntuple::CompressionAlgos::kZSTD;
       int compressionLevel = 4;
+      bool wantAllEvents;
+      bool dropMetaData = false;
+      bool useTailPageOptimization = false;
     };
 
     explicit RNTupleOutputFile(std::string const& iFileName,
@@ -77,7 +80,7 @@ namespace edm {
     void fillParentage();
     void fillMetaData(BranchIDLists const& iBranchIDLists, ThinnedAssociationsHelper const& iThinnedHelper);
 
-    void setupDataProducts(SelectedProducts const&, RNTupleModel&);
+    void setupDataProducts(SelectedProducts const&, std::vector<bool> const&, RNTupleModel&);
     //Can't call until the model is frozen
     std::vector<Product> associateDataProducts(SelectedProducts const&, RNTupleModel const&);
 
@@ -122,6 +125,7 @@ namespace edm {
 
     ParameterSetID selectorConfig_;
     bool extendSelectorConfig_ = true;
+    bool dropMetaData_ = false;
   };
 }  // namespace edm
 #endif
