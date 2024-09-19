@@ -59,7 +59,8 @@ namespace edm {
                                        Config const& iConfig)
       : file_(iFileName.c_str(), "recreate", ""),
         wrapperBaseTClass_(TClass::GetClass("edm::WrapperBase")),
-        selectorConfig_(iConfig.selectorConfig) {
+        selectorConfig_(iConfig.selectorConfig),
+        dropMetaData_(iConfig.dropMetaData) {
     setupRuns(iSelected[InRun], iConfig);
     setupLumis(iSelected[InLumi], iConfig);
     setupEvents(iSelected[InEvent], iConfig);
@@ -82,16 +83,27 @@ namespace edm {
     }
   }  // namespace
 
-  void RNTupleOutputFile::setupDataProducts(SelectedProducts const& iProducts, RNTupleModel& iModel) {
+  void RNTupleOutputFile::setupDataProducts(SelectedProducts const& iProducts,
+                                            std::vector<bool> const& iDoNotSplit,
+                                            RNTupleModel& iModel) {
+    unsigned int index = 0;
     for (auto const& prod : iProducts) {
       try {
         edm::convertException::wrap([&]() {
-          auto field =
-              ROOT::Experimental::RFieldBase::Create(fixBranchName(prod.first->branchName()), prod.first->wrappedName())
-                  .Unwrap();
-          iModel.AddField(std::move(field));
-          branchesWithStoredHistory_.insert(prod.first->branchID());
+          if (index >= iDoNotSplit.size() or not iDoNotSplit[index]) {
+            auto field = ROOT::Experimental::RFieldBase::Create(fixBranchName(prod.first->branchName()),
+                                                                prod.first->wrappedName())
+                             .Unwrap();
+            iModel.AddField(std::move(field));
+            branchesWithStoredHistory_.insert(prod.first->branchID());
+          } else {
+            auto field = std::make_unique<ROOT::Experimental::RUnsplitField>(fixBranchName(prod.first->branchName()),
+                                                                             prod.first->wrappedName());
+            iModel.AddField(std::move(field));
+            branchesWithStoredHistory_.insert(prod.first->branchID());
+          }
         });
+        ++index;
       } catch (cms::Exception& iExcept) {
         std::ostringstream s;
         s << "while setting up field " << prod.first->branchName();
@@ -119,10 +131,12 @@ namespace edm {
         auto field = ROOT::Experimental::RFieldBase::Create(kRunAuxName, "edm::RunAuxiliary").Unwrap();
         model->AddField(std::move(field));
       }
-      setupDataProducts(iProducts, *model);
+      const std::vector<bool> unsplitNothing;
+      setupDataProducts(iProducts, unsplitNothing, *model);
 
       auto writeOptions = ROOT::Experimental::RNTupleWriteOptions();
       writeOptions.SetCompression(convert(iConfig.compressionAlgo), iConfig.compressionLevel);
+      writeOptions.SetUseTailPageOptimization(iConfig.useTailPageOptimization);
       runs_ = ROOT::Experimental::RNTupleWriter::Append(std::move(model), "Runs", file_, writeOptions);
     }
     products_[InRun] = associateDataProducts(iProducts, runs_->GetModel());
@@ -136,10 +150,12 @@ namespace edm {
         auto field = ROOT::Experimental::RFieldBase::Create(kLumiAuxName, "edm::LuminosityBlockAuxiliary").Unwrap();
         model->AddField(std::move(field));
       }
-      setupDataProducts(iProducts, *model);
+      const std::vector<bool> unsplitNothing;
+      setupDataProducts(iProducts, unsplitNothing, *model);
 
       auto writeOptions = ROOT::Experimental::RNTupleWriteOptions();
       writeOptions.SetCompression(convert(iConfig.compressionAlgo), iConfig.compressionLevel);
+      writeOptions.SetUseTailPageOptimization(iConfig.useTailPageOptimization);
       lumis_ = ROOT::Experimental::RNTupleWriter::Append(std::move(model), "LuminosityBlocks", file_, writeOptions);
     }
     products_[InLumi] = associateDataProducts(iProducts, lumis_->GetModel());
@@ -169,10 +185,11 @@ namespace edm {
         auto field = ROOT::Experimental::RFieldBase::Create(kBranchListName, "std::vector<unsigned short>").Unwrap();
         model->AddField(std::move(field));
       }
-      setupDataProducts(iProducts, *model);
+      setupDataProducts(iProducts, iConfig.doNotSplitProduct, *model);
 
       auto writeOptions = ROOT::Experimental::RNTupleWriteOptions();
       writeOptions.SetCompression(convert(iConfig.compressionAlgo), iConfig.compressionLevel);
+      writeOptions.SetUseTailPageOptimization(iConfig.useTailPageOptimization);
       events_ = ROOT::Experimental::RNTupleWriter::Append(std::move(model), "Events", file_, writeOptions);
     }
     products_[InEvent] = associateDataProducts(iProducts, events_->GetModel());
@@ -198,6 +215,7 @@ namespace edm {
     }
     auto writeOptions = ROOT::Experimental::RNTupleWriteOptions();
     writeOptions.SetCompression(convert(iConfig.compressionAlgo), iConfig.compressionLevel);
+    writeOptions.SetUseTailPageOptimization(iConfig.useTailPageOptimization);
     parameterSets_ = ROOT::Experimental::RNTupleWriter::Append(std::move(model), "ParameterSets", file_, writeOptions);
   }
 
@@ -223,6 +241,7 @@ namespace edm {
     }
     auto writeOptions = ROOT::Experimental::RNTupleWriteOptions();
     writeOptions.SetCompression(convert(iConfig.compressionAlgo), iConfig.compressionLevel);
+    writeOptions.SetUseTailPageOptimization(iConfig.useTailPageOptimization);
     parentage_ = ROOT::Experimental::RNTupleWriter::Append(std::move(model), "Parentage", file_, writeOptions);
   }
   void RNTupleOutputFile::fillParentage() {
@@ -290,6 +309,7 @@ namespace edm {
 
     auto writeOptions = ROOT::Experimental::RNTupleWriteOptions();
     writeOptions.SetCompression(convert(iConfig.compressionAlgo), iConfig.compressionLevel);
+    writeOptions.SetUseTailPageOptimization(iConfig.useTailPageOptimization);
     metaData_ = ROOT::Experimental::RNTupleWriter::Append(std::move(model), "MetaData", file_, writeOptions);
   }
 
@@ -389,19 +409,20 @@ namespace edm {
       std::vector<Product> const& iProducts, EventForOutput const& iEvent) {
     std::set<StoredProductProvenance> provenanceToKeep;
 
-    for (auto const& p : iProducts) {
-      auto h = iEvent.getByToken(p.get_, p.desc_->unwrappedTypeID());
-      if (h.isValid()) {
-        auto prov = h.provenance()->productProvenance();
-        if (not prov) {
-          prov = iEvent.productProvenanceRetrieverPtr()->branchIDToProvenance(p.desc_->originalBranchID());
-        }
-        if (prov) {
-          insertProductProvenance(*prov, provenanceToKeep);
+    if (not dropMetaData_) {
+      for (auto const& p : iProducts) {
+        auto h = iEvent.getByToken(p.get_, p.desc_->unwrappedTypeID());
+        if (h.isValid()) {
+          auto prov = h.provenance()->productProvenance();
+          if (not prov) {
+            prov = iEvent.productProvenanceRetrieverPtr()->branchIDToProvenance(p.desc_->originalBranchID());
+          }
+          if (prov) {
+            insertProductProvenance(*prov, provenanceToKeep);
+          }
         }
       }
     }
-
     return std::vector<StoredProductProvenance>(provenanceToKeep.begin(), provenanceToKeep.end());
   }
 
