@@ -44,7 +44,6 @@ namespace edm {
       int compressionLevel = 4;
       bool wantAllEvents;
       bool dropMetaData = false;
-      bool useTailPageOptimization = false;
     };
 
     explicit RNTupleOutputFile(std::string const& iFileName,
