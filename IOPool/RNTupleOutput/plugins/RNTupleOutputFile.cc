@@ -136,7 +136,6 @@ namespace edm {
 
       auto writeOptions = ROOT::Experimental::RNTupleWriteOptions();
       writeOptions.SetCompression(convert(iConfig.compressionAlgo), iConfig.compressionLevel);
-      writeOptions.SetUseTailPageOptimization(iConfig.useTailPageOptimization);
       runs_ = ROOT::Experimental::RNTupleWriter::Append(std::move(model), "Runs", file_, writeOptions);
     }
     products_[InRun] = associateDataProducts(iProducts, runs_->GetModel());
@@ -155,7 +154,6 @@ namespace edm {
 
       auto writeOptions = ROOT::Experimental::RNTupleWriteOptions();
       writeOptions.SetCompression(convert(iConfig.compressionAlgo), iConfig.compressionLevel);
-      writeOptions.SetUseTailPageOptimization(iConfig.useTailPageOptimization);
       lumis_ = ROOT::Experimental::RNTupleWriter::Append(std::move(model), "LuminosityBlocks", file_, writeOptions);
     }
     products_[InLumi] = associateDataProducts(iProducts, lumis_->GetModel());
@@ -189,7 +187,6 @@ namespace edm {
 
       auto writeOptions = ROOT::Experimental::RNTupleWriteOptions();
       writeOptions.SetCompression(convert(iConfig.compressionAlgo), iConfig.compressionLevel);
-      writeOptions.SetUseTailPageOptimization(iConfig.useTailPageOptimization);
       events_ = ROOT::Experimental::RNTupleWriter::Append(std::move(model), "Events", file_, writeOptions);
     }
     products_[InEvent] = associateDataProducts(iProducts, events_->GetModel());
@@ -215,7 +212,6 @@ namespace edm {
     }
     auto writeOptions = ROOT::Experimental::RNTupleWriteOptions();
     writeOptions.SetCompression(convert(iConfig.compressionAlgo), iConfig.compressionLevel);
-    writeOptions.SetUseTailPageOptimization(iConfig.useTailPageOptimization);
     parameterSets_ = ROOT::Experimental::RNTupleWriter::Append(std::move(model), "ParameterSets", file_, writeOptions);
   }
 
@@ -241,7 +237,6 @@ namespace edm {
     }
     auto writeOptions = ROOT::Experimental::RNTupleWriteOptions();
     writeOptions.SetCompression(convert(iConfig.compressionAlgo), iConfig.compressionLevel);
-    writeOptions.SetUseTailPageOptimization(iConfig.useTailPageOptimization);
     parentage_ = ROOT::Experimental::RNTupleWriter::Append(std::move(model), "Parentage", file_, writeOptions);
   }
   void RNTupleOutputFile::fillParentage() {
@@ -309,7 +304,6 @@ namespace edm {
 
     auto writeOptions = ROOT::Experimental::RNTupleWriteOptions();
     writeOptions.SetCompression(convert(iConfig.compressionAlgo), iConfig.compressionLevel);
-    writeOptions.SetUseTailPageOptimization(iConfig.useTailPageOptimization);
     metaData_ = ROOT::Experimental::RNTupleWriter::Append(std::move(model), "MetaData", file_, writeOptions);
   }
 
