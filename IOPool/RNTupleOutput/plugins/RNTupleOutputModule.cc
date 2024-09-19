@@ -110,7 +110,6 @@ namespace edm {
     rntuple::CompressionAlgos compressionAlgo_;
     unsigned int compressionLevel_;
     bool dropMetaData_;
-    bool useTailPageOptimization_;
     bool turnOffSplitting_;
   };
 
@@ -123,7 +122,6 @@ namespace edm {
         compressionAlgo_(convertTo(pset.getUntrackedParameter<std::string>("compressionAlgorithm"))),
         compressionLevel_(pset.getUntrackedParameter<unsigned int>("compressionLevel")),
         dropMetaData_(pset.getUntrackedParameter<bool>("dropPerEventDataProductProvenance")),
-        useTailPageOptimization_(pset.getUntrackedParameter<bool>("useTailPageOptimization")),
         turnOffSplitting_(pset.getUntrackedParameter<bool>("turnOffSplitting")) {}
 
   void RNTupleOutputModule::openFile(FileBlock const& fb) {
@@ -133,7 +131,6 @@ namespace edm {
     conf.compressionAlgo = compressionAlgo_;
     conf.compressionLevel = compressionLevel_;
     conf.dropMetaData = dropMetaData_;
-    conf.useTailPageOptimization = useTailPageOptimization_;
     if (turnOffSplitting_ and overrideSplitting_.empty()) {
       auto const& prods = keptProducts()[InEvent];
       conf.doNotSplitProduct = std::vector<bool>(prods.size(), true);
@@ -182,7 +179,6 @@ namespace edm {
     desc.addUntracked<bool>("dropPerEventDataProductProvenance", false)
         ->setComment(
             "do not store which data products were consumed to create a given data product for a given event.");
-    desc.addUntracked<bool>("useTailPageOptimization", false);
     desc.addUntracked<bool>("turnOffSplitting", false)
         ->setComment("Do not split top level fields when storing data products");
 
