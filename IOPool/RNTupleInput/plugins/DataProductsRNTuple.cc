@@ -15,7 +15,7 @@ namespace {
 }  // namespace
 
 DataProductsRNTuple::DataProductsRNTuple(TFile* iFile, std::string const& iName, std::string const& iAux)
-    : reader_(RNTupleReader::Open(iFile->Get<RNTuple>(iName.c_str()))) {
+    : reader_(RNTupleReader::Open(*iFile->Get<RNTuple>(iName.c_str()))) {
   auxDesc_ = reader_->GetDescriptor().FindFieldId(iAux);
 }
 
