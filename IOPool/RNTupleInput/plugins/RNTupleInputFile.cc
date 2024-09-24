@@ -85,16 +85,13 @@ namespace edm {
       for (auto& product : pList) {
         BranchDescription& prod = product.second;
         prod.initBranchName();
-        if (prod.present()) {
-          prod.initFromDictionary();
-          prod.setOnDemand(true);
-        }
+        if (not prod.present()) continue;
         if (prod.branchType() == InEvent) {
-          events_.setupToReadProductIfAvailable(prod);
+          prod.setDropped(not events_.setupToReadProductIfAvailable(prod));
         } else if (prod.branchType() == InLumi) {
-          lumis_.setupToReadProductIfAvailable(prod);
+          prod.setDropped(not lumis_.setupToReadProductIfAvailable(prod));
         } else if (prod.branchType() == InRun) {
-          runs_.setupToReadProductIfAvailable(prod);
+          prod.setDropped(runs_.setupToReadProductIfAvailable(prod));
         }
       }
     }
