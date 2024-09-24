@@ -15,7 +15,7 @@ namespace edm::input {
   public:
     DataProductsRNTuple(TFile*, std::string const& iName, std::string const& iAux);
 
-    bool setupToReadProductIfAvailable(BranchDescription const&);
+    bool setupToReadProductIfAvailable(BranchDescription&);
 
     std::shared_ptr<edm::WrapperBase> dataProduct(edm::BranchID const&, int iEntry);
 

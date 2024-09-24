@@ -1,6 +1,7 @@
 #include "DataProductsRNTuple.h"
 #include "ROOT/RNTuple.hxx"
 #include "IOPool/Common/interface/getWrapperBasePtr.h"
+#include "FWCore/Utilities/interface/Exception.h"
 
 using namespace edm::input;
 using namespace ROOT::Experimental;
@@ -19,12 +20,14 @@ DataProductsRNTuple::DataProductsRNTuple(TFile* iFile, std::string const& iName,
   auxDesc_ = reader_->GetDescriptor().FindFieldId(iAux);
 }
 
-bool DataProductsRNTuple::setupToReadProductIfAvailable(BranchDescription const& iBranch) {
+bool DataProductsRNTuple::setupToReadProductIfAvailable(BranchDescription& iBranch) {
   auto fixedName = fixName(iBranch.branchName());
   auto desc = reader_->GetDescriptor().FindFieldId(fixedName);
   if (desc == ROOT::Experimental::kInvalidDescriptorId) {
     return false;
   }
+  iBranch.initFromDictionary();
+  iBranch.setOnDemand(true);
   infos_.emplace(iBranch.branchID().id(), ProductInfo(iBranch.wrappedName(), desc));
   return true;
 }
@@ -53,6 +56,9 @@ std::shared_ptr<edm::WrapperBase> DataProductsRNTuple::WrapperFactory::toWrapper
 
 std::shared_ptr<edm::WrapperBase> DataProductsRNTuple::dataProduct(edm::BranchID const& iBranch, int iEntry) {
   auto const& info = infos_.find(iBranch.id());
+  if( info == infos_.end()) {
+    throw cms::Exception("RNTupleError")<<" unable to find branch id "<<iBranch.id()<<" for entry "<<iEntry;
+  }
   assert(info != infos_.end());
 
   auto product = info->second.factory_.newWrapper();
