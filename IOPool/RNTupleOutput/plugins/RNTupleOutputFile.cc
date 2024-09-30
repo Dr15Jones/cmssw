@@ -57,7 +57,7 @@ namespace edm {
                                        FileBlock const& iFileBlock,
                                        SelectedProductsForBranchType const& iSelected,
                                        Config const& iConfig)
-      : file_(iFileName.c_str(), "recreate", ""),
+      : file_(TFile::Open(iFileName.c_str(), "recreate")),
         wrapperBaseTClass_(TClass::GetClass("edm::WrapperBase")),
         selectorConfig_(iConfig.selectorConfig),
         dropMetaData_(iConfig.dropMetaData) {
@@ -136,7 +136,7 @@ namespace edm {
 
       auto writeOptions = ROOT::Experimental::RNTupleWriteOptions();
       writeOptions.SetCompression(convert(iConfig.compressionAlgo), iConfig.compressionLevel);
-      runs_ = ROOT::Experimental::RNTupleWriter::Append(std::move(model), "Runs", file_, writeOptions);
+      runs_ = ROOT::Experimental::RNTupleWriter::Append(std::move(model), "Runs", *file_, writeOptions);
     }
     products_[InRun] = associateDataProducts(iProducts, runs_->GetModel());
     runAuxField_ = runs_->GetModel().GetToken(kRunAuxName);
@@ -154,7 +154,7 @@ namespace edm {
 
       auto writeOptions = ROOT::Experimental::RNTupleWriteOptions();
       writeOptions.SetCompression(convert(iConfig.compressionAlgo), iConfig.compressionLevel);
-      lumis_ = ROOT::Experimental::RNTupleWriter::Append(std::move(model), "LuminosityBlocks", file_, writeOptions);
+      lumis_ = ROOT::Experimental::RNTupleWriter::Append(std::move(model), "LuminosityBlocks", *file_, writeOptions);
     }
     products_[InLumi] = associateDataProducts(iProducts, lumis_->GetModel());
     lumiAuxField_ = lumis_->GetModel().GetToken(kLumiAuxName);
@@ -187,7 +187,7 @@ namespace edm {
 
       auto writeOptions = ROOT::Experimental::RNTupleWriteOptions();
       writeOptions.SetCompression(convert(iConfig.compressionAlgo), iConfig.compressionLevel);
-      events_ = ROOT::Experimental::RNTupleWriter::Append(std::move(model), "Events", file_, writeOptions);
+      events_ = ROOT::Experimental::RNTupleWriter::Append(std::move(model), "Events", *file_, writeOptions);
     }
     products_[InEvent] = associateDataProducts(iProducts, events_->GetModel());
 
@@ -212,7 +212,7 @@ namespace edm {
     }
     auto writeOptions = ROOT::Experimental::RNTupleWriteOptions();
     writeOptions.SetCompression(convert(iConfig.compressionAlgo), iConfig.compressionLevel);
-    parameterSets_ = ROOT::Experimental::RNTupleWriter::Append(std::move(model), "ParameterSets", file_, writeOptions);
+    parameterSets_ = ROOT::Experimental::RNTupleWriter::Append(std::move(model), "ParameterSets", *file_, writeOptions);
   }
 
   void RNTupleOutputFile::fillPSets() {
@@ -237,7 +237,7 @@ namespace edm {
     }
     auto writeOptions = ROOT::Experimental::RNTupleWriteOptions();
     writeOptions.SetCompression(convert(iConfig.compressionAlgo), iConfig.compressionLevel);
-    parentage_ = ROOT::Experimental::RNTupleWriter::Append(std::move(model), "Parentage", file_, writeOptions);
+    parentage_ = ROOT::Experimental::RNTupleWriter::Append(std::move(model), "Parentage", *file_, writeOptions);
   }
   void RNTupleOutputFile::fillParentage() {
     ParentageRegistry& ptReg = *ParentageRegistry::instance();
@@ -304,7 +304,7 @@ namespace edm {
 
     auto writeOptions = ROOT::Experimental::RNTupleWriteOptions();
     writeOptions.SetCompression(convert(iConfig.compressionAlgo), iConfig.compressionLevel);
-    metaData_ = ROOT::Experimental::RNTupleWriter::Append(std::move(model), "MetaData", file_, writeOptions);
+    metaData_ = ROOT::Experimental::RNTupleWriter::Append(std::move(model), "MetaData", *file_, writeOptions);
   }
 
   void RNTupleOutputFile::fillMetaData(BranchIDLists const& iBranchIDLists,
