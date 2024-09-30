@@ -92,7 +92,7 @@ namespace edm {
     void insertAncestorsProvenance(ProductProvenance const& iProv,
                                    ProductProvenanceRetriever const&,
                                    std::set<StoredProductProvenance>& oToKeep);
-    TFile file_;
+    std::unique_ptr<TFile> file_;
     std::unique_ptr<RNTupleWriter> events_;
     std::optional<REntry::RFieldToken> eventAuxField_;
     std::optional<REntry::RFieldToken> eventProvField_;
