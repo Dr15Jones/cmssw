@@ -21,7 +21,7 @@ namespace edm {
 
   class RNTupleInputFile {
   public:
-    RNTupleInputFile(std::string const& iFileName);
+    RNTupleInputFile(std::string const& iFileName, bool enableMetrics);
 
     IndexIntoFile::EntryType getNextItemType();
 
@@ -41,6 +41,7 @@ namespace edm {
     input::DataProductsRNTuple* luminosityBlockProducts() { return &lumis_; }
     input::DataProductsRNTuple* eventProducts() { return &events_; }
 
+    void printInfoForEvent(std::ostream& iOStream) { events_.printInfo(iOStream); }
   private:
     std::unique_ptr<TFile> file_;
 
