@@ -109,6 +109,13 @@ namespace edm {
     std::vector<SetSplitForDataProduct> overrideSplitting_;
     rntuple::CompressionAlgos compressionAlgo_;
     unsigned int compressionLevel_;
+    unsigned long long approxZippedClusterSize_;
+    unsigned long long maxUnzippedClusterSize_;
+    //unsigned long long initialNElementsPerPage_;
+    //unsigned long long maxUnzippedPageSize_;
+    //unsigned long long pageBufferBudget_;
+    bool useBufferedWrite_;
+    bool useDirectIO_;
     bool dropMetaData_;
     bool turnOffSplitting_;
   };
@@ -121,6 +128,13 @@ namespace edm {
             fromConfig(pset.getUntrackedParameter<std::vector<edm::ParameterSet>>("overrideDataProductSplitting"))),
         compressionAlgo_(convertTo(pset.getUntrackedParameter<std::string>("compressionAlgorithm"))),
         compressionLevel_(pset.getUntrackedParameter<unsigned int>("compressionLevel")),
+        approxZippedClusterSize_(pset.getUntrackedParameter<unsigned long long>("approxZippedClusterSize")),
+        maxUnzippedClusterSize_(pset.getUntrackedParameter<unsigned long long>("maxUnzippedClusterSize")),
+        //initialNElementsPerPage_(pset.getUntrackedParameter<unsigned long long>("initialNElementsPerPage")),
+        //maxUnzippedPageSize_(pset.getUntrackedParameter<unsigned long long>("maxUnzippedPageSize")),
+        //pageBufferBudget_(pset.getUntrackedParameter<unsigned long long>("pageBufferBudget")),
+        useBufferedWrite_(pset.getUntrackedParameter<bool>("useBufferedWrite")),
+        useDirectIO_(pset.getUntrackedParameter<bool>("useDirectIO")),
         dropMetaData_(pset.getUntrackedParameter<bool>("dropPerEventDataProductProvenance")),
         turnOffSplitting_(pset.getUntrackedParameter<bool>("turnOffSplitting")) {}
 
@@ -130,6 +144,13 @@ namespace edm {
     conf.selectorConfig = selectorConfig();
     conf.compressionAlgo = compressionAlgo_;
     conf.compressionLevel = compressionLevel_;
+    conf.approxZippedClusterSize = approxZippedClusterSize_;
+    conf.maxUnzippedClusterSize = maxUnzippedClusterSize_;
+    //conf.initialNElementsPerPage = initialNElementsPerPage_;
+    //conf.maxUnzippedPageSize = maxUnzippedPageSize_;
+    //conf.pageBufferBudget = pageBufferBudget_;
+    conf.useBufferedWrite = useBufferedWrite_;
+    conf.useDirectIO = useDirectIO_;
     conf.dropMetaData = dropMetaData_;
     if (turnOffSplitting_ and overrideSplitting_.empty()) {
       auto const& prods = keptProducts()[InEvent];
@@ -176,6 +197,34 @@ namespace edm {
         ->setComment(
             "Algorithm used to compress data in the ROOT output file, allowed values are ZLIB, LZMA, LZ4, and ZSTD");
     desc.addUntracked<unsigned int>("compressionLevel", 4)->setComment("ROOT compression level of output file.");
+    ROOT::Experimental::RNTupleWriteOptions ops;
+    desc.addUntracked<unsigned long long>("approxZippedClusterSize", ops.GetApproxZippedClusterSize())->setComment(
+          "Approximation of the target compressed cluster size"
+                                                                                                                   );
+    desc.addUntracked<unsigned long long>("maxUnzippedClusterSize", ops.GetMaxUnzippedClusterSize())->setComment(
+          "Memory limit for committing a cluster. High compression leads to high IO buffer size."
+);
+    /*
+    desc.addUntracked<unsigned long long>("initialNElementsPerPage", ops.GetInitialNElementsPerPage())->setComment(
+"Initially, columns start with a page large enough to hold the given number of elements. The 'pageBufferBudget'  needs to be large enough to hold the initial pages of all columns."
+);
+    desc.addUntracked<unsigned long long>("maxUnzippedPageSize", ops.GetMaxUnzippedPageSize())->setComment(
+          "Pages can grow only to the given limit (bytes)."
+);
+    desc.addUntracked<unsigned long long>("pageBufferBudget", ops.GetPageBufferBudget())->setComment(
+         "The maximum size that the sum of all page buffers used for writing into a persistent sink are allowed to use."
+         " If set to zero, RNTuple will auto-adjust the budget based on the value of 'approxZippedClusterSize'."
+         " If set manually, the size needs to be large enough to hold all initial page buffers."
+);
+    */
+    desc.addUntracked<bool>("useBufferedWrite", ops.GetUseBufferedWrite())->setComment(
+         "Turn on use of buffered writing. This buffers compressed pages in memory, reorders them to keep pages of the same column adjacent, and coalesces the writes when committing a cluster."
+);
+    desc.addUntracked<bool>("useDirectIO", ops.GetUseDirectIO())->setComment(
+         "Set use of direct IO. this introduces alignment requirements that may vary between filesystems and platforms"
+);
+
+    
     desc.addUntracked<bool>("dropPerEventDataProductProvenance", false)
         ->setComment(
             "do not store which data products were consumed to create a given data product for a given event.");
