@@ -138,6 +138,7 @@ namespace edm {
     void readEvent_(EventPrincipal& eventPrincipal) override;
     std::shared_ptr<RunAuxiliary> readRunAuxiliary_() override;
     void readRun_(RunPrincipal& runPrincipal) override;
+    void closeFile_() override;
 
     std::pair<SharedResourcesAcquirer*, std::recursive_mutex*> resourceSharedWithDelayedReader_() override;
 
@@ -159,15 +160,18 @@ namespace edm {
     ROOT::Experimental::DescriptorId_t eventSelectionsID_;
     ROOT::Experimental::DescriptorId_t eventProductProvenanceID_;
     ROOT::Experimental::DescriptorId_t eventBranchListIndexesID_;
+    bool enableMetrics_ = false;
   };
 
   RNTupleSource::RNTupleSource(ParameterSet const& pset, InputSourceDescription const& desc)
-      : InputSource(pset, desc), entryForStream_(std::size_t(desc.allocations_->numberOfStreams()), int(0)) {
+    : InputSource(pset, desc), entryForStream_(std::size_t(desc.allocations_->numberOfStreams()), int(0)),
+      enableMetrics_(pset.getUntrackedParameter<bool>("enableMetrics"))
+  {
     auto resources = SharedResourcesRegistry::instance()->createAcquirerForSourceDelayedReader();
     resourceSharedWithDelayedReaderPtr_ = std::make_unique<SharedResourcesAcquirer>(std::move(resources.first));
     mutexSharedWithDelayedReader_ = resources.second;
 
-    file_ = std::make_unique<RNTupleInputFile>(pset.getUntrackedParameter<std::string>("fileName"));
+    file_ = std::make_unique<RNTupleInputFile>(pset.getUntrackedParameter<std::string>("fileName"), enableMetrics_);
 
     BranchIDLists branchIDLists;
     file_->readMeta(productRegistryUpdate(), processHistoryRegistryForUpdate(), branchIDLists);
@@ -216,6 +220,7 @@ namespace edm {
   void RNTupleSource::fillDescriptions(ConfigurationDescriptions& descriptions) {
     ParameterSetDescription desc;
     desc.addUntracked<std::string>("fileName");
+    desc.addUntracked<bool>("enableMetrics", false);
 
     descriptions.addDefault(desc);
   }
@@ -292,6 +297,12 @@ namespace edm {
 
   std::pair<SharedResourcesAcquirer*, std::recursive_mutex*> RNTupleSource::resourceSharedWithDelayedReader_() {
     return std::make_pair(resourceSharedWithDelayedReaderPtr_.get(), mutexSharedWithDelayedReader_.get());
+  }
+
+  void RNTupleSource::closeFile_() {
+    if (enableMetrics_) {
+      file_->printInfoForEvent(std::cout);
+    }
   }
 
 }  // namespace edm
