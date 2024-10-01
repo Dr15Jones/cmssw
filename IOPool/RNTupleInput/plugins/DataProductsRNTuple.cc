@@ -15,8 +15,11 @@ namespace {
   }
 }  // namespace
 
-DataProductsRNTuple::DataProductsRNTuple(TFile* iFile, std::string const& iName, std::string const& iAux)
-    : reader_(RNTupleReader::Open(*iFile->Get<RNTuple>(iName.c_str()))) {
+DataProductsRNTuple::DataProductsRNTuple(TFile* iFile, std::string const& iName, std::string const& iAux, bool iEnableMetrics)
+  : reader_(RNTupleReader::Open(*iFile->Get<RNTuple>(iName.c_str()))) {
+  if (iEnableMetrics) {
+    reader_->EnableMetrics();
+  }
   auxDesc_ = reader_->GetDescriptor().FindFieldId(iAux);
 }
 
@@ -28,7 +31,7 @@ bool DataProductsRNTuple::setupToReadProductIfAvailable(BranchDescription& iBran
   }
   iBranch.initFromDictionary();
   iBranch.setOnDemand(true);
-  infos_.emplace(iBranch.branchID().id(), ProductInfo(iBranch.wrappedName(), desc));
+  infos_.emplace(iBranch.branchID().id(), ProductInfo(iBranch.wrappedName(), desc, std::move(fixedName)));
   return true;
 }
 
@@ -61,8 +64,12 @@ std::shared_ptr<edm::WrapperBase> DataProductsRNTuple::dataProduct(edm::BranchID
   }
   assert(info != infos_.end());
 
+  std::cout <<"dataProduct "<<info->second.name_<<std::endl;
   auto product = info->second.factory_.newWrapper();
-  auto view = reader_->GetView<void>(info->second.descriptor_, std::shared_ptr<void>());
+  if (not info->second.view_) {
+    info->second.view_ = reader_->GetView<void>(info->second.descriptor_, std::shared_ptr<void>());
+  }
+  auto& view = *(info->second.view_);
   view.BindRawPtr(product.get());
 
   view(iEntry);
