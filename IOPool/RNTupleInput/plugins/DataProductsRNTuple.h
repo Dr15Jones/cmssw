@@ -9,11 +9,12 @@
 #include "TClass.h"
 #include <string>
 #include <memory>
+#include <optional>
 
 namespace edm::input {
   class DataProductsRNTuple {
   public:
-    DataProductsRNTuple(TFile*, std::string const& iName, std::string const& iAux);
+    DataProductsRNTuple(TFile*, std::string const& iName, std::string const& iAux, bool iEnableMetrics);
 
     bool setupToReadProductIfAvailable(BranchDescription&);
 
@@ -36,6 +37,9 @@ namespace edm::input {
       return reader_->GetView(iID, std::move(oStorage));
     }
 
+    void printInfo(std::ostream& iStream) {
+      reader_->PrintInfo(ROOT::Experimental::ENTupleInfo::kMetrics, iStream);
+    }
   private:
     struct WrapperFactory {
       struct Deleter {
@@ -55,10 +59,12 @@ namespace edm::input {
     };
 
     struct ProductInfo {
-      ProductInfo(std::string const& iTypeName, ROOT::Experimental::DescriptorId_t iDesc)
-          : factory_(iTypeName), descriptor_(iDesc) {}
+      ProductInfo(std::string const& iTypeName, ROOT::Experimental::DescriptorId_t iDesc, std::string iName)
+        : factory_(iTypeName), descriptor_(iDesc), name_(std::move(iName)) {}
       WrapperFactory factory_;
       ROOT::Experimental::DescriptorId_t descriptor_;
+      std::string name_;
+      std::optional<ROOT::Experimental::RNTupleView<void, true>> view_;
     };
 
     std::unique_ptr<ROOT::Experimental::RNTupleReader> reader_;

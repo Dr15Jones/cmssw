@@ -18,11 +18,12 @@
 using namespace ROOT::Experimental;
 namespace edm {
 
-  RNTupleInputFile::RNTupleInputFile(std::string const& iName)
+  RNTupleInputFile::RNTupleInputFile(std::string const& iName, bool iEnableMetrics)
       : file_(TFile::Open(iName.c_str())),
-        runs_(file_.get(), "Runs", "RunAuxiliary"),
-        lumis_(file_.get(), "LuminosityBlocks", "LuminosityBlockAuxiliary"),
-        events_(file_.get(), "Events", "EventAuxiliary") {}
+        runs_(file_.get(), "Runs", "RunAuxiliary", false),
+        lumis_(file_.get(), "LuminosityBlocks", "LuminosityBlockAuxiliary", false),
+        events_(file_.get(), "Events", "EventAuxiliary", iEnableMetrics)
+  {}
 
   std::vector<ParentageID> RNTupleInputFile::readParentage() {
     auto parentageTuple = RNTupleReader::Open(*file_->Get<RNTuple>("Parentage"));
