@@ -187,6 +187,13 @@ namespace edm {
 
       auto writeOptions = ROOT::Experimental::RNTupleWriteOptions();
       writeOptions.SetCompression(convert(iConfig.compressionAlgo), iConfig.compressionLevel);
+      writeOptions.SetApproxZippedClusterSize(iConfig.approxZippedClusterSize);
+      writeOptions.SetMaxUnzippedClusterSize(iConfig.maxUnzippedClusterSize);
+      //writeOptions.SetInitialNElementsPerPage(iConfig.initialNElementsPerPage);
+      //writeOptions.SetMaxUnzippedPageSize(iConig.maxUnzippedPageSize);
+      //writeOptions.SetPageBufferBudget(iConfig.pageBufferBudget);
+      writeOptions.SetUseBufferedWrite(iConfig.useBufferedWrite);
+      writeOptions.SetUseDirectIO(iConfig.useDirectIO);
       events_ = ROOT::Experimental::RNTupleWriter::Append(std::move(model), "Events", file_, writeOptions);
     }
     products_[InEvent] = associateDataProducts(iProducts, events_->GetModel());
