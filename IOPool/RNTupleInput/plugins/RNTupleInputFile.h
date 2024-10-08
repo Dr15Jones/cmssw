@@ -49,6 +49,10 @@ namespace edm {
     input::DataProductsRNTuple lumis_;
     input::DataProductsRNTuple events_;
 
+    std::optional<ROOT::Experimental::RNTupleView<RunAuxiliary>> runAuxView_;
+    std::optional<ROOT::Experimental::RNTupleView<LuminosityBlockAuxiliary>> lumiAuxView_;
+    std::optional<ROOT::Experimental::RNTupleView<EventAuxiliary>> eventAuxView_;
+    
     IndexIntoFile index_;
     std::optional<IndexIntoFile::IndexIntoFileItr> iter_;
     std::optional<IndexIntoFile::IndexIntoFileItr> iterEnd_;
