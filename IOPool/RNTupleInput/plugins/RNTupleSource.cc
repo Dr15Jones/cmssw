@@ -15,6 +15,7 @@
 #include "FWCore/Framework/interface/SharedResourcesRegistry.h"
 #include "FWCore/Framework/interface/InputSourceDescription.h"
 #include "FWCore/Framework/interface/PreallocationConfiguration.h"
+#include "FWCore/Framework/interface/FileBlock.h"
 #include "FWCore/ServiceRegistry/interface/ServiceRegistry.h"
 
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
@@ -138,6 +139,7 @@ namespace edm {
     void readEvent_(EventPrincipal& eventPrincipal) override;
     std::shared_ptr<RunAuxiliary> readRunAuxiliary_() override;
     void readRun_(RunPrincipal& runPrincipal) override;
+    std::shared_ptr<FileBlock> readFile_() override;
     void closeFile_() override;
 
     std::pair<SharedResourcesAcquirer*, std::recursive_mutex*> resourceSharedWithDelayedReader_() override;
@@ -161,6 +163,7 @@ namespace edm {
     ROOT::Experimental::DescriptorId_t eventProductProvenanceID_;
     ROOT::Experimental::DescriptorId_t eventBranchListIndexesID_;
     bool enableMetrics_ = false;
+    bool startedFirstFile_ = false;
   };
 
   RNTupleSource::RNTupleSource(ParameterSet const& pset, InputSourceDescription const& desc)
@@ -226,6 +229,9 @@ namespace edm {
   }
 
   InputSource::ItemTypeInfo RNTupleSource::getNextItemType() {
+    if (not startedFirstFile_) {
+      return InputSource::ItemType::IsFile;
+    }
     auto entryType = file_->getNextItemType();
     switch (entryType) {
       case IndexIntoFile::kEnd:
@@ -297,6 +303,11 @@ namespace edm {
 
   std::pair<SharedResourcesAcquirer*, std::recursive_mutex*> RNTupleSource::resourceSharedWithDelayedReader_() {
     return std::make_pair(resourceSharedWithDelayedReaderPtr_.get(), mutexSharedWithDelayedReader_.get());
+  }
+
+  std::shared_ptr<edm::FileBlock> RNTupleSource::readFile_() {
+    startedFirstFile_ = true;
+    return std::make_shared<edm::FileBlock>();
   }
 
   void RNTupleSource::closeFile_() {
