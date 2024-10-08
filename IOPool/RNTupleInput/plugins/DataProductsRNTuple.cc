@@ -64,15 +64,14 @@ std::shared_ptr<edm::WrapperBase> DataProductsRNTuple::dataProduct(edm::BranchID
   }
   assert(info != infos_.end());
 
-  std::cout <<"dataProduct "<<info->second.name_<<std::endl;
+  //std::cout <<"dataProduct "<<info->second.name_<<std::endl;
   auto product = info->second.factory_.newWrapper();
   if (not info->second.view_) {
-    info->second.view_ = reader_->GetView<void>(info->second.descriptor_, std::shared_ptr<void>());
+    info->second.view_ = reader_->GetView<void>(info->second.descriptor_, product.get());
+  } else {
+    info->second.view_->BindRawPtr(product.get());
   }
-  auto& view = *(info->second.view_);
-  view.BindRawPtr(product.get());
-
-  view(iEntry);
+  (*info->second.view_)(iEntry);
 
   return info->second.factory_.toWrapperBase(std::move(product));
 }

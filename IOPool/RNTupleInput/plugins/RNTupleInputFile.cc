@@ -134,8 +134,12 @@ namespace edm {
     auto lumiAux = std::make_shared<LuminosityBlockAuxiliary>();
     assert(*iter_ != *iterEnd_);
     assert(iter_->getEntryType() == IndexIntoFile::kLumi);
-    auto view = lumis_.auxView(lumiAux);
-    view(iter_->entry());
+    if (!lumiAuxView_) {
+      lumiAuxView_ = lumis_.auxView(lumiAux);
+    } else {
+      lumiAuxView_->Bind(lumiAux);
+    }
+    (*lumiAuxView_)(iter_->entry());
     return lumiAux;
   }
 
@@ -151,8 +155,12 @@ namespace edm {
     auto eventAux = std::make_shared<EventAuxiliary>();
     assert(*iter_ != *iterEnd_);
     assert(iter_->getEntryType() == IndexIntoFile::kEvent);
-    auto view = events_.auxView(eventAux);
-    view(iter_->entry());
+    if(!eventAuxView_) {
+      eventAuxView_ = events_.auxView(eventAux);
+    } else {
+      eventAuxView_->Bind(eventAux);
+    }
+    (*eventAuxView_)(iter_->entry());
     return eventAux;
   }
 
@@ -161,8 +169,12 @@ namespace edm {
     assert(*iter_ != *iterEnd_);
     assert(iter_->getEntryType() == IndexIntoFile::kRun);
 
-    auto view = runs_.auxView(runAux);
-    view(iter_->entry());
+    if(! runAuxView_) {
+      runAuxView_ = runs_.auxView(runAux);
+    } else {
+      runAuxView_->Bind(runAux);
+    }
+    (*runAuxView_)(iter_->entry());
     return runAux;
   }
 

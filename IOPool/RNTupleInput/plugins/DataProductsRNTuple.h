@@ -21,7 +21,7 @@ namespace edm::input {
     std::shared_ptr<edm::WrapperBase> dataProduct(edm::BranchID const&, int iEntry);
 
     template <typename T>
-    ROOT::Experimental::RNTupleView<T, true> auxView(std::shared_ptr<T> oStorage) {
+    ROOT::Experimental::RNTupleView<T> auxView(std::shared_ptr<T> oStorage) {
       return reader_->GetView(auxDesc_, std::move(oStorage));
     }
 
@@ -32,7 +32,7 @@ namespace edm::input {
     }
 
     template <typename T>
-    ROOT::Experimental::RNTupleView<T, true> viewFor(ROOT::Experimental::DescriptorId_t iID,
+    ROOT::Experimental::RNTupleView<T> viewFor(ROOT::Experimental::DescriptorId_t iID,
                                                      std::shared_ptr<T> oStorage) {
       return reader_->GetView(iID, std::move(oStorage));
     }
@@ -64,7 +64,7 @@ namespace edm::input {
       WrapperFactory factory_;
       ROOT::Experimental::DescriptorId_t descriptor_;
       std::string name_;
-      std::optional<ROOT::Experimental::RNTupleView<void, true>> view_;
+      std::optional<ROOT::Experimental::RNTupleView<void>> view_;
     };
 
     std::unique_ptr<ROOT::Experimental::RNTupleReader> reader_;
