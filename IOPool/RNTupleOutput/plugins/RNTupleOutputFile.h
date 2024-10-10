@@ -44,9 +44,9 @@ namespace edm {
       int compressionLevel = 4;
       unsigned long long approxZippedClusterSize;
       unsigned long long maxUnzippedClusterSize;
-      //unsigned long long initialNElementsPerPage;
-      //unsigned long long maxUnzippedPageSize;
-      //unsigned long long pageBufferBudget;
+      unsigned long long initialNElementsPerPage;
+      unsigned long long maxUnzippedPageSize;
+      unsigned long long pageBufferBudget;
       bool useBufferedWrite;
       bool useDirectIO;
       

@@ -111,9 +111,9 @@ namespace edm {
     unsigned int compressionLevel_;
     unsigned long long approxZippedClusterSize_;
     unsigned long long maxUnzippedClusterSize_;
-    //unsigned long long initialNElementsPerPage_;
-    //unsigned long long maxUnzippedPageSize_;
-    //unsigned long long pageBufferBudget_;
+    unsigned long long initialNElementsPerPage_;
+    unsigned long long maxUnzippedPageSize_;
+    unsigned long long pageBufferBudget_;
     bool useBufferedWrite_;
     bool useDirectIO_;
     bool dropMetaData_;
@@ -130,9 +130,9 @@ namespace edm {
         compressionLevel_(pset.getUntrackedParameter<unsigned int>("compressionLevel")),
         approxZippedClusterSize_(pset.getUntrackedParameter<unsigned long long>("approxZippedClusterSize")),
         maxUnzippedClusterSize_(pset.getUntrackedParameter<unsigned long long>("maxUnzippedClusterSize")),
-        //initialNElementsPerPage_(pset.getUntrackedParameter<unsigned long long>("initialNElementsPerPage")),
-        //maxUnzippedPageSize_(pset.getUntrackedParameter<unsigned long long>("maxUnzippedPageSize")),
-        //pageBufferBudget_(pset.getUntrackedParameter<unsigned long long>("pageBufferBudget")),
+        initialNElementsPerPage_(pset.getUntrackedParameter<unsigned long long>("initialNElementsPerPage")),
+        maxUnzippedPageSize_(pset.getUntrackedParameter<unsigned long long>("maxUnzippedPageSize")),
+        pageBufferBudget_(pset.getUntrackedParameter<unsigned long long>("pageBufferBudget")),
         useBufferedWrite_(pset.getUntrackedParameter<bool>("useBufferedWrite")),
         useDirectIO_(pset.getUntrackedParameter<bool>("useDirectIO")),
         dropMetaData_(pset.getUntrackedParameter<bool>("dropPerEventDataProductProvenance")),
@@ -146,9 +146,9 @@ namespace edm {
     conf.compressionLevel = compressionLevel_;
     conf.approxZippedClusterSize = approxZippedClusterSize_;
     conf.maxUnzippedClusterSize = maxUnzippedClusterSize_;
-    //conf.initialNElementsPerPage = initialNElementsPerPage_;
-    //conf.maxUnzippedPageSize = maxUnzippedPageSize_;
-    //conf.pageBufferBudget = pageBufferBudget_;
+    conf.initialNElementsPerPage = initialNElementsPerPage_;
+    conf.maxUnzippedPageSize = maxUnzippedPageSize_;
+    conf.pageBufferBudget = pageBufferBudget_;
     conf.useBufferedWrite = useBufferedWrite_;
     conf.useDirectIO = useDirectIO_;
     conf.dropMetaData = dropMetaData_;
@@ -204,7 +204,7 @@ namespace edm {
     desc.addUntracked<unsigned long long>("maxUnzippedClusterSize", ops.GetMaxUnzippedClusterSize())->setComment(
           "Memory limit for committing a cluster. High compression leads to high IO buffer size."
 );
-    /*
+    
     desc.addUntracked<unsigned long long>("initialNElementsPerPage", ops.GetInitialNElementsPerPage())->setComment(
 "Initially, columns start with a page large enough to hold the given number of elements. The 'pageBufferBudget'  needs to be large enough to hold the initial pages of all columns."
 );
@@ -216,7 +216,7 @@ namespace edm {
          " If set to zero, RNTuple will auto-adjust the budget based on the value of 'approxZippedClusterSize'."
          " If set manually, the size needs to be large enough to hold all initial page buffers."
 );
-    */
+    
     desc.addUntracked<bool>("useBufferedWrite", ops.GetUseBufferedWrite())->setComment(
          "Turn on use of buffered writing. This buffers compressed pages in memory, reorders them to keep pages of the same column adjacent, and coalesces the writes when committing a cluster."
 );
