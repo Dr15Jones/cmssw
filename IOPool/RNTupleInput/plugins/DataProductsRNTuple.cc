@@ -15,8 +15,11 @@ namespace {
   }
 }  // namespace
 
-DataProductsRNTuple::DataProductsRNTuple(TFile* iFile, std::string const& iName, std::string const& iAux, bool iEnableMetrics)
-  : reader_(RNTupleReader::Open(*iFile->Get<RNTuple>(iName.c_str()))) {
+DataProductsRNTuple::DataProductsRNTuple(TFile* iFile,
+                                         std::string const& iName,
+                                         std::string const& iAux,
+                                         bool iEnableMetrics)
+    : reader_(RNTupleReader::Open(*iFile->Get<RNTuple>(iName.c_str()))) {
   if (iEnableMetrics) {
     reader_->EnableMetrics();
   }
@@ -59,8 +62,8 @@ std::shared_ptr<edm::WrapperBase> DataProductsRNTuple::WrapperFactory::toWrapper
 
 std::shared_ptr<edm::WrapperBase> DataProductsRNTuple::dataProduct(edm::BranchID const& iBranch, int iEntry) {
   auto const& info = infos_.find(iBranch.id());
-  if( info == infos_.end()) {
-    throw cms::Exception("RNTupleError")<<" unable to find branch id "<<iBranch.id()<<" for entry "<<iEntry;
+  if (info == infos_.end()) {
+    throw cms::Exception("RNTupleError") << " unable to find branch id " << iBranch.id() << " for entry " << iEntry;
   }
   assert(info != infos_.end());
 
