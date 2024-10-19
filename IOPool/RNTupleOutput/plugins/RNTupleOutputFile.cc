@@ -81,19 +81,70 @@ namespace edm {
       //need to remove the '.' at the end of the branch name
       return iName.substr(0, iName.size() - 1);
     }
+
+    void noSplitField(ROOT::Experimental::RFieldBase& iField) {
+      auto const& typeName = iField.GetTypeName();
+      if (typeName == "std::uint16_t") {
+        iField.SetColumnRepresentatives({{ROOT::Experimental::EColumnType::kUInt16}});
+      } else if (typeName == "std::uint32_t") {
+        iField.SetColumnRepresentatives({{ROOT::Experimental::EColumnType::kUInt32}});
+      } else if (typeName == "std::uint64_t") {
+        iField.SetColumnRepresentatives({{ROOT::Experimental::EColumnType::kUInt64}});
+      } else if (typeName == "std::int16_t") {
+        iField.SetColumnRepresentatives({{ROOT::Experimental::EColumnType::kInt16}});
+      } else if (typeName == "std::int32_t") {
+        iField.SetColumnRepresentatives({{ROOT::Experimental::EColumnType::kInt32}});
+      } else if (typeName == "std::int64_t") {
+        iField.SetColumnRepresentatives({{ROOT::Experimental::EColumnType::kInt64}});
+      } else if (typeName == "float") {
+        iField.SetColumnRepresentatives({{ROOT::Experimental::EColumnType::kReal32}});
+      } else if (typeName == "double") {
+        iField.SetColumnRepresentatives({{ROOT::Experimental::EColumnType::kReal64}});
+      }
+    }
+
+    void checkSubFieldsForNoSplit(ROOT::Experimental::RFieldBase& iField,
+                                  std::vector<std::string> const& iNoSplitFields) {
+      for (auto const& name : iNoSplitFields) {
+        if (name.starts_with(iField.GetFieldName())) {
+          bool found = false;
+          for (auto& subfield : iField) {
+            if (subfield.GetQualifiedFieldName() == name) {
+              found = true;
+              noSplitField(subfield);
+              break;
+            }
+          }
+          if (not found) {
+            edm::LogError("MissingSubField")
+                << "The data product was found but the requested subfield '" << name << "' is not part of the class";
+          }
+        }
+      }
+    }
   }  // namespace
 
   void RNTupleOutputFile::setupDataProducts(SelectedProducts const& iProducts,
-                                            std::vector<bool> const& iDoNotSplit,
+                                            std::vector<bool> const& iUseStreamer,
+                                            std::vector<std::string> const& iNoSplitFields,
                                             RNTupleModel& iModel) {
     unsigned int index = 0;
+    const bool noSplitSubFields = (iNoSplitFields.size() == 1 and iNoSplitFields[0] == "all") ? true : false;
     for (auto const& prod : iProducts) {
       try {
         edm::convertException::wrap([&]() {
-          if (index >= iDoNotSplit.size() or not iDoNotSplit[index]) {
+          if (index >= iUseStreamer.size() or not iUseStreamer[index]) {
             auto field = ROOT::Experimental::RFieldBase::Create(fixBranchName(prod.first->branchName()),
                                                                 prod.first->wrappedName())
                              .Unwrap();
+            if (noSplitSubFields) {
+              //use the 'conventional' way to store fields
+              for (auto& subfield : *field) {
+                noSplitField(subfield);
+              }
+            } else if (not iNoSplitFields.empty()) {
+              checkSubFieldsForNoSplit(*field, iNoSplitFields);
+            }
             iModel.AddField(std::move(field));
             branchesWithStoredHistory_.insert(prod.first->branchID());
           } else {
@@ -131,8 +182,9 @@ namespace edm {
         auto field = ROOT::Experimental::RFieldBase::Create(kRunAuxName, "edm::RunAuxiliary").Unwrap();
         model->AddField(std::move(field));
       }
-      const std::vector<bool> unsplitNothing;
-      setupDataProducts(iProducts, unsplitNothing, *model);
+      const std::vector<bool> streamerNothing;
+      const std::vector<std::string> unsplitNothing;
+      setupDataProducts(iProducts, streamerNothing, unsplitNothing, *model);
 
       auto writeOptions = ROOT::Experimental::RNTupleWriteOptions();
       writeOptions.SetCompression(convert(iConfig.compressionAlgo), iConfig.compressionLevel);
@@ -149,8 +201,9 @@ namespace edm {
         auto field = ROOT::Experimental::RFieldBase::Create(kLumiAuxName, "edm::LuminosityBlockAuxiliary").Unwrap();
         model->AddField(std::move(field));
       }
-      const std::vector<bool> unsplitNothing;
-      setupDataProducts(iProducts, unsplitNothing, *model);
+      const std::vector<bool> streamerNothing;
+      const std::vector<std::string> unsplitNothing;
+      setupDataProducts(iProducts, streamerNothing, unsplitNothing, *model);
 
       auto writeOptions = ROOT::Experimental::RNTupleWriteOptions();
       writeOptions.SetCompression(convert(iConfig.compressionAlgo), iConfig.compressionLevel);
@@ -183,7 +236,7 @@ namespace edm {
         auto field = ROOT::Experimental::RFieldBase::Create(kBranchListName, "std::vector<unsigned short>").Unwrap();
         model->AddField(std::move(field));
       }
-      setupDataProducts(iProducts, iConfig.doNotSplitProduct, *model);
+      setupDataProducts(iProducts, iConfig.streamerProduct, iConfig.doNotSplitSubFields, *model);
 
       auto writeOptions = ROOT::Experimental::RNTupleWriteOptions();
       writeOptions.SetCompression(convert(iConfig.compressionAlgo), iConfig.compressionLevel);

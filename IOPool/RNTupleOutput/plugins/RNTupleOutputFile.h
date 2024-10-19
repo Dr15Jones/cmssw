@@ -39,7 +39,8 @@ namespace edm {
   public:
     struct Config {
       ParameterSetID selectorConfig;
-      std::vector<bool> doNotSplitProduct;
+      std::vector<bool> streamerProduct;
+      std::vector<std::string> doNotSplitSubFields;
       rntuple::CompressionAlgos compressionAlgo = rntuple::CompressionAlgos::kZSTD;
       int compressionLevel = 4;
       unsigned long long approxZippedClusterSize;
@@ -49,7 +50,7 @@ namespace edm {
       unsigned long long pageBufferBudget;
       bool useBufferedWrite;
       bool useDirectIO;
-      
+
       bool wantAllEvents;
       bool dropMetaData = false;
     };
@@ -87,7 +88,10 @@ namespace edm {
     void fillParentage();
     void fillMetaData(BranchIDLists const& iBranchIDLists, ThinnedAssociationsHelper const& iThinnedHelper);
 
-    void setupDataProducts(SelectedProducts const&, std::vector<bool> const&, RNTupleModel&);
+    void setupDataProducts(SelectedProducts const&,
+                           std::vector<bool> const&,
+                           std::vector<std::string> const&,
+                           RNTupleModel&);
     //Can't call until the model is frozen
     std::vector<Product> associateDataProducts(SelectedProducts const&, RNTupleModel const&);
 
