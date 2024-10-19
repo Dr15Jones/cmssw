@@ -32,14 +32,12 @@ namespace edm::input {
     }
 
     template <typename T>
-    ROOT::Experimental::RNTupleView<T> viewFor(ROOT::Experimental::DescriptorId_t iID,
-                                                     std::shared_ptr<T> oStorage) {
+    ROOT::Experimental::RNTupleView<T> viewFor(ROOT::Experimental::DescriptorId_t iID, std::shared_ptr<T> oStorage) {
       return reader_->GetView(iID, std::move(oStorage));
     }
 
-    void printInfo(std::ostream& iStream) {
-      reader_->PrintInfo(ROOT::Experimental::ENTupleInfo::kMetrics, iStream);
-    }
+    void printInfo(std::ostream& iStream) { reader_->PrintInfo(ROOT::Experimental::ENTupleInfo::kMetrics, iStream); }
+
   private:
     struct WrapperFactory {
       struct Deleter {
@@ -60,7 +58,7 @@ namespace edm::input {
 
     struct ProductInfo {
       ProductInfo(std::string const& iTypeName, ROOT::Experimental::DescriptorId_t iDesc, std::string iName)
-        : factory_(iTypeName), descriptor_(iDesc), name_(std::move(iName)) {}
+          : factory_(iTypeName), descriptor_(iDesc), name_(std::move(iName)) {}
       WrapperFactory factory_;
       ROOT::Experimental::DescriptorId_t descriptor_;
       std::string name_;
