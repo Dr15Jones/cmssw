@@ -22,8 +22,7 @@ namespace edm {
       : file_(TFile::Open(iName.c_str())),
         runs_(file_.get(), "Runs", "RunAuxiliary", false),
         lumis_(file_.get(), "LuminosityBlocks", "LuminosityBlockAuxiliary", false),
-        events_(file_.get(), "Events", "EventAuxiliary", iEnableMetrics)
-  {}
+        events_(file_.get(), "Events", "EventAuxiliary", iEnableMetrics) {}
 
   std::vector<ParentageID> RNTupleInputFile::readParentage() {
     auto parentageTuple = RNTupleReader::Open(*file_->Get<RNTuple>("Parentage"));
@@ -86,7 +85,8 @@ namespace edm {
       for (auto& product : pList) {
         BranchDescription& prod = product.second;
         prod.initBranchName();
-        if (not prod.present()) continue;
+        if (not prod.present())
+          continue;
         if (prod.branchType() == InEvent) {
           prod.setDropped(not events_.setupToReadProductIfAvailable(prod));
         } else if (prod.branchType() == InLumi) {
@@ -155,7 +155,7 @@ namespace edm {
     auto eventAux = std::make_shared<EventAuxiliary>();
     assert(*iter_ != *iterEnd_);
     assert(iter_->getEntryType() == IndexIntoFile::kEvent);
-    if(!eventAuxView_) {
+    if (!eventAuxView_) {
       eventAuxView_ = events_.auxView(eventAux);
     } else {
       eventAuxView_->Bind(eventAux);
@@ -169,7 +169,7 @@ namespace edm {
     assert(*iter_ != *iterEnd_);
     assert(iter_->getEntryType() == IndexIntoFile::kRun);
 
-    if(! runAuxView_) {
+    if (!runAuxView_) {
       runAuxView_ = runs_.auxView(runAux);
     } else {
       runAuxView_->Bind(runAux);

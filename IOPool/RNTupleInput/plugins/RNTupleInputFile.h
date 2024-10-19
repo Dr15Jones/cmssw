@@ -42,6 +42,7 @@ namespace edm {
     input::DataProductsRNTuple* eventProducts() { return &events_; }
 
     void printInfoForEvent(std::ostream& iOStream) { events_.printInfo(iOStream); }
+
   private:
     std::unique_ptr<TFile> file_;
 
@@ -52,7 +53,7 @@ namespace edm {
     std::optional<ROOT::Experimental::RNTupleView<RunAuxiliary>> runAuxView_;
     std::optional<ROOT::Experimental::RNTupleView<LuminosityBlockAuxiliary>> lumiAuxView_;
     std::optional<ROOT::Experimental::RNTupleView<EventAuxiliary>> eventAuxView_;
-    
+
     IndexIntoFile index_;
     std::optional<IndexIntoFile::IndexIntoFileItr> iter_;
     std::optional<IndexIntoFile::IndexIntoFileItr> iterEnd_;
