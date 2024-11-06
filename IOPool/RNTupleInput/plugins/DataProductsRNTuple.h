@@ -5,6 +5,7 @@
 #include "DataFormats/Common/interface/WrapperBase.h"
 #include "FWCore/Utilities/interface/InputType.h"
 #include "ROOT/RNTupleReader.hxx"
+#include "ROOT/RNTupleReadOptions.hxx"
 #include "TFile.h"
 #include "TClass.h"
 #include <string>
@@ -14,7 +15,7 @@
 namespace edm::input {
   class DataProductsRNTuple {
   public:
-    DataProductsRNTuple(TFile*, std::string const& iName, std::string const& iAux, bool iEnableMetrics);
+    DataProductsRNTuple(TFile*, std::string const& iName, std::string const& iAux, ROOT::Experimental::RNTupleReadOptions const& iOpts);
 
     bool setupToReadProductIfAvailable(BranchDescription&);
 
