@@ -18,11 +18,8 @@ namespace {
 DataProductsRNTuple::DataProductsRNTuple(TFile* iFile,
                                          std::string const& iName,
                                          std::string const& iAux,
-                                         bool iEnableMetrics)
-    : reader_(RNTupleReader::Open(*iFile->Get<RNTuple>(iName.c_str()))) {
-  if (iEnableMetrics) {
-    reader_->EnableMetrics();
-  }
+                                         ROOT::Experimental::RNTupleReadOptions const& iOps)
+  : reader_(RNTupleReader::Open(*iFile->Get<RNTuple>(iName.c_str()), iOps)) {
   auxDesc_ = reader_->GetDescriptor().FindFieldId(iAux);
 }
 
