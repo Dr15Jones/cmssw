@@ -21,7 +21,11 @@ namespace edm {
 
   class RNTupleInputFile {
   public:
-    RNTupleInputFile(std::string const& iFileName, bool enableMetrics);
+    struct Options {
+      bool enableMetrics_ = false;
+      bool useClusterCache_ = true;
+    };
+    RNTupleInputFile(std::string const& iFileName, Options const& iOpts);
 
     IndexIntoFile::EntryType getNextItemType();
 
