@@ -12,17 +12,26 @@
 #include "DataFormats/Provenance/interface/ProcessHistoryRegistry.h"
 #include "DataFormats/Provenance/interface/Parentage.h"
 #include "DataFormats/Provenance/interface/ParentageRegistry.h"
+#include "ROOT/RNTupleReadOptions.hxx"
 
 #include <cassert>
 #include <iostream>
 using namespace ROOT::Experimental;
+namespace {
+  ROOT::Experimental::RNTupleReadOptions options(edm::RNTupleInputFile::Options const& iOpt) {
+    ROOT::Experimental::RNTupleReadOptions opt;
+    opt.SetMetricsEnabled(iOpt.enableMetrics_);
+    opt.SetClusterCache(iOpt.useClusterCache_? RNTupleReadOptions::EClusterCache::kOn : RNTupleReadOptions::EClusterCache::kOff);
+    return opt;
+  }
+}
 namespace edm {
 
-  RNTupleInputFile::RNTupleInputFile(std::string const& iName, bool iEnableMetrics)
+  RNTupleInputFile::RNTupleInputFile(std::string const& iName, Options const& iOpt)
       : file_(TFile::Open(iName.c_str())),
-        runs_(file_.get(), "Runs", "RunAuxiliary", false),
-        lumis_(file_.get(), "LuminosityBlocks", "LuminosityBlockAuxiliary", false),
-        events_(file_.get(), "Events", "EventAuxiliary", iEnableMetrics) {}
+        runs_(file_.get(), "Runs", "RunAuxiliary", {}),
+        lumis_(file_.get(), "LuminosityBlocks", "LuminosityBlockAuxiliary", {}),
+        events_(file_.get(), "Events", "EventAuxiliary", options(iOpt)) {}
 
   std::vector<ParentageID> RNTupleInputFile::readParentage() {
     auto parentageTuple = RNTupleReader::Open(*file_->Get<RNTuple>("Parentage"));
