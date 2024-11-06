@@ -148,8 +148,8 @@ namespace edm {
             iModel.AddField(std::move(field));
             branchesWithStoredHistory_.insert(prod.first->branchID());
           } else {
-            auto field = std::make_unique<ROOT::Experimental::RUnsplitField>(fixBranchName(prod.first->branchName()),
-                                                                             prod.first->wrappedName());
+            auto field = std::make_unique<ROOT::Experimental::RStreamerField>(fixBranchName(prod.first->branchName()),
+                                                                              prod.first->wrappedName());
             iModel.AddField(std::move(field));
             branchesWithStoredHistory_.insert(prod.first->branchID());
           }
