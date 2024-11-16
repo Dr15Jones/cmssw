@@ -79,8 +79,10 @@ namespace edm {
       bool isParentageSet() const noexcept { return isParentageSet_.load(std::memory_order_acquire); }
 
       void threadsafe_set(ParentageID id) const {
-        provenance_.set(std::move(id));
-        isParentageSet_.store(true, std::memory_order_release);
+        if (not isParentageSet() and id != provenance_.parentageID()) {
+          provenance_.set(std::move(id));
+          isParentageSet_.store(true, std::memory_order_release);
+        }
       }
 
       void resetParentage() { isParentageSet_.store(false, std::memory_order_release); }
