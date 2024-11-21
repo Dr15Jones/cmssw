@@ -34,7 +34,7 @@ namespace edm {
         events_(file_.get(), "Events", "EventAuxiliary", options(iOpt)) {}
 
   std::vector<ParentageID> RNTupleInputFile::readParentage() {
-    auto parentageTuple = RNTupleReader::Open(*file_->Get<RNTuple>("Parentage"));
+    auto parentageTuple = RNTupleReader::Open(*file_->Get<ROOT::RNTuple>("Parentage"));
     auto entry = parentageTuple->GetModel().CreateBareEntry();
 
     edm::Parentage parentage;
@@ -57,7 +57,7 @@ namespace edm {
   void RNTupleInputFile::readMeta(edm::ProductRegistry& iReg,
                                   edm::ProcessHistoryRegistry& iHist,
                                   BranchIDLists& iBranchIDLists) {
-    auto meta = RNTupleReader::Open(*file_->Get<RNTuple>("MetaData"));
+    auto meta = RNTupleReader::Open(*file_->Get<ROOT::RNTuple>("MetaData"));
     assert(meta.get());
 
     //BEWARE, if you do not 'BindRawPtr' to all top level Fields,
