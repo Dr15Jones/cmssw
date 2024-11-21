@@ -116,7 +116,7 @@ int main(int iArgc, char const* iArgv[]) {
 
   auto file = TFile::Open(vm["file"].as<std::string>().c_str(), "r");
 
-  auto ntuple = RNTupleReader::Open(*file->Get<RNTuple>("Events"));
+  auto ntuple = RNTupleReader::Open(*file->Get<ROOT::RNTuple>("Events"));
 
   if (vm.count("printProductDetails")) {
     ntuple->PrintInfo(ENTupleInfo::kStorageDetails, std::cout);
