@@ -1,7 +1,6 @@
 #include "FWCore/Framework/interface/one/OutputModule.h"
 #include "FWCore/Framework/interface/EventForOutput.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
-#include "FWCore/Framework/interface/ConstProductRegistry.h"
 #include "FWCore/Framework/interface/FileBlock.h"
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
@@ -10,10 +9,10 @@
 #include "FWCore/ParameterSet/interface/Registry.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
-#include "FWCore/Framework/interface/ConstProductRegistry.h"
 #include "FWCore/Utilities/interface/GlobalIdentifier.h"
 
 #include "DataFormats/Provenance/interface/ParentageRegistry.h"
+#include "DataFormats/Provenance/interface/ProductRegistry.h"
 #include "DataFormats/Provenance/interface/FileID.h"
 #include "DataFormats/Provenance/interface/ProcessHistoryRegistry.h"
 #include "DataFormats/Provenance/interface/Provenance.h"
@@ -104,7 +103,9 @@ namespace edm {
     void writeRun(RunForOutput const&) final;
     void reallyCloseFile() final;
     void openFile(FileBlock const& fb) final;
+    void initialRegistry(edm::ProductRegistry const& iReg) final;
     std::string fileName_;
+    std::unique_ptr<edm::ProductRegistry const> reg_;
     std::unique_ptr<RNTupleOutputFile> file_;
     std::vector<SetStreamerForDataProduct> overrideStreamer_;
     std::vector<std::string> noSplitSubFields_;
@@ -173,12 +174,18 @@ namespace edm {
         ++index;
       }
     }
-    file_ = std::make_unique<RNTupleOutputFile>(fileName_, fb, keptProducts(), conf);
+    assert(reg_);
+    file_ = std::make_unique<RNTupleOutputFile>(fileName_, fb, keptProducts(), conf, reg_->anyProductProduced());
+  }
+
+  void RNTupleOutputModule::initialRegistry(edm::ProductRegistry const& iReg) {
+    reg_ = std::make_unique<ProductRegistry>(iReg.productList());
   }
 
   void RNTupleOutputModule::reallyCloseFile() {
     if (file_) {
-      file_->reallyCloseFile(*branchIDLists(), *thinnedAssociationsHelper());
+      assert(reg_);
+      file_->reallyCloseFile(*branchIDLists(), *thinnedAssociationsHelper(), *reg_);
     }
   }
 

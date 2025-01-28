@@ -7,7 +7,6 @@
 #include "FWCore/ParameterSet/interface/Registry.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
-#include "FWCore/Framework/interface/ConstProductRegistry.h"
 #include "FWCore/Utilities/interface/GlobalIdentifier.h"
 
 #include "DataFormats/Provenance/interface/ParentageRegistry.h"
@@ -45,7 +44,7 @@ namespace edm {
       int compressionLevel = 4;
       unsigned long long approxZippedClusterSize;
       unsigned long long maxUnzippedClusterSize;
-      unsigned long long initialUnzippedPageSize;;
+      unsigned long long initialUnzippedPageSize;
       unsigned long long maxUnzippedPageSize;
       unsigned long long pageBufferBudget;
       bool useBufferedWrite;
@@ -58,13 +57,16 @@ namespace edm {
     explicit RNTupleOutputFile(std::string const& iFileName,
                                FileBlock const& iFileBlock,
                                SelectedProductsForBranchType const& iSelected,
-                               Config const&);
+                               Config const&,
+                               bool anyProductProduced);
     ~RNTupleOutputFile();
 
     void write(EventForOutput const& e);
     void writeLuminosityBlock(LuminosityBlockForOutput const&);
     void writeRun(RunForOutput const&);
-    void reallyCloseFile(BranchIDLists const& iBranchIDLists, ThinnedAssociationsHelper const& iThinnedHelper);
+    void reallyCloseFile(BranchIDLists const& iBranchIDLists,
+                         ThinnedAssociationsHelper const& iThinnedHelper,
+                         ProductRegistry const& iReg);
     void openFile(FileBlock const& fb);
 
     struct Product {
@@ -79,14 +81,16 @@ namespace edm {
   private:
     void setupRuns(SelectedProducts const&, Config const&);
     void setupLumis(SelectedProducts const&, Config const&);
-    void setupEvents(SelectedProducts const&, Config const&);
+    void setupEvents(SelectedProducts const&, Config const&, bool anyProductProduced);
     void setupPSets(Config const&);
     void setupParentage(Config const&);
     void setupMetaData(Config const&);
 
     void fillPSets();
     void fillParentage();
-    void fillMetaData(BranchIDLists const& iBranchIDLists, ThinnedAssociationsHelper const& iThinnedHelper);
+    void fillMetaData(BranchIDLists const& iBranchIDLists,
+                      ThinnedAssociationsHelper const& iThinnedHelper,
+                      ProductRegistry const&);
 
     void setupDataProducts(SelectedProducts const&,
                            std::vector<bool> const&,
