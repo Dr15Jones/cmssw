@@ -21,10 +21,11 @@ namespace {
   ROOT::Experimental::RNTupleReadOptions options(edm::RNTupleInputFile::Options const& iOpt) {
     ROOT::Experimental::RNTupleReadOptions opt;
     opt.SetMetricsEnabled(iOpt.enableMetrics_);
-    opt.SetClusterCache(iOpt.useClusterCache_? RNTupleReadOptions::EClusterCache::kOn : RNTupleReadOptions::EClusterCache::kOff);
+    opt.SetClusterCache(iOpt.useClusterCache_ ? RNTupleReadOptions::EClusterCache::kOn
+                                              : RNTupleReadOptions::EClusterCache::kOff);
     return opt;
   }
-}
+}  // namespace
 namespace edm {
 
   RNTupleInputFile::RNTupleInputFile(std::string const& iName, Options const& iOpt)

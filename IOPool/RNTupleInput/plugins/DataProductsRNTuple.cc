@@ -19,7 +19,7 @@ DataProductsRNTuple::DataProductsRNTuple(TFile* iFile,
                                          std::string const& iName,
                                          std::string const& iAux,
                                          ROOT::Experimental::RNTupleReadOptions const& iOps)
-  : reader_(RNTupleReader::Open(*iFile->Get<ROOT::RNTuple>(iName.c_str()), iOps)) {
+    : reader_(RNTupleReader::Open(*iFile->Get<ROOT::RNTuple>(iName.c_str()), iOps)) {
   auxDesc_ = reader_->GetDescriptor().FindFieldId(iAux);
 }
 
