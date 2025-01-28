@@ -112,7 +112,7 @@ namespace edm {
     unsigned int compressionLevel_;
     unsigned long long approxZippedClusterSize_;
     unsigned long long maxUnzippedClusterSize_;
-    unsigned long long initialNElementsPerPage_;
+    unsigned long long initialUnzippedPageSize_;
     unsigned long long maxUnzippedPageSize_;
     unsigned long long pageBufferBudget_;
     bool useBufferedWrite_;
@@ -132,7 +132,7 @@ namespace edm {
         compressionLevel_(pset.getUntrackedParameter<unsigned int>("compressionLevel")),
         approxZippedClusterSize_(pset.getUntrackedParameter<unsigned long long>("approxZippedClusterSize")),
         maxUnzippedClusterSize_(pset.getUntrackedParameter<unsigned long long>("maxUnzippedClusterSize")),
-        initialNElementsPerPage_(pset.getUntrackedParameter<unsigned long long>("initialNElementsPerPage")),
+        initialUnzippedPageSize_(pset.getUntrackedParameter<unsigned long long>("initialUnzippedPageSize")),
         maxUnzippedPageSize_(pset.getUntrackedParameter<unsigned long long>("maxUnzippedPageSize")),
         pageBufferBudget_(pset.getUntrackedParameter<unsigned long long>("pageBufferBudget")),
         useBufferedWrite_(pset.getUntrackedParameter<bool>("useBufferedWrite")),
@@ -148,7 +148,7 @@ namespace edm {
     conf.compressionLevel = compressionLevel_;
     conf.approxZippedClusterSize = approxZippedClusterSize_;
     conf.maxUnzippedClusterSize = maxUnzippedClusterSize_;
-    conf.initialNElementsPerPage = initialNElementsPerPage_;
+    conf.initialUnzippedPageSize = initialUnzippedPageSize_;
     conf.maxUnzippedPageSize = maxUnzippedPageSize_;
     conf.pageBufferBudget = pageBufferBudget_;
     conf.useBufferedWrite = useBufferedWrite_;
@@ -206,10 +206,8 @@ namespace edm {
     desc.addUntracked<unsigned long long>("maxUnzippedClusterSize", ops.GetMaxUnzippedClusterSize())
         ->setComment("Memory limit for committing a cluster. High compression leads to high IO buffer size.");
 
-    desc.addUntracked<unsigned long long>("initialNElementsPerPage", ops.GetInitialNElementsPerPage())
-        ->setComment(
-            "Initially, columns start with a page large enough to hold the given number of elements. The "
-            "'pageBufferBudget'  needs to be large enough to hold the initial pages of all columns.");
+    desc.addUntracked<unsigned long long>("initialUnzippedPageSize", ops.GetInitialUnzippedPageSize())
+        ->setComment("Initially, columns start with a page of this size (bytes).");
     desc.addUntracked<unsigned long long>("maxUnzippedPageSize", ops.GetMaxUnzippedPageSize())
         ->setComment("Pages can grow only to the given limit (bytes).");
     desc.addUntracked<unsigned long long>("pageBufferBudget", ops.GetPageBufferBudget())
