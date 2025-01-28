@@ -242,7 +242,7 @@ namespace edm {
       writeOptions.SetCompression(convert(iConfig.compressionAlgo), iConfig.compressionLevel);
       writeOptions.SetApproxZippedClusterSize(iConfig.approxZippedClusterSize);
       writeOptions.SetMaxUnzippedClusterSize(iConfig.maxUnzippedClusterSize);
-      writeOptions.SetInitialNElementsPerPage(iConfig.initialNElementsPerPage);
+      writeOptions.SetInitialUnzippedPageSize(iConfig.initialUnzippedPageSize);
       writeOptions.SetMaxUnzippedPageSize(iConfig.maxUnzippedPageSize);
       writeOptions.SetPageBufferBudget(iConfig.pageBufferBudget);
       writeOptions.SetUseBufferedWrite(iConfig.useBufferedWrite);
