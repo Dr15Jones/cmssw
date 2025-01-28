@@ -15,7 +15,10 @@
 namespace edm::input {
   class DataProductsRNTuple {
   public:
-    DataProductsRNTuple(TFile*, std::string const& iName, std::string const& iAux, ROOT::Experimental::RNTupleReadOptions const& iOpts);
+    DataProductsRNTuple(TFile*,
+                        std::string const& iName,
+                        std::string const& iAux,
+                        ROOT::Experimental::RNTupleReadOptions const& iOpts);
 
     bool setupToReadProductIfAvailable(BranchDescription&);
 

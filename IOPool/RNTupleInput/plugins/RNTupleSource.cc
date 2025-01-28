@@ -171,8 +171,7 @@ namespace edm {
       : InputSource(pset, desc),
         entryForStream_(std::size_t(desc.allocations_->numberOfStreams()), int(0)),
         enableMetrics_(pset.getUntrackedParameter<bool>("enableMetrics")),
-        useClusterCache_(pset.getUntrackedParameter<bool>("useClusterCache"))
-  {
+        useClusterCache_(pset.getUntrackedParameter<bool>("useClusterCache")) {
     auto resources = SharedResourcesRegistry::instance()->createAcquirerForSourceDelayedReader();
     resourceSharedWithDelayedReaderPtr_ = std::make_unique<SharedResourcesAcquirer>(std::move(resources.first));
     mutexSharedWithDelayedReader_ = resources.second;
