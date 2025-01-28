@@ -3,10 +3,8 @@
 #include "FWCore/Framework/interface/RunForOutput.h"
 #include "FWCore/Framework/interface/LuminosityBlockForOutput.h"
 #include "FWCore/Framework/interface/EventForOutput.h"
-#include "FWCore/Framework/interface/ConstProductRegistry.h"
 #include "FWCore/Framework/interface/FileBlock.h"
 #include "FWCore/Framework/interface/ProductProvenanceRetriever.h"
-#include "FWCore/Framework/interface/ConstProductRegistry.h"
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
@@ -18,6 +16,7 @@
 #include "FWCore/Utilities/interface/ConvertException.h"
 
 #include "DataFormats/Provenance/interface/ParentageRegistry.h"
+#include "DataFormats/Provenance/interface/ProductRegistry.h"
 #include "DataFormats/Provenance/interface/FileID.h"
 #include "DataFormats/Provenance/interface/ProcessHistoryRegistry.h"
 #include "DataFormats/Provenance/interface/Provenance.h"
@@ -56,14 +55,15 @@ namespace edm {
   RNTupleOutputFile::RNTupleOutputFile(std::string const& iFileName,
                                        FileBlock const& iFileBlock,
                                        SelectedProductsForBranchType const& iSelected,
-                                       Config const& iConfig)
+                                       Config const& iConfig,
+                                       bool anyProductProduced)
       : file_(iFileName.c_str(), "recreate", ""),
         wrapperBaseTClass_(TClass::GetClass("edm::WrapperBase")),
         selectorConfig_(iConfig.selectorConfig),
         dropMetaData_(iConfig.dropMetaData) {
     setupRuns(iSelected[InRun], iConfig);
     setupLumis(iSelected[InLumi], iConfig);
-    setupEvents(iSelected[InEvent], iConfig);
+    setupEvents(iSelected[InEvent], iConfig, anyProductProduced);
     setupPSets(iConfig);
     setupParentage(iConfig);
     setupMetaData(iConfig);
@@ -212,7 +212,9 @@ namespace edm {
     products_[InLumi] = associateDataProducts(iProducts, lumis_->GetModel());
     lumiAuxField_ = lumis_->GetModel().GetToken(kLumiAuxName);
   }
-  void RNTupleOutputFile::setupEvents(SelectedProducts const& iProducts, Config const& iConfig) {
+  void RNTupleOutputFile::setupEvents(SelectedProducts const& iProducts,
+                                      Config const& iConfig,
+                                      bool anyProductProduced) {
     std::string kEventAuxName = "EventAuxiliary";
     std::string kEventProvName = "EventProductProvenance";
     std::string kEventSelName = "EventSelections";
@@ -259,8 +261,7 @@ namespace edm {
     // Note: The EventSelectionIDVector should have a one to one correspondence with the processes in the process history.
     // Therefore, a new entry should be added if and only if the current process has been added to the process history,
     // which is done if and only if there is a produced product.
-    Service<ConstProductRegistry> reg;
-    extendSelectorConfig_ = reg->anyProductProduced() || !iConfig.wantAllEvents;
+    extendSelectorConfig_ = anyProductProduced || !iConfig.wantAllEvents;
   }
   void RNTupleOutputFile::setupPSets(Config const& iConfig) {
     auto model = ROOT::Experimental::RNTupleModel::CreateBare();
@@ -368,7 +369,8 @@ namespace edm {
   }
 
   void RNTupleOutputFile::fillMetaData(BranchIDLists const& iBranchIDLists,
-                                       ThinnedAssociationsHelper const& iThinnedHelper) {
+                                       ThinnedAssociationsHelper const& iThinnedHelper,
+                                       ProductRegistry const& iReg) {
     auto rentry = metaData_->CreateEntry();
 
     FileID id(createGlobalIdentifier());
@@ -386,8 +388,7 @@ namespace edm {
 
     // Make a local copy of the ProductRegistry, removing any transient or pruned products.
     using ProductList = ProductRegistry::ProductList;
-    Service<ConstProductRegistry> reg;
-    ProductRegistry pReg(reg->productList());
+    ProductRegistry pReg(iReg.productList());
     ProductList& pList = const_cast<ProductList&>(pReg.productList());
     for (auto const& prod : pList) {
       if (prod.second.branchID() != prod.second.originalBranchID()) {
@@ -427,10 +428,11 @@ namespace edm {
   }
 
   void RNTupleOutputFile::reallyCloseFile(BranchIDLists const& iBranchIDLists,
-                                          ThinnedAssociationsHelper const& iThinnedHelper) {
+                                          ThinnedAssociationsHelper const& iThinnedHelper,
+                                          ProductRegistry const& iReg) {
     fillPSets();
     fillParentage();
-    fillMetaData(iBranchIDLists, iThinnedHelper);
+    fillMetaData(iBranchIDLists, iThinnedHelper, iReg);
   }
 
   RNTupleOutputFile::~RNTupleOutputFile() {}
