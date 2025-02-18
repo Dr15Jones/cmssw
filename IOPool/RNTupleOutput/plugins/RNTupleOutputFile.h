@@ -14,7 +14,7 @@
 #include "DataFormats/Provenance/interface/ProcessHistoryRegistry.h"
 #include "DataFormats/Provenance/interface/Provenance.h"
 #include "DataFormats/Provenance/interface/IndexIntoFile.h"
-#include "DataFormats/Provenance/interface/BranchChildren.h"
+#include "DataFormats/Provenance/interface/ProductDependencies.h"
 #include "DataFormats/Provenance/interface/ThinnedAssociationsHelper.h"
 #include "DataFormats/Provenance/interface/SelectedProducts.h"
 #include "DataFormats/Provenance/interface/StoredProductProvenance.h"
@@ -70,11 +70,11 @@ namespace edm {
     void openFile(FileBlock const& fb);
 
     struct Product {
-      Product(EDGetToken iGet, BranchDescription const* iDesc, REntry::RFieldToken iField)
+      Product(EDGetToken iGet, ProductDescription const* iDesc, REntry::RFieldToken iField)
           : get_(std::move(iGet)), desc_(iDesc), field_(std::move(iField)) {}
 
       EDGetToken get_;
-      BranchDescription const* desc_;
+      ProductDescription const* desc_;
       REntry::RFieldToken field_;
     };
 
@@ -133,7 +133,7 @@ namespace edm {
     IndexIntoFile::EntryNumber_t lumiEntryNumber_ = 0LL;
     IndexIntoFile::EntryNumber_t runEntryNumber_ = 0LL;
     IndexIntoFile indexIntoFile_;
-    BranchChildren branchChildren_;
+    ProductDependencies productDependencies_;
 
     std::array<std::vector<Product>, NumBranchTypes> products_;
     TClass const* wrapperBaseTClass_;

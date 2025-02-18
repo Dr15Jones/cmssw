@@ -23,15 +23,15 @@ DataProductsRNTuple::DataProductsRNTuple(TFile* iFile,
   auxDesc_ = reader_->GetDescriptor().FindFieldId(iAux);
 }
 
-bool DataProductsRNTuple::setupToReadProductIfAvailable(BranchDescription& iBranch) {
-  auto fixedName = fixName(iBranch.branchName());
+bool DataProductsRNTuple::setupToReadProductIfAvailable(ProductDescription& iProduct) {
+  auto fixedName = fixName(iProduct.branchName());
   auto desc = reader_->GetDescriptor().FindFieldId(fixedName);
   if (desc == ROOT::Experimental::kInvalidDescriptorId) {
     return false;
   }
-  iBranch.initFromDictionary();
-  iBranch.setOnDemand(true);
-  infos_.emplace(iBranch.branchID().id(), ProductInfo(iBranch.wrappedName(), desc, std::move(fixedName)));
+  iProduct.initFromDictionary();
+  iProduct.setOnDemand(true);
+  infos_.emplace(iProduct.branchID().id(), ProductInfo(iProduct.wrappedName(), desc, std::move(fixedName)));
   return true;
 }
 
@@ -57,10 +57,10 @@ std::shared_ptr<edm::WrapperBase> DataProductsRNTuple::WrapperFactory::toWrapper
   return getWrapperBasePtr(iProduct.release(), offsetToWrapperBase_);
 }
 
-std::shared_ptr<edm::WrapperBase> DataProductsRNTuple::dataProduct(edm::BranchID const& iBranch, int iEntry) {
-  auto const& info = infos_.find(iBranch.id());
+std::shared_ptr<edm::WrapperBase> DataProductsRNTuple::dataProduct(edm::BranchID const& iProduct, int iEntry) {
+  auto const& info = infos_.find(iProduct.id());
   if (info == infos_.end()) {
-    throw cms::Exception("RNTupleError") << " unable to find branch id " << iBranch.id() << " for entry " << iEntry;
+    throw cms::Exception("RNTupleError") << " unable to find branch id " << iProduct.id() << " for entry " << iEntry;
   }
   assert(info != infos_.end());
 

@@ -8,7 +8,7 @@
 #include "DataFormats/Provenance/interface/ProcessHistory.h"
 #include "DataFormats/Provenance/interface/ProductRegistry.h"
 #include "DataFormats/Provenance/interface/ThinnedAssociationsHelper.h"
-#include "DataFormats/Provenance/interface/BranchChildren.h"
+#include "DataFormats/Provenance/interface/ProductDependencies.h"
 #include "DataFormats/Provenance/interface/ProcessHistoryRegistry.h"
 #include "DataFormats/Provenance/interface/Parentage.h"
 #include "DataFormats/Provenance/interface/ParentageRegistry.h"
@@ -85,15 +85,15 @@ namespace edm {
     edm::ThinnedAssociationsHelper thinned;
     entry->BindRawPtr("ThinnedAssociationsHelper", &thinned);
 
-    edm::BranchChildren branchChildren;
-    entry->BindRawPtr("ProductDependencies", &branchChildren);
+    edm::ProductDependencies productDependencies;
+    entry->BindRawPtr("ProductDependencies", &productDependencies);
 
     meta->LoadEntry(0, *entry);
 
     {
       auto& pList = reg.productListUpdator();
       for (auto& product : pList) {
-        BranchDescription& prod = product.second;
+        ProductDescription& prod = product.second;
         prod.initBranchName();
         if (not prod.present())
           continue;

@@ -1,7 +1,7 @@
 #if !defined(DataProductsRNTuple_h)
 #define DataProductsRNTuple_h
 
-#include "DataFormats/Provenance/interface/BranchDescription.h"
+#include "DataFormats/Provenance/interface/ProductDescription.h"
 #include "DataFormats/Common/interface/WrapperBase.h"
 #include "FWCore/Utilities/interface/InputType.h"
 #include "ROOT/RNTupleReader.hxx"
@@ -20,7 +20,7 @@ namespace edm::input {
                         std::string const& iAux,
                         ROOT::Experimental::RNTupleReadOptions const& iOpts);
 
-    bool setupToReadProductIfAvailable(BranchDescription&);
+    bool setupToReadProductIfAvailable(ProductDescription&);
 
     std::shared_ptr<edm::WrapperBase> dataProduct(edm::BranchID const&, int iEntry);
 

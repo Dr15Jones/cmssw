@@ -21,7 +21,7 @@
 #include "DataFormats/Provenance/interface/ProcessHistoryRegistry.h"
 #include "DataFormats/Provenance/interface/Provenance.h"
 #include "DataFormats/Provenance/interface/IndexIntoFile.h"
-#include "DataFormats/Provenance/interface/BranchChildren.h"
+#include "DataFormats/Provenance/interface/ProductDependencies.h"
 
 #include "IOPool/Common/interface/getWrapperBasePtr.h"
 
@@ -68,10 +68,10 @@ namespace edm {
     setupParentage(iConfig);
     setupMetaData(iConfig);
 
-    auto const& branchToChildMap = iFileBlock.branchChildren().childLookup();
+    auto const& branchToChildMap = iFileBlock.productDependencies().childLookup();
     for (auto const& parentToChildren : branchToChildMap) {
       for (auto const& child : parentToChildren.second) {
-        branchChildren_.insertChild(parentToChildren.first, child);
+        productDependencies_.insertChild(parentToChildren.first, child);
       }
     }
   }
@@ -413,16 +413,16 @@ namespace edm {
     rentry->BindRawPtr("ProductRegistry", &pReg);
     rentry->BindRawPtr("ThinnedAssociationsHelper", const_cast<void*>(static_cast<const void*>(&iThinnedHelper)));
     rentry->BindRawPtr("BranchIDLists", const_cast<void*>(static_cast<const void*>(&iBranchIDLists)));
-    rentry->BindRawPtr("ProductDependencies", const_cast<void*>(static_cast<const void*>(&branchChildren_)));
+    rentry->BindRawPtr("ProductDependencies", const_cast<void*>(static_cast<const void*>(&productDependencies_)));
 
     metaData_->Fill(*rentry);
   }
 
   void RNTupleOutputFile::openFile(FileBlock const& fb) {
-    auto const& branchToChildMap = fb.branchChildren().childLookup();
+    auto const& branchToChildMap = fb.productDependencies().childLookup();
     for (auto const& parentToChildren : branchToChildMap) {
       for (auto const& child : parentToChildren.second) {
-        branchChildren_.insertChild(parentToChildren.first, child);
+        productDependencies_.insertChild(parentToChildren.first, child);
       }
     }
   }
