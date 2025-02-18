@@ -1,5 +1,5 @@
-#ifndef IOPool_Input_RNTupleInputFile_h
-#define IOPool_Input_RNTupleInputFile_h
+#ifndef FWIO_RNTuple_RNTupleInputFile_h
+#define FWIO_RNTuple_RNTupleInputFile_h
 
 #include "DataFormats/Provenance/interface/IndexIntoFile.h"
 #include "DataFormats/Provenance/interface/ParentageID.h"

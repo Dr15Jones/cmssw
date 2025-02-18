@@ -1,5 +1,5 @@
-#if !defined(IOPool_RNTuptleOutput_RNTupleOutputFile_h)
-#define IOPool_RNTuptleOutput_RNTupleOutputFile_h
+#if !defined(FWIO_RNTuple_RNTupleOutputFile_h)
+#define FWIO_RNTuple_RNTupleOutputFile_h
 
 #include "FWCore/Framework/interface/EventForOutput.h"
 #include "FWCore/Framework/interface/FileBlock.h"
