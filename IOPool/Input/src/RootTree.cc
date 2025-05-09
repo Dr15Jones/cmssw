@@ -410,6 +410,25 @@ namespace edm {
       return treeCache_.get();
     }
   }
+  TTreeCache* RootTree::getAuxCache(TBranch* auxBranch) const {
+    if (not auxCache_ and cacheSize_ > 0) {
+      assert(tree_);
+      tree_->SetCacheSize(static_cast<Long64_t>(cacheSize_));
+      assert(filePtr_);
+      auxCache_.reset(dynamic_cast<TTreeCache*>(filePtr_->GetCacheRead(tree_)));
+      if (auxCache_) {
+        auxCache_->SetEnablePrefetching(enablePrefetching_);
+        auxCache_->SetEnablePrefetching(false);
+        filePtr_->SetCacheRead(nullptr, tree_);
+        auxCache_->SetLearnEntries(0);
+        auxCache_->StartLearningPhase();
+        auxCache_->SetEntryRange(0, tree_->GetEntries());
+        auxCache_->AddBranch(auxBranch->GetName(), kTRUE);
+        auxCache_->StopLearningPhase();
+      }
+    }
+    return auxCache_.get();
+  }
 
   void RootTree::getEntryForAllBranches() const {
     filePtr_->SetCacheRead(rawTreeCache_.get(), tree_);
@@ -420,8 +439,12 @@ namespace edm {
   }
 
   void RootTree::getEntry(TBranch* branch, EntryNumber entryNumber) const {
+    getEntryUsingCache(branch, entryNumber, selectCache(branch, entryNumber));
+  }
+
+  inline void RootTree::getEntryUsingCache(TBranch* branch, EntryNumber entryNumber, TTreeCache* cache) const {
     try {
-      TTreeCache* cache = selectCache(branch, entryNumber);
+
       filePtr_->SetCacheRead(cache, tree_);
       branch->GetEntry(entryNumber);
       filePtr_->SetCacheRead(nullptr, tree_);
@@ -529,6 +552,7 @@ namespace edm {
     rawTreeCache_.reset();
     triggerTreeCache_.reset();
     rawTriggerTreeCache_.reset();
+    auxCache_.reset();
     // We give up our shared ownership of the TFile itself.
     filePtr_.reset();
   }
