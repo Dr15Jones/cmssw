@@ -294,6 +294,8 @@ class SwitchProducer(EDProducer):
             message += "\nThe original parameters are:\n"
             message += self.dumpPython() + '\n'
             raise ValueError(message)
+        if isinstance(value, EDProducer):
+            value = value.clone()
         self.__dict__[name]=value
         if self.hasLabel_():
             value.setLabel(self.caseLabel_(self.label_(), name))
@@ -326,6 +328,8 @@ class SwitchProducer(EDProducer):
             if not self.__typeIsValid(value):
                 raise TypeError(name+" can only be set to a cms.EDProducer or cms.EDAlias")
             # We should always receive an cms.EDProducer
+            if isinstance(value, EDProducer):
+                value = value.clone()
             self.__dict__[name] = value
             if self.hasLabel_():
                 value.setLabel(self.caseLabel_(self.label_(), name))
@@ -587,6 +591,16 @@ if __name__ == "__main__":
             self.assertEqual(sp.label_(), "other")
             self.assertEqual(sp.test1.label_(), "other@test1")
             self.assertEqual(sp.test2.label_(), "other@test2")
+            # Existing EDProducer
+            p = EDProducer("Foo")
+            sp = SwitchProducerTest(test1 = p)
+            #simulates if the switch gets added to Process first
+            sp.setLabel("sp")
+            #Process does a clear on the label before setting
+            p.setLabel(None)            
+            p.setLabel("P")            
+            self.assertEqual(sp.test1.label_(), "sp@test1")
+
 
             # Case decision
             accelerators = ["test1", "test2", "test3"]
