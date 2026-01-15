@@ -46,7 +46,8 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE::lst {
                                                             uint8_t layer,
                                                             unsigned int quintupletIndex,
                                                             const float (&t5Embed)[Params_T5::kEmbed],
-                                                            bool tightCutFlag) {
+                                                            bool tightCutFlag,
+                                                            float dnnScore) {
     quintuplets.tripletIndices()[quintupletIndex][0] = innerTripletIndex;
     quintuplets.tripletIndices()[quintupletIndex][1] = outerTripletIndex;
 
@@ -88,6 +89,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE::lst {
     quintuplets.nonAnchorChiSquared()[quintupletIndex] = nonAnchorChiSquared;
     quintuplets.dBeta1()[quintupletIndex] = dBeta1;
     quintuplets.dBeta2()[quintupletIndex] = dBeta2;
+    quintuplets.dnnScore()[quintupletIndex] = dnnScore;
 
     CMS_UNROLL_LOOP
     for (unsigned int i = 0; i < Params_T5::kEmbed; ++i) {
@@ -96,7 +98,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE::lst {
   }
 
   //bounds can be found at http://uaf-10.t2.ucsd.edu/~bsathian/SDL/T5_RZFix/t5_rz_thresholds.txt
-  template <typename TAcc>
+  template <alpaka::concepts::Acc TAcc>
   ALPAKA_FN_ACC ALPAKA_FN_INLINE bool passT5RZConstraint(TAcc const& acc,
                                                          ModulesConst modules,
                                                          MiniDoubletsConst mds,
@@ -528,7 +530,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE::lst {
     return true;
   }
 
-  template <typename TAcc>
+  template <alpaka::concepts::Acc TAcc>
   ALPAKA_FN_ACC ALPAKA_FN_INLINE bool T5HasCommonMiniDoublet(TripletsConst triplets,
                                                              SegmentsConst segments,
                                                              unsigned int innerTripletIndex,
@@ -543,7 +545,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE::lst {
     return (innerOuterOuterMiniDoubletIndex == outerInnerInnerMiniDoubletIndex);
   }
 
-  template <typename TAcc>
+  template <alpaka::concepts::Acc TAcc>
   ALPAKA_FN_ACC ALPAKA_FN_INLINE void computeSigmasForRegression(TAcc const& acc,
                                                                  ModulesConst modules,
                                                                  const uint16_t* lowerModuleIndices,
@@ -630,7 +632,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE::lst {
     }
   }
 
-  template <typename TAcc>
+  template <alpaka::concepts::Acc TAcc>
   ALPAKA_FN_ACC ALPAKA_FN_INLINE float computeRadiusUsingRegression(TAcc const& acc,
                                                                     unsigned int nPoints,
                                                                     float* xs,
@@ -729,7 +731,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE::lst {
     return radius;
   }
 
-  template <typename TAcc>
+  template <alpaka::concepts::Acc TAcc>
   ALPAKA_FN_ACC ALPAKA_FN_INLINE float computeChiSquared(TAcc const& acc,
                                                          unsigned int nPoints,
                                                          float* xs,
@@ -776,7 +778,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE::lst {
     return chiSquared;
   }
 
-  template <typename TAcc>
+  template <alpaka::concepts::Acc TAcc>
   ALPAKA_FN_ACC ALPAKA_FN_INLINE void runDeltaBetaIterations(TAcc const& acc,
                                                              float& betaIn,
                                                              float& betaOut,
@@ -875,7 +877,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE::lst {
     }
   }
 
-  template <typename TAcc>
+  template <alpaka::concepts::Acc TAcc>
   ALPAKA_FN_ACC ALPAKA_FN_INLINE bool runQuintupletdBetaCutBBBB(TAcc const& acc,
                                                                 ModulesConst modules,
                                                                 MiniDoubletsConst mds,
@@ -1054,7 +1056,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE::lst {
     return dBeta * dBeta <= dBetaCut2;
   }
 
-  template <typename TAcc>
+  template <alpaka::concepts::Acc TAcc>
   ALPAKA_FN_ACC ALPAKA_FN_INLINE bool runQuintupletdBetaCutBBEE(TAcc const& acc,
                                                                 ModulesConst modules,
                                                                 MiniDoubletsConst mds,
@@ -1220,7 +1222,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE::lst {
     return dBeta * dBeta <= dBetaCut2;
   }
 
-  template <typename TAcc>
+  template <alpaka::concepts::Acc TAcc>
   ALPAKA_FN_ACC ALPAKA_FN_INLINE bool runQuintupletdBetaCutEEEE(TAcc const& acc,
                                                                 ModulesConst modules,
                                                                 MiniDoubletsConst mds,
@@ -1350,7 +1352,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE::lst {
     return dBeta * dBeta <= dBetaCut2;
   }
 
-  template <typename TAcc>
+  template <alpaka::concepts::Acc TAcc>
   ALPAKA_FN_ACC ALPAKA_FN_INLINE bool runQuintupletdBetaAlgoSelector(TAcc const& acc,
                                                                      ModulesConst modules,
                                                                      MiniDoubletsConst mds,
@@ -1467,7 +1469,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE::lst {
     return false;
   }
 
-  template <typename TAcc>
+  template <alpaka::concepts::Acc TAcc>
   ALPAKA_FN_ACC ALPAKA_FN_INLINE bool runQuintupletDefaultAlgo(TAcc const& acc,
                                                                ModulesConst modules,
                                                                MiniDoubletsConst mds,
@@ -1491,6 +1493,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE::lst {
                                                                float& nonAnchorChiSquared,
                                                                float& dBeta1,
                                                                float& dBeta2,
+                                                               float& dnnScore,
                                                                bool& tightCutFlag,
                                                                float (&t5Embed)[Params_T5::kEmbed],
                                                                const float ptCut) {
@@ -1531,7 +1534,8 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE::lst {
                                               fifthMDIndex,
                                               innerRadius,
                                               outerRadius,
-                                              bridgeRadius);
+                                              bridgeRadius,
+                                              dnnScore);
     tightCutFlag = tightCutFlag and inference;  // T5-in-TC cut
     if (!inference)                             // T5-building cut
       return false;
@@ -1754,7 +1758,8 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE::lst {
               uint16_t lowerModule5 = triplets.lowerModuleIndices()[outerTripletIndex][2];
 
               float innerRadius, outerRadius, bridgeRadius, regressionCenterX, regressionCenterY, regressionRadius,
-                  rzChiSquared, chiSquared, nonAnchorChiSquared, dBeta1, dBeta2;  //required for making distributions
+                  rzChiSquared, chiSquared, nonAnchorChiSquared, dBeta1, dBeta2,
+                  dnnScore;  //required for making distributions
 
               float t5Embed[Params_T5::kEmbed] = {0.f};
 
@@ -1783,6 +1788,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE::lst {
                                                       nonAnchorChiSquared,
                                                       dBeta1,
                                                       dBeta2,
+                                                      dnnScore,
                                                       tightCutFlag,
                                                       t5Embed,
                                                       ptCut);
@@ -1841,7 +1847,8 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE::lst {
                                           layer,
                                           quintupletIndex,
                                           t5Embed,
-                                          tightCutFlag);
+                                          tightCutFlag,
+                                          dnnScore);
 
                     triplets.partOfT5()[quintuplets.tripletIndices()[quintupletIndex][0]] = true;
                     triplets.partOfT5()[quintuplets.tripletIndices()[quintupletIndex][1]] = true;
@@ -1890,7 +1897,8 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE::lst {
           uint16_t lowerModule5 = triplets.lowerModuleIndices()[outerTripletIndex][2];
 
           float innerRadius, outerRadius, bridgeRadius, regressionCenterX, regressionCenterY, regressionRadius,
-              rzChiSquared, chiSquared, nonAnchorChiSquared, dBeta1, dBeta2;  //required for making distributions
+              rzChiSquared, chiSquared, nonAnchorChiSquared, dBeta1, dBeta2,
+              dnnScore;  //required for making distributions
 
           float t5Embed[Params_T5::kEmbed] = {0.f};
 
@@ -1919,6 +1927,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE::lst {
                                                   nonAnchorChiSquared,
                                                   dBeta1,
                                                   dBeta2,
+                                                  dnnScore,
                                                   tightCutFlag,
                                                   t5Embed,
                                                   ptCut);
@@ -1974,7 +1983,8 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE::lst {
                                       layer,
                                       quintupletIndex,
                                       t5Embed,
-                                      tightCutFlag);
+                                      tightCutFlag,
+                                      dnnScore);
 
                 triplets.partOfT5()[quintuplets.tripletIndices()[quintupletIndex][0]] = true;
                 triplets.partOfT5()[quintuplets.tripletIndices()[quintupletIndex][1]] = true;
@@ -2045,7 +2055,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE::lst {
 
                 float innerRadius, outerRadius, bridgeRadius;
                 float regCx, regCy, regR;
-                float rzChi2, chi2, nonAnchorChi2, dBeta1, dBeta2;
+                float rzChi2, chi2, nonAnchorChi2, dBeta1, dBeta2, dnnScore;
                 float t5Embed[Params_T5::kEmbed] = {0.f};
                 bool tightFlag = false;
 
@@ -2072,6 +2082,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE::lst {
                                                          nonAnchorChi2,
                                                          dBeta1,
                                                          dBeta2,
+                                                         dnnScore,
                                                          tightFlag,
                                                          t5Embed,
                                                          ptCut);

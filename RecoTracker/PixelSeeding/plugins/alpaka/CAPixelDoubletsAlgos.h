@@ -67,7 +67,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE::caPixelDoublets {
     return moduleIsOuterLadderPhase2(moduleId);
   }
 
-  template <typename TrackerTraits, typename TAcc>
+  template <typename TrackerTraits, alpaka::concepts::Acc TAcc>
   ALPAKA_FN_ACC ALPAKA_FN_INLINE bool zSizeCut(
       const TAcc& acc, HitsConstView hh, ::reco::CALayersSoAConstView ll, AlgoParams const& params, int i, int o) {
     const uint32_t mi = hh[i].detectorIndex();
@@ -118,7 +118,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE::caPixelDoublets {
                : innerBarrel && std::abs(mes - int(std::abs(dz / dr) * params.dzdrFact_ + 0.5f)) > params.maxDYPred_;
   }
 
-  template <typename TrackerTraits, typename TAcc>
+  template <typename TrackerTraits, alpaka::concepts::Acc TAcc>
   ALPAKA_FN_ACC ALPAKA_FN_INLINE bool clusterCut(
       const TAcc& acc, HitsConstView hh, ::reco::CALayersSoAConstView ll, AlgoParams const& params, uint32_t i) {
     const uint32_t mi = hh[i].detectorIndex();
@@ -158,7 +158,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE::caPixelDoublets {
     return false;
   }
 
-  template <typename TrackerTraits, typename TAcc>
+  template <typename TrackerTraits, alpaka::concepts::Acc TAcc>
   ALPAKA_FN_ACC ALPAKA_FN_INLINE void doubletsFromHisto(const TAcc& acc,
                                                         uint32_t maxNumOfDoublets,
                                                         CACell<TrackerTraits>* cells,
@@ -420,9 +420,11 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE::caPixelDoublets {
           }
 
           auto ind = alpaka::atomicAdd(acc, nCells, 1u, alpaka::hierarchy::Blocks{});
-          if (ind >= maxNumOfDoublets) {
+          if (ind >= maxNumOfDoublets or ind >= uint32_t(outerHitHisto->capacity())) {
 #ifdef CA_WARNINGS
-            printf("Warning!!!! Too many cells (limit = %d)!\n", maxNumOfDoublets);
+            printf("Warning!!!! Too many cells (maxNumOfDoublets = %d - nHitsToCell = %d)!\n",
+                   maxNumOfDoublets,
+                   outerHitHisto->capacity());
 #endif
             alpaka::atomicSub(acc, nCells, 1u, alpaka::hierarchy::Blocks{});
             break;

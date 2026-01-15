@@ -372,6 +372,8 @@ void BtlLocalRecoValidation::analyze(const edm::Event& iEvent, const edm::EventS
       (simHitIt->second).x = hit_pos.x();
       (simHitIt->second).y = hit_pos.y();
       (simHitIt->second).z = hit_pos.z();
+
+      (simHitIt->second).thetaAtEntry = simHit.thetaAtEntry();
     }
 
   }  // simHit loop
@@ -678,7 +680,7 @@ void BtlLocalRecoValidation::analyze(const edm::Event& iEvent, const edm::EventS
         std::vector<MtdSimLayerClusterRef> simClustersRefs =
             (*itp.first).second;  // the range of itp.first, itp.second should be always 1
         for (unsigned int i = 0; i < simClustersRefs.size(); i++) {
-          auto simClusterRef = simClustersRefs[i];
+          const auto& simClusterRef = simClustersRefs[i];
 
           float simClusEnergy = convertUnitsTo(0.001_MeV, (*simClusterRef).simLCEnergy());  // GeV --> MeV
           float simClusTime = (*simClusterRef).simLCTime();

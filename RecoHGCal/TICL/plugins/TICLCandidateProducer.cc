@@ -31,6 +31,7 @@
 #include "RecoHGCal/TICL/interface/TICLInterpretationAlgoBase.h"
 #include "RecoHGCal/TICL/plugins/TICLInterpretationPluginFactory.h"
 #include "RecoHGCal/TICL/plugins/GeneralInterpretationAlgo.h"
+#include "RecoHGCal/TICL/plugins/GNNInterpretationAlgo.h"
 
 #include "RecoParticleFlow/PFProducer/interface/PFMuonAlgo.h"
 
@@ -332,7 +333,7 @@ void TICLCandidateProducer::produce(edm::Event &evt, const edm::EventSetup &es) 
                         true);
   if (regressionAndPid_) {
     // Run inference algorithm
-    inferenceAlgo_->inputData(layerClusters, *resultTracksters);
+    inferenceAlgo_->inputData(layerClusters, *resultTracksters, rhtools_);
     inferenceAlgo_->runInference(
         *resultTracksters);  //option to use "Linking" instead of "CLU3D"/"energyAndPid" instead of "PID"
   }
