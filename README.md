@@ -1,6 +1,6 @@
 Introduction to CMSSW: http://cms-sw.github.io
 
-Development in this fork starts from `CMSSW_16_0_0_pre2`.
+Development in this fork starts from `CMSSW_16_1_0_pre1`.
 
 Run these instructions *first* to set up the development environment: https://github.com/code4hep/build
 
