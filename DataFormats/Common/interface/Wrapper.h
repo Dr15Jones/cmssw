@@ -47,7 +47,7 @@ namespace edm {
     Wrapper(T*);
 
     //Used by ROOT storage
-    CMS_CLASS_VERSION(4)
+    CMS_CLASS_VERSION(3)
 
   private:
     constexpr T construct_() {
