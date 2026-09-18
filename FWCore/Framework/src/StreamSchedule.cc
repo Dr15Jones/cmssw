@@ -512,7 +512,7 @@ namespace edm {
   void StreamSchedule::replaceModule(maker::ModuleHolder* iMod, std::string const& iLabel) {
     for (auto const& worker : allWorkersRuns()) {
       if (worker->description()->moduleLabel() == iLabel) {
-        iMod->replaceModuleFor(worker);
+        iMod->replaceModuleFor(worker, RunTransitionInfo::key(), TransitionPhaseStream::value);
         try {
           convertException::wrap([&] { iMod->beginStream(streamID_); });
         } catch (cms::Exception& ex) {
@@ -525,13 +525,13 @@ namespace edm {
     }
     for (auto const& worker : allWorkersEvents()) {
       if (worker->description()->moduleLabel() == iLabel) {
-        iMod->replaceModuleFor(worker);
+        iMod->replaceModuleFor(worker, EventTransitionInfo::key(), TransitionPhaseGlobal::value);
         break;
       }
     }
     for (auto const& worker : allWorkersLumis()) {
       if (worker->description()->moduleLabel() == iLabel) {
-        iMod->replaceModuleFor(worker);
+        iMod->replaceModuleFor(worker, LumiTransitionInfo::key(), TransitionPhaseStream::value);
         break;
       }
     }

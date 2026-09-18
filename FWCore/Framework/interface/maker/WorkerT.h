@@ -10,6 +10,7 @@ WorkerT: Code common to all workers.
 #include "FWCore/Common/interface/FWCoreCommonFwd.h"
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/TransitionInfoTypes.h"
+#include "FWCore/Framework/interface/TransitionPhaseTypes.h"
 #include "FWCore/Framework/interface/maker/Worker.h"
 #include "FWCore/Framework/interface/maker/WorkerParams.h"
 #include "FWCore/ServiceRegistry/interface/ServiceRegistryfwd.h"
@@ -31,22 +32,22 @@ namespace edm {
     struct ComponentDescription;
   }  // namespace eventsetup
 
-  template <typename T>
-  class WorkerT : public Worker {
+  template <typename T, typename TI = EventTransitionInfo, typename TP = TransitionPhaseGlobal>
+  class WorkerT : public TransitionWorker<TI, TP> {
   public:
     typedef T ModuleType;
-    typedef WorkerT<T> WorkerType;
+    typedef WorkerT<T, TI, TP> WorkerType;
     WorkerT(std::shared_ptr<T>, ModuleDescription const&, ExceptionToActionTable const* actions);
 
     ~WorkerT() override;
 
     void setModule(std::shared_ptr<T> iModule) {
       module_ = iModule;
-      resetModuleDescription(&(module_->moduleDescription()));
+      this->resetModuleDescription(&(module_->moduleDescription()));
     }
 
-    Types moduleType() const override;
-    ConcurrencyTypes moduleConcurrencyType() const override;
+    TransitionWorker<TI, TP>::Types moduleType() const override;
+    TransitionWorker<TI, TP>::ConcurrencyTypes moduleConcurrencyType() const override;
 
     bool wantsProcessBlocks() const noexcept final;
     bool wantsInputProcessBlocks() const noexcept final;
@@ -110,7 +111,7 @@ namespace edm {
     bool implDoStreamEnd(StreamID, LumiTransitionInfo const&, ModuleCallingContext const*) override;
     bool implDoEnd(LumiTransitionInfo const&, ModuleCallingContext const*) override;
     bool implDoWrite(LumiTransitionInfo const&, ModuleCallingContext const*) override;
-    TaskQueueAdaptor serializeRunModule() override;
+    typename TransitionWorker<TI, TP>::TaskQueueAdaptor serializeRunModule() override;
 
     void itemsToGet(BranchType branchType, std::vector<ProductResolverIndexAndSkipBit>& indexes) const override {
       module_->itemsToGet(branchType, indexes);
