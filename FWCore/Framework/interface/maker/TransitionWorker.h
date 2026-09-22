@@ -5,6 +5,11 @@
 
 #include "FWCore/Framework/interface/maker/Worker.h"
 namespace edm {
+  class EventTransitionInfo;
+  class RunTransitionInfo;
+  class LumiTransitionInfo;
+  class TransitionPhaseGlobal;
+  class TransitionPhaseStream;
   template <typename TI, typename TP>
   class TransitionWorker : public Worker {
   public:
@@ -12,5 +17,10 @@ namespace edm {
     ~TransitionWorker() override = default;
   };
 
+  using StreamRunWorker = TransitionWorker<RunTransitionInfo, TransitionPhaseStream>;
+  using StreamLumiWorker = TransitionWorker<LumiTransitionInfo, TransitionPhaseStream>;
+  using GlobalRunWorker = TransitionWorker<RunTransitionInfo, TransitionPhaseGlobal>;
+  using GlobalLumiWorker = TransitionWorker<LumiTransitionInfo, TransitionPhaseGlobal>;
+  using GlobalEventWorker = TransitionWorker<EventTransitionInfo, TransitionPhaseGlobal>;
 }  // namespace edm
 #endif

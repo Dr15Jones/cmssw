@@ -190,8 +190,8 @@ namespace edm {
         workerManager.setupResolvers(transitionInfo.principal());
 
         auto& aw = workerManager.allWorkers();
-        for (Worker* worker : boost::adaptors::reverse(aw)) {
-          worker->doWorkAsync<T>(
+        for (auto* worker : boost::adaptors::reverse(aw)) {
+          worker->template doWorkAsync<T>(
               holdForLoop, transitionInfo, token, StreamID::invalidStreamID(), parentContext, globalContext.get());
         }
       } catch (...) {

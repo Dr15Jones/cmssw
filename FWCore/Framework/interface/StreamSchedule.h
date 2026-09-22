@@ -121,9 +121,6 @@ namespace edm {
     using TrigPaths = std::vector<Path>;
     using TrigResPtr = std::shared_ptr<HLTGlobalStatus>;
     using TrigResConstPtr = std::shared_ptr<HLTGlobalStatus const>;
-    using AllWorkers = std::vector<Worker*>;
-
-    using Workers = std::vector<Worker*>;
 
     using PathWorkers = std::vector<WorkerInPath>;
 

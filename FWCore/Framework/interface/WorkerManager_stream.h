@@ -36,7 +36,7 @@ namespace edm {
         // Spawn them in reverse order. At least in the single threaded case that makes
         // them run in forward order (and more likely to with multiple threads).
         for (auto it = allWorkers().rbegin(), itEnd = allWorkers().rend(); it != itEnd; ++it) {
-          Worker* worker = *it;
+          auto* worker = *it;
 
           ParentContext parentContext(context);
 
@@ -49,7 +49,7 @@ namespace edm {
           // global begin/end run/lumi transitions through here. They shouldn't
           // need prefetching either and for some years nothing has been using
           // that part of the code anyway...)
-          worker->doWorkNoPrefetchingAsync<T>(task, info, token, streamID, parentContext, topContext);
+          worker->template doWorkNoPrefetchingAsync<T>(task, info, token, streamID, parentContext, topContext);
         }
       }
     }

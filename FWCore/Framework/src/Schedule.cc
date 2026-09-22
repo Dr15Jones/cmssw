@@ -410,7 +410,7 @@ namespace edm {
       std::transform(workers.begin(),
                      workers.end(),
                      std::back_inserter(modDesc),
-                     [](const Worker* iWorker) -> const ModuleDescription* { return iWorker->description(); });
+                     [](const auto* iWorker) -> const ModuleDescription* { return iWorker->description(); });
 
       // propagate_const<T> has no reset() function
       summaryTimeKeeper_ = std::make_unique<SystemTimeKeeper>(prealloc.numberOfStreams(), modDesc, tns, processContext);
@@ -868,7 +868,7 @@ namespace edm {
                               ParameterSet const& iPSet,
                               const SignallingProductRegistryFiller& iRegistry,
                               eventsetup::ESRecordsToProductResolverIndices const& iIndices) {
-    Worker* found = nullptr;
+    GlobalEventWorker* found = nullptr;
     for (auto const& worker : allWorkersEvents()) {
       if (worker->description()->moduleLabel() == iLabel) {
         found = worker;

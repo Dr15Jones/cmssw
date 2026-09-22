@@ -78,7 +78,7 @@ namespace edm {
 
     void initializeBranchToReadingWorker(std::vector<std::string> const& branchesToDeleteEarly,
                                          ProductRegistry const& preg,
-                                         std::multimap<std::string, Worker*>& branchToReadingWorker) {
+                                         std::multimap<std::string, GlobalEventWorker*>& branchToReadingWorker) {
       auto vBranchesToDeleteEarly = branchesToDeleteEarly;
       // Remove any duplicates
       std::sort(vBranchesToDeleteEarly.begin(), vBranchesToDeleteEarly.end(), std::less<std::string>());
@@ -117,7 +117,7 @@ namespace edm {
       //set placeholder for the branch, we will remove the nullptr if a
       // module actually wants the branch.
       for (auto const& branch : vBranchesToDeleteEarly) {
-        branchToReadingWorker.insert(std::make_pair(branch, static_cast<Worker*>(nullptr)));
+        branchToReadingWorker.insert(std::make_pair(branch, static_cast<GlobalEventWorker*>(nullptr)));
       }
     }
   }  // namespace
@@ -198,11 +198,11 @@ namespace edm {
                                              std::vector<std::string> const& modulesToSkip,
                                              edm::ProductRegistry const& preg) {
     // setup the list with those products actually registered for this job
-    std::multimap<std::string, Worker*> branchToReadingWorker;
+    std::multimap<std::string, GlobalEventWorker*> branchToReadingWorker;
     initializeBranchToReadingWorker(branchesToDeleteEarly, preg, branchToReadingWorker);
 
     const std::vector<std::string> kEmpty;
-    std::map<Worker*, unsigned int> reserveSizeForWorker;
+    std::map<GlobalEventWorker*, unsigned int> reserveSizeForWorker;
     unsigned int upperLimitOnReadingWorker = 0;
     unsigned int upperLimitOnIndicies = 0;
     unsigned int nUniqueBranchesToDelete = branchToReadingWorker.size();
@@ -345,7 +345,7 @@ namespace edm {
       earlyDeleteHelpers_.reserve(upperLimitOnReadingWorker);
       earlyDeleteHelperToBranchIndicies_.resize(upperLimitOnIndicies, 0);
       earlyDeleteBranchToCount_.reserve(nUniqueBranchesToDelete);
-      std::map<const Worker*, EarlyDeleteHelper*> alreadySeenWorkers;
+      std::map<const GlobalEventWorker*, EarlyDeleteHelper*> alreadySeenWorkers;
       std::string lastBranchName;
       size_t nextOpenIndex = 0;
       unsigned int* beginAddress = &(earlyDeleteHelperToBranchIndicies_.front());
@@ -431,7 +431,7 @@ namespace edm {
   }
 
   void StreamSchedule::fillEndPath(EndPathInfo const& iEndPath, int bitpos) {
-    Worker* workerPtr = nullptr;
+    GlobalEventWorker* workerPtr = nullptr;
     if (iEndPath.inserter_) {
       workerPtr = workerManagerEvents_.getWorkerForModule(*iEndPath.inserter_);
       endPathStatusInserterWorkers_.emplace_back(workerPtr);
