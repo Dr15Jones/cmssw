@@ -228,11 +228,11 @@ namespace edm {
                                edm::ProductRegistry const& preg);
 
     /// returns the collection of pointers to workers
-    AllWorkers const& allWorkersRuns() const { return workerManagerRuns_.allWorkers(); }
-    AllWorkers const& allWorkersLumis() const { return workerManagerLumis_.allWorkers(); }
-    AllWorkers const& allWorkersEvents() const { return workerManagerEvents_.allWorkers(); }
+    auto const& allWorkersRuns() const { return workerManagerRuns_.allWorkers(); }
+    auto const& allWorkersLumis() const { return workerManagerLumis_.allWorkers(); }
+    auto const& allWorkersEvents() const { return workerManagerEvents_.allWorkers(); }
 
-    AllWorkers const& unscheduledWorkersEvents() const { return workerManagerEvents_.unscheduledWorkers(); }
+    auto const& unscheduledWorkersEvents() const { return workerManagerEvents_.unscheduledWorkers(); }
     unsigned int numberOfUnscheduledModules() const { return number_of_unscheduled_modules_; }
 
     StreamContext const& context() const { return streamContext_; }

@@ -1212,13 +1212,5 @@ namespace edm {
     std::exception_ptr prefetchingException;  // null because there was no prefetching to do
     return runModuleAfterAsyncPrefetch<T>(prefetchingException, transitionInfo, streamID, parentContext, context);
   }
-
-  template <typename TI, typename TP>
-  class TransitionWorker : public Worker {
-  public:
-    TransitionWorker(ModuleDescription const& iMD, ExceptionToActionTable const* iActions)
-        : Worker(iMD, iActions) {}
-    ~TransitionWorker() override = default;
-  };
 }  // namespace edm
 #endif

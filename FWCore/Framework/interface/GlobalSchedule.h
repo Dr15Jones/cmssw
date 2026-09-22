@@ -81,8 +81,12 @@ namespace edm {
     /// Delete the module with label iLabel
     void deleteModule(std::string const& iLabel);
 
-    std::vector<Worker*> const& lumiWorkers() const { return lumiManagers()[0].allWorkers(); }
-    std::vector<Worker*> const& runWorkers() const { return runManagers()[0].allWorkers(); }
+    std::vector<TransitionWorker<LumiTransitionInfo, TransitionPhaseGlobal>*> const& lumiWorkers() const {
+      return lumiManagers()[0].allWorkers();
+    }
+    std::vector<TransitionWorker<RunTransitionInfo, TransitionPhaseGlobal>*> const& runWorkers() const {
+      return runManagers()[0].allWorkers();
+    }
 
   private:
     std::span<GlobalWorkerManager<LumiTransitionInfo>> lumiManagers() {

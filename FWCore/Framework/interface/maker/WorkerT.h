@@ -11,7 +11,7 @@ WorkerT: Code common to all workers.
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/TransitionInfoTypes.h"
 #include "FWCore/Framework/interface/TransitionPhaseTypes.h"
-#include "FWCore/Framework/interface/maker/Worker.h"
+#include "FWCore/Framework/interface/maker/TransitionWorker.h"
 #include "FWCore/Framework/interface/maker/WorkerParams.h"
 #include "FWCore/ServiceRegistry/interface/ServiceRegistryfwd.h"
 #include "FWCore/Utilities/interface/BranchType.h"

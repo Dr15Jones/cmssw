@@ -41,7 +41,7 @@ namespace edm {
         unscheduled_(*areg) {}  // WorkerManager::WorkerManager
 
   template <typename TI, typename TP>
-  Worker const* WorkerManagerCore<TI, TP>::deleteModuleIfExists(std::string const& moduleLabel) {
+  TransitionWorker<TI, TP> const* WorkerManagerCore<TI, TP>::deleteModuleIfExists(std::string const& moduleLabel) {
     auto worker = workerReg_.get(moduleLabel);
     if (worker != nullptr) {
       auto eraseBeg = std::remove(allWorkers_.begin(), allWorkers_.end(), worker);
@@ -68,7 +68,7 @@ namespace edm {
   }
 
   template <typename TI, typename TP>
-  Worker* WorkerManagerCore<TI, TP>::getWorkerForExistingModule(std::string const& label) {
+  TransitionWorker<TI, TP>* WorkerManagerCore<TI, TP>::getWorkerForExistingModule(std::string const& label) {
     auto worker = workerReg_.getWorkerFromExistingModule(label, actionTable_);
     if (nullptr != worker) {
       addToAllWorkers(worker);
@@ -92,7 +92,7 @@ namespace edm {
   }
 
   template <typename TI, typename TP>
-  void WorkerManagerCore<TI, TP>::addToAllWorkers(Worker* w) {
+  void WorkerManagerCore<TI, TP>::addToAllWorkers(TransitionWorker<TI, TP>* w) {
     if (!search_all(allWorkers_, w)) {
       allWorkers_.push_back(w);
     }
