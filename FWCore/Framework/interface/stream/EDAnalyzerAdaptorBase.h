@@ -66,7 +66,7 @@ namespace edm {
 
     class EDAnalyzerAdaptorBase {
     public:
-      template <typename T>
+      template <typename T, typename TI, typename TP>
       friend class edm::WorkerT;
       template <typename T>
       friend class edm::maker::ModuleHolderT;

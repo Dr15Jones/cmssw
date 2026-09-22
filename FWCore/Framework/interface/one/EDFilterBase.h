@@ -50,7 +50,7 @@ namespace edm {
     public:
       template <typename T>
       friend class edm::maker::ModuleHolderT;
-      template <typename T>
+      template <typename T, typename TI, typename TP>
       friend class edm::WorkerT;
       typedef EDFilterBase ModuleType;
 
